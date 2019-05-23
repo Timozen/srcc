@@ -1,5 +1,5 @@
-call conda env remove -n srcc
-call conda env create -n -y srcc python=3.7
+call conda remove -n srcc -y
+call conda create -n srcc python=3.7 -y
 call conda install -n srcc -y numpy
 call conda install -n srcc -y scipy
 call conda install -n srcc -y pandas
