@@ -11,9 +11,10 @@ It will create a folder ../DSIDS
 with files like niklas_animal_0003 or niklas_landscape_0037 and so on.
 '''
 
+
 def parse_command_line_args():
     """A function for passing command line arguments.
-    
+
     It searches for a source and destination directory 
     as well as the author name."""
     dst = False
@@ -48,7 +49,7 @@ def parse_command_line_args():
     if not os.path.isdir(src):
         print('invalid source directory: ', src)
         exit()
-    
+
     # create destination directory if necessary
     if not os.path.isdir(dst):
         os.mkdir(dst)
@@ -68,9 +69,9 @@ def build_file_dict(src):
     # filling the dictionary with all files and parent paths in the source directory
     for root, folder, files in w:
         for f in files:
-            if root in file_dict: # checks if this subfolder is already in the file_dict
-                file_dict[root].append(f)           
-            else: # if not than create a list for the files in this subfolder
+            if root in file_dict:  # checks if this subfolder is already in the file_dict
+                file_dict[root].append(f)
+            else:  # if not than create a list for the files in this subfolder
                 file_dict[root] = [f]
 
     return file_dict
