@@ -47,13 +47,33 @@ def handle(key, mask, sel):
     # read event
     if mask & selectors.EVENT_READ:
         #get the data, if none we close the connection
-        receivedData = sock.recv(1024) # should be ready
-        if receivedData:
-            data.outb += receivedData
-        else:
-            print(f"Closing connection from {data.address}")
-            sel.unregister(sock)
-            sock.close()
+
+        header = sock.recv(2) # should be ready
+        size = sock.recv(4)
+
+        payloadSize = int.from_bytes(size, byteorder = "big")
+
+        payload = sock.recv(payloadSize)
+
+        print(f"received header {header} and size {size}")
+        print(f"payload {payload}")
+
+        #echo the content
+        out = header
+        out += size
+        out += payload
+
+        sock.sendall(out)
+        sel.unregister(sock)
+        sock.close()        
+        # if receivedData:
+        #     data.outb += receivedData
+        # else:
+        #     # if we received the all the data we have to understand what we 
+        #     # received 
+        #     print(f"Closing connection from {data.address}")
+        #     sel.unregister(sock)
+        #     sock.close()
     
     if mask & selectors.EVENT_WRITE:
         if data.outb:

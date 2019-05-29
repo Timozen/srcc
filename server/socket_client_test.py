@@ -15,10 +15,18 @@ def main():
         s.connect((HOST_IP, HOST_PORT))
         print(f"Socket client connecting to IP {HOST_IP} and port {HOST_PORT}")
 
-        # caveat: send all requires binary data!
-        s.sendall(b"This is my test message")
-        data = s.recv(1024)
-        print(f"Data received: {repr(data)}")
+        s.send(bytes(2))
 
+        size = 6
+        s.send(size.to_bytes(4, byteorder = "big"))
+        s.send(bytes(size))
+
+        header = s.recv(2) # should be ready
+        size = s.recv(4)
+        payloadSize = int.from_bytes(size, byteorder = "big")
+        payload = s.recv(payloadSize)
+
+        print(f"received header {header} and size {size}")
+        print(f"payload {payload}")
 if __name__ == "__main__":
     main()
