@@ -105,6 +105,7 @@ venv.bak/
 
 ##VScode
 .vscode/*
+*.code-workspace
 
 
 ##Android Studio
