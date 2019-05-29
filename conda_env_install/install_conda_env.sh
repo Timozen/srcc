@@ -8,3 +8,4 @@ conda install -n srcc -y tensorflow-gpu
 conda install -n srcc -y keras
 conda install --name srcc -y autopep8
 conda install --name srcc -y pylint
+conda isntall --name srcc -y opencv
