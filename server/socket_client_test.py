@@ -1,5 +1,7 @@
 import socket
 
+from application_protocoll import receive_message, send_message
+
 HOST_IP = "127.0.0.1"  # standard loop back address
 HOST_PORT = 8000  # everything after 1023 will be ok, but not every port works
 
@@ -15,18 +17,13 @@ def main():
         s.connect((HOST_IP, HOST_PORT))
         print(f"Socket client connecting to IP {HOST_IP} and port {HOST_PORT}")
 
-        s.send(bytes(2))
+        send_message(s, messageType=1, data=4251165801351)
 
-        size = 6
-        s.send(size.to_bytes(4, byteorder = "big"))
-        s.send(bytes(size))
+        messageType, data = receive_message(s)
 
-        header = s.recv(2) # should be ready
-        size = s.recv(4)
-        payloadSize = int.from_bytes(size, byteorder = "big")
-        payload = s.recv(payloadSize)
+        print(f"received messageType {messageType}")
+        print(f"payload {data}")
 
-        print(f"received header {header} and size {size}")
-        print(f"payload {payload}")
+
 if __name__ == "__main__":
     main()

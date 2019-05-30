@@ -2,6 +2,7 @@ import socket
 import selectors
 import types
 
+from application_protocoll import send_message, receive_message
 
 HOST_IP = "127.0.0.1"  # standard loop back address
 HOST_PORT = 8000  # everything after 1023 will be ok, but not every port works
@@ -24,12 +25,13 @@ def accept(sock, sel):
 
     # create a new data object, where can handle the data for sendind and
     # receiving data
-    data = types.SimpleNamespace(address = address, inb = b'', outb = b'')
+    data = types.SimpleNamespace(address=address, inb=b'', outb=b'')
 
     # we have to care for reading and writing events so combine them
     eventTrigger = selectors.EVENT_READ | selectors.EVENT_WRITE
 
     sel.register(connection, eventTrigger, data)
+
 
 def handle(key, mask, sel):
     """Handling the connection with the already connected socket.
@@ -46,42 +48,29 @@ def handle(key, mask, sel):
     # checking which event was triggered for our socket
     # read event
     if mask & selectors.EVENT_READ:
-        #get the data, if none we close the connection
+        # get the data, if none we close the connection
 
-        header = sock.recv(2) # should be ready
-        size = sock.recv(4)
+        messageType, payload = receive_message(sock)
 
-        payloadSize = int.from_bytes(size, byteorder = "big")
-
-        payload = sock.recv(payloadSize)
-
-        print(f"received header {header} and size {size}")
+        print(f"received messageType {messageType}")
         print(f"payload {payload}")
 
-        #echo the content
-        out = header
-        out += size
-        out += payload
+        # echo the content
+        # TODO add handling how the server has to deal with the message received
 
-        sock.sendall(out)
+        send_message(sock, messageType, payload)
+
+        # TODO maybe do not close the connection ...
         sel.unregister(sock)
-        sock.close()        
-        # if receivedData:
-        #     data.outb += receivedData
-        # else:
-        #     # if we received the all the data we have to understand what we 
-        #     # received 
-        #     print(f"Closing connection from {data.address}")
-        #     sel.unregister(sock)
-        #     sock.close()
-    
+        sock.close()
+
     if mask & selectors.EVENT_WRITE:
         if data.outb:
             print(f"Echo back to {data.address} with {repr(data.outb)}")
-            sent = sock.send(data.outb) ## should be ready to write
-            # delete the data 
+            sent = sock.send(data.outb)  # should be ready to write
+            # delete the data
             data.outb = data.outb[sent:]
-    
+
 
 def main():
     """Main function for the socket server.
