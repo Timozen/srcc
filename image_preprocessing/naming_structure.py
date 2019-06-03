@@ -52,7 +52,7 @@ def parse_command_line_args():
 
     # create destination directory if necessary
     if not os.path.isdir(dst):
-        os.mkdir(dst)
+        os.makedirs(dst)
 
     return src, dst, author
 
