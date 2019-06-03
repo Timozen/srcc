@@ -4,10 +4,10 @@ import sys
 '''
 Example usage: 
 
-    srcc/image_preprocessing$ python naming_structure.py -s ../raw_images -d ../DSIDS -n niklas
+    srcc/image_preprocessing$ python naming_structure.py -s raw_images -d DSIDS/HR -n niklas
 With raw_images/landscape, raw_images/animal, ... as the categories.
 
-It will create a folder ../DSIDS
+It will create a folder DSIDS inside the srcc directory
 with files like niklas_animal_0003 or niklas_landscape_0037 and so on.
 '''
 
@@ -93,10 +93,37 @@ def main():
 
     parses command line arguments, builds file dictionary 
     and than copy + rename the files."""
+    # change into the srcc directory
+    os.chdir('..')
     # parsing the command line arguments
     src, dst, author = parse_command_line_args()
     # building the file dictionary
     file_dict = build_file_dict(src)
+
+    # try to get highest number per category in DSIDS/HR/
+    cat_i_dict = {}
+    hr_flist = []
+    # create path to HR images
+    hr_path = os.path.join(os.getcwd(), 'DSIDS', 'HR')
+    # check if the folder exists
+    if os.path.isdir(hr_path):
+        #create list with all hr files
+        hr_flist = os.listdir(hr_path)
+
+    # iterate over hr_flist
+    for f in hr_flist:
+        # split the file name
+        name = f.split('_')
+        # check for the right author
+        if name[0] == author:
+            if name[1] in cat_i_dict:
+                cat_i_dict[name[1]] += 1
+            else:
+                cat_i_dict[name[1]] = 1
+
+    # control output
+    print('found the following number of images per category:')
+    print(cat_i_dict)
 
     # iterating through the root folders
     for root in file_dict:
@@ -104,8 +131,15 @@ def main():
         for i, f in enumerate(file_dict[root]):
             # check if the file is a JPEG
             if '.jpg' in f:
+                # create category
+                category = os.path.split(root)[1]
+                # create category count
+                cat_count = i
+                # update cat_count if found
+                if category in cat_i_dict:
+                    cat_count += cat_i_dict[category]
                 # create the path to the destination file
-                tmp_dst_path = os.path.join(dst, get_name(author, root, i))
+                tmp_dst_path = os.path.join(dst, get_name(author, root, cat_count))
                 # create the path to the source file
                 tmp_src_path = os.path.join(root, f)
                 # rename + copy the file
