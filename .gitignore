@@ -191,3 +191,7 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+# image directories
+raw_images/
+DSIDS/
