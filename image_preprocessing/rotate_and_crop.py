@@ -6,11 +6,11 @@ import numpy as np
 '''
 Example usage: 
 
-    srcc/image_preprocessing$ python rotate_and_clip.py -d DSIDS/HR
+    srcc/image_preprocessing$ python rotate_and_crop.py -d DSIDS/HR
 
 rotates all images in the -d directory and clips too big images into the standard size.
 '''
-NEW_DIRECTORY = False
+NEW_DIRECTORY = True
 
 
 def parse_command_line_args():
@@ -112,7 +112,11 @@ def main():
 
                 # save the processed image
                 if NEW_DIRECTORY:
-                    cv2.imwrite(os.path.join(root, 'cropped', f), img)
+                    p = os.path.join(root, 'cropped')
+                    # create cropped directory if necessary
+                    if not os.path.isdir(p):
+                        os.makedirs(p)
+                    cv2.imwrite(os.path.join(p, f), img)
                 else:
                     cv2.imwrite(os.path.join(root, f), img)
 
