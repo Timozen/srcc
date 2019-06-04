@@ -10,6 +10,7 @@ Example usage:
 
 rotates all images in the -d directory and clips too big images into the standard size.
 '''
+NEW_DIRECTORY = False
 
 
 def parse_command_line_args():
@@ -110,7 +111,10 @@ def main():
                         img = img[:, int(diff/2)+1:-int(diff/2), :]
 
                 # save the processed image
-                cv2.imwrite(os.path.join(root, f), img)
+                if NEW_DIRECTORY:
+                    cv2.imwrite(os.path.join(root, 'cropped', f), img)
+                else:
+                    cv2.imwrite(os.path.join(root, f), img)
 
 
 if __name__ == '__main__':
