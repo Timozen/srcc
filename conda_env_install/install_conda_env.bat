@@ -8,3 +8,7 @@ call conda install -n srcc -y tensorflow-gpu
 call conda install -n srcc -y keras
 call conda install --name srcc -y autopep8
 call conda install --name srcc -y pylint
+call conda install -n srcc -c anaconda -y flask 
+call conda install -n srcc -c conda-forge -y flask-restful 
+call conda install -n srcc -c anaconda -y requests
+call conda install -n srcc -c anaconda -y pillow 
