@@ -8,7 +8,7 @@ Expects a folder DSIDS/HR and DSIDS/LR in the srcc directory.
 '''
 DOWN_SCALING_FACTOR = 4
 # area vs cubic vs linear vs nearest vs lanczos
-INTERPOLATION = 'nearest'
+INTERPOLATION = 'cubic'
 
 
 # using correct constant for the given INTERPOLATION
@@ -41,7 +41,7 @@ def main():
 
     # create the destination directory if necessary
     if not os.path.isdir(dst):
-        os.mkdir(dst)
+        os.makedirs(dst)
 
     # builds a list with all file names
     img_list = os.listdir(src)
