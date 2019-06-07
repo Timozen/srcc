@@ -1,7 +1,17 @@
+'''
+https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
+'''
+
 import numpy as np
 from keras import backend as K
     
 def get_model_memory_usage(batch_size, model):
+    '''this function calculates the needed memory for a model in GB.
+    found on stackoverflow.
+    
+    batch_size -- self explanatory
+    model -- the precompiled keras model
+    '''
     shapes_mem_count = 0
     for l in model.layers:
         single_layer_mem = 1
