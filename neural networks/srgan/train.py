@@ -1,15 +1,15 @@
 '''
-source: https://github.com/deepak112/Keras-SRGAN/blob/master/Utils_model.py
+source: https://github.com/deepak112/Keras-SRGAN/blob/master/train.py
 
 also:
 C. Ledig et al., “Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network,” in 2017 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), Honolulu, HI, 2017, pp. 105–114.
 '''
 
 
-#title           :train.py
+# title           :train.py
 # description     :to train the model
 # author          :Deepak Birla
-#date            :2018/10/30
+# date            :2018/10/30
 # usage           :python train.py --options
 # python_version  :3.5.4
 
@@ -17,6 +17,7 @@ from Network import Generator, Discriminator
 from data_generator import create_data_generator, rescale_imgs_to_neg1_1
 import Utils_model, Utils
 from Utils_model import VGG_LOSS
+from memory_usage import get_model_memory_usage
 
 from keras.models import Model
 from keras.layers import Input
@@ -76,6 +77,8 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
     gan = get_gan_network(discriminator, lr_shape, generator,
                           optimizer, loss.vgg_loss)
+    
+    print("memory usage: ", get_model_memory_usage(batch_size, gan))
 
     loss_file = open(model_save_dir + 'losses.txt', 'w+')
     loss_file.close()
@@ -136,7 +139,7 @@ if __name__ == "__main__":
     image_shape = (3024, 4032, 3)
 
     epochs = 1
-    batch_size = 4
+    batch_size = 64
     train_test_ratio = 0.1
     rescaling_factor = 4
 
