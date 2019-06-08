@@ -16,8 +16,7 @@ NEW_DIRECTORY = True
 def parse_command_line_args():
     """A function for passing command line arguments.
 
-    It searches for a source and destination directory 
-    as well as the author name."""
+    It searches for a source directory."""
     path = False
 
     # parsing the comment line arguments
