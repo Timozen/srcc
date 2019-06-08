@@ -30,7 +30,7 @@ np.random.seed(10)
 
 
 # Combined network
-def get_gan_network(discriminator, shape, generator, optimizer, vgg_loss):
+def get_gan_network(discriminator, shape, generator, optimizer, vgg_loss, batch_size):
     '''this function creates the GAN and compiles it
 
     discriminator -- the discriminator model
@@ -44,6 +44,9 @@ def get_gan_network(discriminator, shape, generator, optimizer, vgg_loss):
     x = generator(gan_input)
     gan_output = discriminator(x)
     gan = Model(inputs=gan_input, outputs=[x, gan_output])
+
+    print('memory usage gan: ', get_model_memory_usage(batch_size, gan))
+
     gan.compile(loss=[vgg_loss, "binary_crossentropy"],
                 loss_weights=[1., 1e-3],
                 optimizer=optimizer)
@@ -71,14 +74,15 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     generator = Generator(lr_shape, rescaling_factor).generator()
     discriminator = Discriminator(img_shape).discriminator()
 
+    print('memory usage generator: ', get_model_memory_usage(batch_size, generator))
+    print('memory usage discriminator: ', get_model_memory_usage(batch_size, discriminator))
+
     optimizer = Utils_model.get_optimizer()
     generator.compile(loss=loss.vgg_loss, optimizer=optimizer)
     discriminator.compile(loss="binary_crossentropy", optimizer=optimizer)
 
     gan = get_gan_network(discriminator, lr_shape, generator,
-                          optimizer, loss.vgg_loss)
-    
-    print("memory usage: ", get_model_memory_usage(batch_size, gan))
+                          optimizer, loss.vgg_loss, batch_size)
 
     loss_file = open(model_save_dir + 'losses.txt', 'w+')
     loss_file.close()
@@ -139,7 +143,7 @@ if __name__ == "__main__":
     image_shape = (3024, 4032, 3)
 
     epochs = 1
-    batch_size = 64
+    batch_size = 1
     train_test_ratio = 0.1
     rescaling_factor = 4
 
