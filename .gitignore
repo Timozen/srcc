@@ -198,3 +198,6 @@ DSIDS/
 
 *.pdf
 srdense_summary.txt
+
+# ingore the log folder for tensorboard
+logs

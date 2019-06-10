@@ -6,6 +6,8 @@ conda install -n srcc -y pandas
 conda install -n srcc -y matplotlib
 conda install -n srcc -y tensorflow-gpu
 conda install -n srcc -y keras
-conda install --name srcc -y autopep8
-conda install --name srcc -y pylint
+conda install -n srcc -y autopep8
+conda install -n srcc -y pylint
+conda install -n srcc -y opencv
+conda install -n srcc -y tqdm
 conda install -n srcc -y graphviz
