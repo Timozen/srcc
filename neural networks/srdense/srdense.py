@@ -38,7 +38,7 @@ def dense_layer(x, block_id, layer_id, filters=12, kernel_size=(3, 3), strides=(
     return x
 
 
-def dense_block(x, block_id, layers=3, filters=16, grow_filters=True, growth_rate=16, kernel_size=(3, 3), strides=(1, 1)):
+def dense_block(x, block_id, layers=3, growth_rate=16, kernel_size=(3, 3), strides=(1, 1)):
     """
     This function will bild one dense block with k dense layers.
 
@@ -58,69 +58,125 @@ def dense_block(x, block_id, layers=3, filters=16, grow_filters=True, growth_rat
             x = cb
         else:
             x = concatenate([x, cb], axis=3, name=f"Block-{block_id}-InnerConcatenate-{i}")
-        if growth_rate:
-            filters += growth_rate
-
-    return x, filters
+    return x
 
 
 def get_adam_optimizer(lr):
+    """
+    Return the adam optimizer
+
+    lr -- learning rate
+    """
     return Adam(lr)
+
 
 DENSE_TYPE_H = 1
 DENSE_TYPE_HL = 2
 DENSE_TYPE_ALL = 3
 
-def dense_model(dense_type, input_shape, blocks=[3, 4, 5], filters=16, grow_filters=True, growth_rate=16, kernel_size=(3, 3), strides=(1, 1), weight_decay=1e-4):
-    if len(blocks) < 2:
-        return None
 
+def dense_model(dense_type, input_shape, blocks=[3, 4, 5], growth_rate=16, kernel_size=(3, 3), strides=(1, 1), weight_decay=1e-4):
+    """
+    This function will create the srdense net model.
+
+    dense_type -- 1,2 or 3, use only High features, High and low, or all
+    input_shape -- input shape of the input images
+    blocks -- how many layers each dense block has
+    growth_rate -- how many features are added per layer in one block
+    kernel_size -- conv. kernel size
+    strides -- strides size in x and y
+    weight_decay -- for better learning    
+    """
+    # define the input of the network
     inputs = Input(shape=input_shape, name="Input")
 
-    res = Conv2D(filters=128,
-                 kernel_size=kernel_size,
-                 kernel_initializer='he_normal',
-                 padding='same',
-                 strides=strides,
-                 use_bias=False,
-                 kernel_regularizer=l2(weight_decay),
-                 name="LowLevelFeatures")(inputs)
-    res = ReLU(name="LowLevelFeatures-ReLU")(res)
+    # first extract the low level features, use 128 filters, because each
+    # dense block will have the same size
+    lowres = Conv2D(filters=128,
+                    kernel_size=kernel_size,
+                    kernel_initializer='he_normal',
+                    padding='same',
+                    strides=strides,
+                    use_bias=False,
+                    kernel_regularizer=l2(weight_decay),
+                    name="LowLevelFeatures")(inputs)
+    # add a ReLU after conv2D
+    lowres = ReLU(name="LowLevelFeatures-ReLU")(lowres)
 
     concat = []
+    # create all the denseblocks
     for i in range(len(blocks)):
+        # if it is the first block, handle the output of low lowres
         if i == 0:
-            x, filters = dense_block(res, i, layers=blocks[i], filters=filters,
-                                     grow_filters=grow_filters, growth_rate=growth_rate)
+            # add one dense block
+            x = dense_block(x=lowres,
+                            block_id=i,
+                            layers=blocks[i],
+                            growth_rate=growth_rate)
+
+            # if we need all denseblocks output concatenate with the low res ones
+            # if not just continue with the output
             if dense_type == DENSE_TYPE_ALL:
-                concat = concatenate([res, x], axis=3, name=f"Block-OuterConcatenate-{i}")
+                concat = concatenate([lowres, x], axis=3, name=f"Block-OuterConcatenate-{i}")
             else:
                 concat = x
         else:
-            x, filters = dense_block(concat, i, layers=blocks[i], filters=filters,
-                                     grow_filters=grow_filters, growth_rate=growth_rate)
+            # add one dense block
+            x = dense_block(x=concat,
+                            block_id=i,
+                            layers=blocks[i],
+                            growth_rate=growth_rate)
+            # if we need all denseblocks output concatenate with the prev. dense blocks
+            # if not just continue with the output
             if dense_type == DENSE_TYPE_ALL:
                 concat = concatenate([concat, x], axis=3, name=f"Block-OuterConcatenate-{i}")
             else:
                 concat = x
 
-    # add the bottle neck
+    # add the bottle neck, if we have all dense block concatenates, because
+    # 1152 features would be quite a lot...
+    # if we dont concatenate all, than if HL concatenate the lowres features
     if dense_type == DENSE_TYPE_ALL:
-        x = Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding="same", use_bias=False, name="Bottleneck")(concat)
+        x = Conv2D(filters=256,
+                   kernel_size=(1, 1),
+                   strides=(1, 1),
+                   padding="same",
+                   use_bias=False,
+                   name="Bottleneck")(concat)
     elif dense_type == DENSE_TYPE_HL:
-        x = concatenate([res, concat], axis=3, name=f"Block-OuterConcatenate-LH")
-    
-    # add the deconv. layers
+        x = concatenate([lowres, concat], axis=3, name=f"Block-OuterConcatenate-LH")
+
+    # add the two deconv. layers
     # deconv. layers are mostly referred as ConvTranspose
-    x = Conv2DTranspose(filters=256, kernel_size=(3,3), strides=(2,2), padding="same", use_bias=False, name="Deconvolution-1")(x)
+    # this will make the network really big...
+    x = Conv2DTranspose(filters=256,
+                        kernel_size=(3, 3),
+                        strides=(2, 2),
+                        padding="same",
+                        use_bias=False,
+                        name="Deconvolution-1")(x)
     x = ReLU(name="Deconvolution-1-ReLU")(x)
-    x = Conv2DTranspose(filters=256, kernel_size=(3,3), strides=(2,2), padding="same", use_bias=False, name="Deconvolution-2")(x)
+
+    x = Conv2DTranspose(filters=256,
+                        kernel_size=(3, 3),
+                        strides=(2, 2),
+                        padding="same",
+                        use_bias=False,
+                        name="Deconvolution-2")(x)
     x = ReLU(name="Deconvolution-2-ReLU")(x)
 
     # reconstruction layer
-    outputs = Conv2D(filters=1, kernel_size=(3,3), strides=(1,1), padding="same", use_bias=False, name="Reconstruction")(x)
-    
+    outputs = Conv2D(filters=1,
+                     kernel_size=(3, 3),
+                     strides=(1, 1),
+                     padding="same",
+                     use_bias=False,
+                     name="Reconstruction")(x)
+
+    # create the model
     model = Model(input=inputs, output=outputs)
+
+    # compile the model with the settings
     model.compile(loss=categorical_crossentropy,
                   optimizer=get_adam_optimizer(0.0001),
                   metrics=['accuracy'])
@@ -128,37 +184,62 @@ def dense_model(dense_type, input_shape, blocks=[3, 4, 5], filters=16, grow_filt
 
 
 def update_lr(epoch, lr):
+    """
+    This function will adapt the learning rate like discussed in the paper.
+    """
     if epoch == 30:
         lr /= 10
     return lr
 
 
 def create_callbacks(name):
+    """
+    This function will create the callbacks during the fitting process.
+
+    name -- name of the trail
+    """
+
+    # create a tensorboard logfile
     tboard = TensorBoard(log_dir=f"./logs/{name}")
+
+    # adapt the learning rate
     lrs = LearningRateScheduler(schedule=update_lr, verbose=1)
     return [tboard, lrs]
 
 
 def main():
-    lr_input_shape = (84,84,1)    
+    lr_input_shape = (84, 84, 1)
 
+    # define the model type
     model_type = DENSE_TYPE_ALL
 
+    # create a unique name for this trial
     name = f"{time.time()}-SRDense-Type-{model_type}"
 
-    dense_model_net = dense_model(model_type, lr_input_shape, blocks=[8, 8, 8, 8, 8, 8, 8, 8], filters=16, growth_rate=16)
+    # create the model
+    dense_model_net = dense_model(dense_type=model_type,
+                                  input_shape=lr_input_shape,
+                                  blocks=[8, 8, 8, 8, 8, 8, 8, 8],
+                                  growth_rate=16)
     dense_model_net.name = name
 
+    # save the summary of the model
     with open(f"SRDense-Type-{model_type}-summary.txt", 'w') as f:
         with redirect_stdout(f):
             dense_model_net.summary()
+            print(f"Memory usage of model {get_model_memory_usage(16, dense_model_net)}")
 
+    # print size of the model
     print(f"Memory usage of model {get_model_memory_usage(16, dense_model_net)}")
+
+    # save some plots about the model
     plot_model(dense_model_net, f"SRDense-Type-{model_type}-plot.pdf")
     plot_model(dense_model_net, f"SRDense-Type-{model_type}-plot-shapes.pdf", show_shapes=True)
 
+    # create the call backs
     callbacks = create_callbacks(name)
 
+    # train the model
     #dense_model_net.fit(x_train, y_train, epochs=50, shuffle=True, validation_split=0.1, callbacks=callbacks)
 
 
