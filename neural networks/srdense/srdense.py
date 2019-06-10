@@ -1,6 +1,6 @@
 import time
 from contextlib import redirect_stdout
-
+from data_generator import create_data_generator
 # for the callbacks
 from keras.callbacks import EarlyStopping, LearningRateScheduler, TensorBoard
 # testing stuff
@@ -67,12 +67,15 @@ def dense_block(x, block_id, layers=3, filters=16, grow_filters=True, growth_rat
 def get_adam_optimizer(lr):
     return Adam(lr)
 
+DENSE_TYPE_H = 1
+DENSE_TYPE_HL = 2
+DENSE_TYPE_ALL = 3
 
-def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth_rate=16, kernel_size=(3, 3), strides=(1, 1), weight_decay=1e-4):
+def dense_model(dense_type, input_shape, blocks=[3, 4, 5], filters=16, grow_filters=True, growth_rate=16, kernel_size=(3, 3), strides=(1, 1), weight_decay=1e-4):
     if len(blocks) < 2:
         return None
 
-    inputs = Input(x_train.shape[1:], name="Input")
+    inputs = Input(shape=input_shape, name="Input")
 
     res = Conv2D(filters=128,
                  kernel_size=kernel_size,
@@ -89,15 +92,24 @@ def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth
         if i == 0:
             x, filters = dense_block(res, i, layers=blocks[i], filters=filters,
                                      grow_filters=grow_filters, growth_rate=growth_rate)
-            concat = concatenate([res, x], axis=3, name=f"Block-OuterConcatenate-{i}")
+            if dense_type == DENSE_TYPE_ALL:
+                concat = concatenate([res, x], axis=3, name=f"Block-OuterConcatenate-{i}")
+            else:
+                concat = x
         else:
             x, filters = dense_block(concat, i, layers=blocks[i], filters=filters,
                                      grow_filters=grow_filters, growth_rate=growth_rate)
-            concat = concatenate([concat, x], axis=3, name=f"Block-OuterConcatenate-{i}")
+            if dense_type == DENSE_TYPE_ALL:
+                concat = concatenate([concat, x], axis=3, name=f"Block-OuterConcatenate-{i}")
+            else:
+                concat = x
 
     # add the bottle neck
-    x = Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding="same", use_bias=False, name="Bottleneck")(concat)
-
+    if dense_type == DENSE_TYPE_ALL:
+        x = Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding="same", use_bias=False, name="Bottleneck")(concat)
+    elif dense_type == DENSE_TYPE_HL:
+        x = concatenate([res, concat], axis=3, name=f"Block-OuterConcatenate-LH")
+    
     # add the deconv. layers
     # deconv. layers are mostly referred as ConvTranspose
     x = Conv2DTranspose(filters=256, kernel_size=(3,3), strides=(2,2), padding="same", use_bias=False, name="Deconvolution-1")(x)
@@ -128,24 +140,22 @@ def create_callbacks(name):
 
 
 def main():
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    lr_input_shape = (84,84,1)    
 
-    x_train = x_train.reshape((60000, 28, 28, 1))[:30000]
-    y_train = to_categorical(y_train, 10)[:30000]
+    model_type = DENSE_TYPE_ALL
 
-    name = f"{time.time()}-SRDense"
+    name = f"{time.time()}-SRDense-Type-{model_type}"
 
-    dense_model_net = dense_model(x_train, blocks=[8, 8, 8, 8, 8, 8, 8, 8], filters=16, growth_rate=16)
+    dense_model_net = dense_model(model_type, lr_input_shape, blocks=[8, 8, 8, 8, 8, 8, 8, 8], filters=16, growth_rate=16)
     dense_model_net.name = name
-    # dense_model_net.summary()
 
-    with open('srdense_summary.txt', 'w') as f:
+    with open(f"SRDense-Type-{model_type}-summary.txt", 'w') as f:
         with redirect_stdout(f):
             dense_model_net.summary()
 
-    print(f"Memory usage of model {get_model_memory_usage(32, dense_model_net)}")
-    plot_model(dense_model_net, 'plot_srdense.pdf')
-    plot_model(dense_model_net, 'plot_srdense_shapes.pdf', show_shapes=True)
+    print(f"Memory usage of model {get_model_memory_usage(16, dense_model_net)}")
+    plot_model(dense_model_net, f"SRDense-Type-{model_type}-plot.pdf")
+    plot_model(dense_model_net, f"SRDense-Type-{model_type}-plot-shapes.pdf", show_shapes=True)
 
     callbacks = create_callbacks(name)
 
