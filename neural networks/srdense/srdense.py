@@ -18,7 +18,7 @@ from keras.utils.vis_utils import plot_model
 from memory_usage import get_model_memory_usage
 
 
-def dense_layer(inputs, filters=12, kernel_size=(3, 3), strides=(1, 1)):
+def dense_layer(x, block_id, layer_id, filters=12, kernel_size=(3, 3), strides=(1, 1)):
     """
     This function will build a single dense layer of a dense block.
 
@@ -27,18 +27,18 @@ def dense_layer(inputs, filters=12, kernel_size=(3, 3), strides=(1, 1)):
     kernel_size -- size of the conv. kernel
     strides -- the stride size of the kernel, should be (1,1) in most cases
     """
-    #x = BatchNormalization()(inputs)
     x = Conv2D(filters=filters,
                strides=strides,
                kernel_size=kernel_size,
                padding='same',
                kernel_initializer='he_normal',
-               use_bias=False)(inputs)
-    x = ReLU()(x)
+               use_bias=False,
+               name=f"Block-{block_id}-Layer-{layer_id}-Conv2D")(x)
+    x = ReLU(name=f"Block-{block_id}-Layer-{layer_id}-ReLU")(x)
     return x
 
 
-def dense_block(x, layers=3, filters=16, grow_filters=True, growth_rate=16, kernel_size=(3, 3), strides=(1, 1)):
+def dense_block(x, block_id, layers=3, filters=16, grow_filters=True, growth_rate=16, kernel_size=(3, 3), strides=(1, 1)):
     """
     This function will bild one dense block with k dense layers.
 
@@ -52,12 +52,12 @@ def dense_block(x, layers=3, filters=16, grow_filters=True, growth_rate=16, kern
     # add the k layers
     for i in range(layers):
         # create one dense layers
-        cb = dense_layer(x, filters=growth_rate)
+        cb = dense_layer(x, block_id, i, filters=growth_rate)
         # connected the output from all prev. ones
         if i == 0:
             x = cb
         else:
-            x = concatenate([x, cb], axis=3)
+            x = concatenate([x, cb], axis=3, name=f"Block-{block_id}-InnerConcatenate-{i}")
         if growth_rate:
             filters += growth_rate
 
@@ -72,7 +72,7 @@ def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth
     if len(blocks) < 2:
         return None
 
-    inputs = Input(x_train.shape[1:])
+    inputs = Input(x_train.shape[1:], name="Input")
 
     res = Conv2D(filters=128,
                  kernel_size=kernel_size,
@@ -80,21 +80,20 @@ def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth
                  padding='same',
                  strides=strides,
                  use_bias=False,
-                 kernel_regularizer=l2(weight_decay))(inputs)
-    res = ReLU()(res)
+                 kernel_regularizer=l2(weight_decay),
+                 name="LowLevelFeatures")(inputs)
+    res = ReLU(name="LowLevelFeatures-ReLU")(res)
 
-    # create the dense blocks, but the last one
-    # doesnt need a transition layer
     concat = []
     for i in range(len(blocks)):
         if i == 0:
-            x, filters = dense_block(res, layers=blocks[i], filters=filters,
+            x, filters = dense_block(res, i, layers=blocks[i], filters=filters,
                                      grow_filters=grow_filters, growth_rate=growth_rate)
-            concat = concatenate([res, x], axis=3)
+            concat = concatenate([res, x], axis=3, name=f"Block-OuterConcatenate-{i}")
         else:
-            x, filters = dense_block(concat, layers=blocks[i], filters=filters,
+            x, filters = dense_block(concat, i, layers=blocks[i], filters=filters,
                                      grow_filters=grow_filters, growth_rate=growth_rate)
-            concat = concatenate([concat, x], axis=3)
+            concat = concatenate([concat, x], axis=3, name=f"Block-OuterConcatenate-{i}")
 
     # add the bottle neck
     x = Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding="same", use_bias=False, name="Bottleneck")(concat)
