@@ -2,7 +2,7 @@ import time
 from contextlib import redirect_stdout
 
 # for the callbacks
-from keras.callbacks import EarlyStopping, TensorBoard
+from keras.callbacks import EarlyStopping, TensorBoard, LearningRateScheduler
 # testing stuff
 from keras.datasets import mnist
 
@@ -10,7 +10,7 @@ from keras.layers import (AveragePooling2D, BatchNormalization, Conv2D, Dense,
                           Flatten, Input, ReLU, concatenate)
 from keras.losses import categorical_crossentropy
 from keras.models import Model
-from keras.optimizers import SGD
+from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils import to_categorical
 from keras.utils.vis_utils import plot_model
@@ -80,6 +80,9 @@ def transition_layer(inputs, filters=16, compression=1.0, weight_decay=1e-4):
     return x
 
 
+def get_adam_optimizer(lr):
+    return Adam(lr)
+
 
 def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth_rate=16, kernel_size=(3, 3), strides=(1, 1), weight_decay=1e-4):
     if len(blocks) < 2:
@@ -98,7 +101,8 @@ def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth
     # create the dense blocks, but the last one
     # doesnt need a transition layer
     for i in range(len(blocks) - 1):
-        x, filters = dense_block(x, layers=blocks[i], filters=filters, grow_filters=grow_filters, growth_rate=growth_rate)
+        x, filters = dense_block(x, layers=blocks[i], filters=filters,
+                                 grow_filters=grow_filters, growth_rate=growth_rate)
         x = transition_layer(x, filters=filters)
     x, filters = dense_block(x, layers=blocks[-1], filters=filters, grow_filters=grow_filters, growth_rate=growth_rate)
 
@@ -108,24 +112,32 @@ def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth
 
     model = Model(input=inputs, output=predictions)
     model.compile(loss=categorical_crossentropy,
-                  optimizer=SGD(lr=1e-2, decay=1e-6),
+                  optimizer=get_adam_optimizer(0.0001),
                   metrics=['accuracy'])
     return model
 
+
+def update_lr(epoch, lr):
+    if epoch == 30:
+        lr /= 10
+    return lr
+
+
 def create_callbacks(name):
     tboard = TensorBoard(log_dir=f"./logs/{name}")
+    lrs = LearningRateScheduler(schedule=update_lr, verbose=1)
+    return [tboard, lrs]
 
-    return [tboard]
 
 def main():
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-    x_train = x_train.reshape((60000, 28, 28, 1))[:5000]
-    y_train = to_categorical(y_train, 10)[:5000]
+    x_train = x_train.reshape((60000, 28, 28, 1))[:30000]
+    y_train = to_categorical(y_train, 10)[:30000]
 
     name = f"{time.time()}-SRDense"
 
-    dense_model_net = dense_model(x_train, blocks=[8,8,8,8], filters=16, growth_rate=16)
+    dense_model_net = dense_model(x_train, blocks=[8, 8, 8, 8], filters=16, growth_rate=16)
     dense_model_net.name = name
     dense_model_net.summary()
 
@@ -137,7 +149,6 @@ def main():
     plot_model(dense_model_net, 'plot_srdense.pdf')
     plot_model(dense_model_net, 'plot_srdense_shapes.pdf', show_shapes=True)
 
-    
     callbacks = create_callbacks(name)
 
     dense_model_net.fit(x_train, y_train, epochs=50, shuffle=True, validation_split=0.1, callbacks=callbacks)
