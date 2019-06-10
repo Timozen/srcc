@@ -194,8 +194,9 @@ lint/tmp/
 
 # image directories
 raw_images/
-DSIDS/
 
+raw_data/
+DSIDS/
 *.pdf
 srdense_summary.txt
 

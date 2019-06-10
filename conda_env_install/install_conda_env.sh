@@ -9,5 +9,6 @@ conda install -n srcc -y keras
 conda install -n srcc -y autopep8
 conda install -n srcc -y pylint
 conda install -n srcc -y opencv
+conda install -n srcc -y scikit-image
 conda install -n srcc -y tqdm
 conda install -n srcc -y graphviz
