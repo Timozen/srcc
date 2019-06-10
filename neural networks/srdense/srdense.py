@@ -2,12 +2,12 @@ import time
 from contextlib import redirect_stdout
 
 # for the callbacks
-from keras.callbacks import EarlyStopping, TensorBoard, LearningRateScheduler
+from keras.callbacks import EarlyStopping, LearningRateScheduler, TensorBoard
 # testing stuff
 from keras.datasets import mnist
-
-from keras.layers import (AveragePooling2D, BatchNormalization, Conv2D, Dense,
-                          Flatten, Input, ReLU, concatenate)
+from keras.layers import (AveragePooling2D, BatchNormalization, Conv2D,
+                          Conv2DTranspose, Dense, Flatten, Input, ReLU,
+                          concatenate)
 from keras.losses import categorical_crossentropy
 from keras.models import Model
 from keras.optimizers import Adam
@@ -27,14 +27,14 @@ def dense_layer(inputs, filters=12, kernel_size=(3, 3), strides=(1, 1)):
     kernel_size -- size of the conv. kernel
     strides -- the stride size of the kernel, should be (1,1) in most cases
     """
-    x = BatchNormalization()(inputs)
-    x = ReLU()(x)
+    #x = BatchNormalization()(inputs)
     x = Conv2D(filters=filters,
                strides=strides,
                kernel_size=kernel_size,
                padding='same',
                kernel_initializer='he_normal',
-               use_bias=False)(x)
+               use_bias=False)(inputs)
+    x = ReLU()(x)
     return x
 
 
@@ -64,22 +64,6 @@ def dense_block(x, layers=3, filters=16, grow_filters=True, growth_rate=16, kern
     return x, filters
 
 
-def transition_layer(inputs, filters=16, compression=1.0, weight_decay=1e-4):
-    """
-    This layer is between two dense blocks.
-    """
-    x = BatchNormalization()(inputs)
-    x = ReLU()(x)
-    x = Conv2D(filters=int(filters * compression),
-               kernel_size=(1, 1),
-               padding="same",
-               use_bias=False,
-               kernel_initializer='he_normal',
-               kernel_regularizer=l2(weight_decay))(x)
-    #x = AveragePooling2D((2, 2), strides=(2, 2))(x)
-    return x
-
-
 def get_adam_optimizer(lr):
     return Adam(lr)
 
@@ -90,27 +74,42 @@ def dense_model(x_train, blocks=[3, 4, 5], filters=16, grow_filters=True, growth
 
     inputs = Input(x_train.shape[1:])
 
-    x = Conv2D(filters=filters,
-               kernel_size=kernel_size,
-               kernel_initializer='he_normal',
-               padding='same',
-               strides=strides,
-               use_bias=False,
-               kernel_regularizer=l2(weight_decay))(inputs)
+    res = Conv2D(filters=128,
+                 kernel_size=kernel_size,
+                 kernel_initializer='he_normal',
+                 padding='same',
+                 strides=strides,
+                 use_bias=False,
+                 kernel_regularizer=l2(weight_decay))(inputs)
+    res = ReLU()(res)
 
     # create the dense blocks, but the last one
     # doesnt need a transition layer
-    for i in range(len(blocks) - 1):
-        x, filters = dense_block(x, layers=blocks[i], filters=filters,
-                                 grow_filters=grow_filters, growth_rate=growth_rate)
-        x = transition_layer(x, filters=filters)
-    x, filters = dense_block(x, layers=blocks[-1], filters=filters, grow_filters=grow_filters, growth_rate=growth_rate)
+    concat = []
+    for i in range(len(blocks)):
+        if i == 0:
+            x, filters = dense_block(res, layers=blocks[i], filters=filters,
+                                     grow_filters=grow_filters, growth_rate=growth_rate)
+            concat = concatenate([res, x], axis=3)
+        else:
+            x, filters = dense_block(concat, layers=blocks[i], filters=filters,
+                                     grow_filters=grow_filters, growth_rate=growth_rate)
+            concat = concatenate([concat, x], axis=3)
 
-    x = Flatten()(x)
-    x = Dense(64, activation='softmax')(x)
-    predictions = Dense(10, activation='softmax')(x)
+    # add the bottle neck
+    x = Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding="same", use_bias=False, name="Bottleneck")(concat)
 
-    model = Model(input=inputs, output=predictions)
+    # add the deconv. layers
+    # deconv. layers are mostly referred as ConvTranspose
+    x = Conv2DTranspose(filters=256, kernel_size=(3,3), strides=(2,2), padding="same", use_bias=False, name="Deconvolution-1")(x)
+    x = ReLU(name="Deconvolution-1-ReLU")(x)
+    x = Conv2DTranspose(filters=256, kernel_size=(3,3), strides=(2,2), padding="same", use_bias=False, name="Deconvolution-2")(x)
+    x = ReLU(name="Deconvolution-2-ReLU")(x)
+
+    # reconstruction layer
+    outputs = Conv2D(filters=1, kernel_size=(3,3), strides=(1,1), padding="same", use_bias=False, name="Reconstruction")(x)
+    
+    model = Model(input=inputs, output=outputs)
     model.compile(loss=categorical_crossentropy,
                   optimizer=get_adam_optimizer(0.0001),
                   metrics=['accuracy'])
@@ -137,9 +136,9 @@ def main():
 
     name = f"{time.time()}-SRDense"
 
-    dense_model_net = dense_model(x_train, blocks=[8, 8, 8, 8], filters=16, growth_rate=16)
+    dense_model_net = dense_model(x_train, blocks=[8, 8, 8, 8, 8, 8, 8, 8], filters=16, growth_rate=16)
     dense_model_net.name = name
-    dense_model_net.summary()
+    # dense_model_net.summary()
 
     with open('srdense_summary.txt', 'w') as f:
         with redirect_stdout(f):
@@ -151,7 +150,7 @@ def main():
 
     callbacks = create_callbacks(name)
 
-    dense_model_net.fit(x_train, y_train, epochs=50, shuffle=True, validation_split=0.1, callbacks=callbacks)
+    #dense_model_net.fit(x_train, y_train, epochs=50, shuffle=True, validation_split=0.1, callbacks=callbacks)
 
 
 if __name__ == "__main__":
