@@ -12,3 +12,5 @@ conda install -n srcc -y opencv
 conda install -n srcc -y scikit-image
 conda install -n srcc -y tqdm
 conda install -n srcc -y graphviz
+conda install -n srcc -y pydot
+conda install -n srcc -y pillow
