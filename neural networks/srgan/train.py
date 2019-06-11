@@ -142,10 +142,10 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
 
 if __name__ == "__main__":
-    image_shape = (336, 336, 3)
+    image_shape = (168, 168, 3)
 
-    epochs = 500
-    batch_size = 8
+    epochs = 5000
+    batch_size = 64
     train_test_ratio = 0.1
     rescaling_factor = 4
 
