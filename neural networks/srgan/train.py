@@ -74,7 +74,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     test_image = []
     for img in os.listdir(os.path.join(input_dirs[1], 'ignore')):
         if 'niklas_city_0009' in img:
-            test_image.append(cv2.imread(os.path.join(input_dirs[1], 'ignore', img).astype(np.float32)/255))
+            test_image.append(cv2.imread(os.path.join(input_dirs[1], 'ignore', img)).astype(np.float32)/255)
 
     print("test length: ",len(test_image))
 
