@@ -4,7 +4,7 @@ import cv2
 from contextlib import redirect_stdout
 from data_generator import create_data_generator
 # for the callbacks
-from keras.callbacks import EarlyStopping, LearningRateScheduler, TensorBoard
+from keras.callbacks import EarlyStopping, LearningRateScheduler, TensorBoard, ModelCheckpoint
 # testing stuff
 from keras.datasets import mnist
 from keras.layers import (AveragePooling2D, BatchNormalization, Conv2D,
@@ -207,7 +207,13 @@ def create_callbacks(name):
 
     # adapt the learning rate
     lrs = LearningRateScheduler(schedule=update_lr, verbose=1)
-    return [tboard, lrs]
+
+    # save the good models
+    mc = ModelCheckpoint(filepath=f"{name}.hdf", monitor="val_loss", verbose=1, save_best_only=True)
+
+    ea = EarlyStopping(monitor="val_loss", mode="min", min_delta=0.5)
+
+    return [tboard, lrs, mc, ea]
 
 
 def convert_to_YCrCb(image):
@@ -217,14 +223,14 @@ def convert_to_YCrCb(image):
 def main():
     lr_input_shape = (42, 42, 3)
 
-    train_data, val_data = create_data_generator(path_lr="../../DSIDS/LR/tiles/4x_cubic/",
-                                                 path_hr="../../DSIDS/HR/tiles/",
-                                                 target_size_lr=(84, 84),
-                                                 target_size_hr=(336, 336),
-                                                 preproc_lr=convert_to_YCrCb,
-                                                 preproc_hr=convert_to_YCrCb,
-                                                 batch_size=16)
-    # define the model type
+#    train_data, val_data = create_data_generator(path_lr="../../DSIDS/LR/tiles/4x_cubic/",
+#                                                  path_hr="../../DSIDS/HR/tiles/",
+#                                                  target_size_lr=(84, 84),
+#                                                  target_size_hr=(336, 336),
+#                                                  preproc_lr=None,#convert_to_YCrCb,
+#                                                  preproc_hr=None,#convert_to_YCrCb,
+#                                                  batch_size=16)
+#     # define the model type
     model_type = DENSE_TYPE_ALL
 
     # create a unique name for this trial
