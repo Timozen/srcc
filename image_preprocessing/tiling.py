@@ -13,7 +13,7 @@ Example usage:
 tiles all the images in the -d directory into the standard size 336x336.
 '''
 
-TILE_SHAPE = (336,336)
+TILE_SHAPE = (168,168)
 
 def parse_command_line_args():
     """A function for passing command line arguments.
