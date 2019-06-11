@@ -25,6 +25,7 @@ from tqdm import tqdm
 import numpy as np
 import argparse
 import os
+import cv2
 
 np.random.seed(10)
 
@@ -68,8 +69,14 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
                                         validation_split=train_test_ratio, batch_size=batch_size)
     loss = VGG_LOSS(image_shape)
 
-    batch_count = int(len(os.listdir(os.path.join(input_dirs[1], 'sub'))) / batch_size)
-    
+    batch_count = int(len(os.listdir(os.path.join(input_dirs[1], 'ignore'))) / batch_size)
+
+    test_image = []
+    for img in os.listdir(os.path.join(input_dirs[1], 'ignore')):
+        if 'niklas_city_0009' in img:
+            test_image.append(cv2.imread(os.path.join(input_dirs[1], 'ignore', img).astype(np.float32)/255))
+
+    print("test length: ",len(test_image))
 
     generator = Generator(lr_shape, rescaling_factor).generator()
     discriminator = Discriminator(img_shape).discriminator()
@@ -128,27 +135,22 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
         loss_file.close()
 
         if e == 1 or e % 5 == 0:
-            t_batch = next(img_test_gen)
-            t_batch_hr = t_batch[1]
-            t_batch_lr = t_batch[0]
-
-            Utils.plot_generated_images(
-                output_dir, e, generator, t_batch_hr, t_batch_lr)
+            Utils.generate_test_image(output_dir, e, generator, test_image)
         if e % 500 == 0:
             generator.save(model_save_dir + 'gen_model%d.h5' % e)
             discriminator.save(model_save_dir + 'dis_model%d.h5' % e)
 
 
 if __name__ == "__main__":
-    image_shape = (3024, 4032, 3)
+    image_shape = (336, 336, 3)
 
     epochs = 1
     batch_size = 1
     train_test_ratio = 0.1
     rescaling_factor = 4
 
-    input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR'),
-                  os.path.join('..', '..', 'DSIDS', 'LR', '4x_cubic')]
+    input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR', 'tiles'),
+                  os.path.join('..', '..', 'DSIDS', 'LR', 'tiles' ,'4x_cubic')]
     output_dir = os.path.join(os.getcwd(), 'output')
     model_save_dir = os.path.join(os.getcwd(), 'model')
 
