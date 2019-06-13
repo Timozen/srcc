@@ -116,7 +116,7 @@ def create_data_generator(path_lr, path_hr,
     image_validation_generator = zip(lr_image_validation_generator, hr_image_validation_generator)
 
     # return our training and validation generator
-    return image_training_generator, image_validation_generator
+    return image_training_generator, image_validation_generator, lr_image_training_generator.n, lr_image_validation_generator.n
 
 
 def main():

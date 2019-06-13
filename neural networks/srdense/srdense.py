@@ -87,7 +87,7 @@ def dense_model(dense_type, input_shape, blocks=[3, 4, 5], growth_rate=16, kerne
     growth_rate -- how many features are added per layer in one block
     kernel_size -- conv. kernel size
     strides -- strides size in x and y
-    weight_decay -- for better learning    
+    weight_decay -- for better learning
     """
     # define the input of the network
     inputs = Input(shape=input_shape, name="Input")
@@ -223,14 +223,14 @@ def convert_to_YCrCb(image):
 def main():
     lr_input_shape = (42, 42, 3)
 
-#    train_data, val_data = create_data_generator(path_lr="../../DSIDS/LR/tiles/4x_cubic/",
-#                                                  path_hr="../../DSIDS/HR/tiles/",
-#                                                  target_size_lr=(84, 84),
-#                                                  target_size_hr=(336, 336),
-#                                                  preproc_lr=None,#convert_to_YCrCb,
-#                                                  preproc_hr=None,#convert_to_YCrCb,
-#                                                  batch_size=16)
-#     # define the model type
+    train_data, val_data, train_samp, val_samp = create_data_generator(path_lr="../../DSIDS/LR/tiles/4x_cubic/",
+                                                                       path_hr="../../DSIDS/HR/tiles/",
+                                                                       target_size_lr=(42, 42),
+                                                                       target_size_hr=(168, 168),
+                                                                       preproc_lr=None,  # convert_to_YCrCb,
+                                                                       preproc_hr=None,  # convert_to_YCrCb,
+                                                                       batch_size=16)
+    # define the model type
     model_type = DENSE_TYPE_ALL
 
     # create a unique name for this trial
@@ -261,6 +261,7 @@ def main():
 
     # train the model
     #dense_model_net.fit(x_train, y_train, epochs=50, shuffle=True, validation_split=0.1, callbacks=callbacks)
+    dense_model_net.fit_generator(train_data, steps_per_epoch=train_samp//16, epochs=50, validation_data=val_data, validation_steps=val_samp//16, shuffle=True)
 
 
 if __name__ == "__main__":
