@@ -1,5 +1,6 @@
 import time
 import cv2
+import pickle
 
 from contextlib import redirect_stdout
 from data_generator import create_data_generator
@@ -209,7 +210,7 @@ def create_callbacks(name):
     lrs = LearningRateScheduler(schedule=update_lr, verbose=1)
 
     # save the good models
-    mc = ModelCheckpoint(filepath=f"{name}.hdf", monitor="val_loss", verbose=1, save_best_only=True)
+    mc = ModelCheckpoint(filepath=f"{name}-CheckPoint.h5", monitor="val_loss", verbose=1, save_best_only=True)
 
     ea = EarlyStopping(monitor="val_loss", mode="min", min_delta=0.5)
 
@@ -261,7 +262,13 @@ def main():
 
     # train the model
     #dense_model_net.fit(x_train, y_train, epochs=50, shuffle=True, validation_split=0.1, callbacks=callbacks)
-    dense_model_net.fit_generator(train_data, steps_per_epoch=train_samp//16, epochs=50, validation_data=val_data, validation_steps=val_samp//16, shuffle=True)
+    history = dense_model_net.fit_generator(train_data, steps_per_epoch=train_samp//16,
+                                            epochs=50, validation_data=val_data, validation_steps=val_samp//16, shuffle=True)
+
+    dense_model_net.save(f"{name}.h5")
+
+    with open(f"{name}-history.json", 'wb') as file_pi:
+        pickle.dump(history, file_pi)
 
 
 if __name__ == "__main__":
