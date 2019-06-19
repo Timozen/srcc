@@ -22,6 +22,7 @@ from model_check import check_model
 
 from keras.models import Model
 from keras.layers import Input
+from keras.utils import multi_gpu_model
 from tqdm import tqdm
 import numpy as np
 import argparse
@@ -46,14 +47,21 @@ def get_gan_network(discriminator, shape, generator, optimizer, loss, batch_size
     x = generator(gan_input)
     gan_output = discriminator(x)
     gan = Model(inputs=gan_input, outputs=[x, gan_output])
-
+    
     print('memory usage gan: ', get_model_memory_usage(batch_size, gan))
+    
+    try:
+        print("multi_gpu_model gan")
+        par_gan = multi_gpu_model(gan, gpus=2)
+    except:
+        par_gan = gan
+        print("single_gpu_model gan")
 
-    gan.compile(loss=[loss, "binary_crossentropy"],
+    par_gan.compile(loss=[loss, "binary_crossentropy"],
                 loss_weights=[1., 1e-3],
                 optimizer=optimizer)
 
-    return gan
+    return gan, par_gan
 
 
 
@@ -69,7 +77,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
                                         rescale_lr=1.0/255, 
                                         preproc_hr=rescale_imgs_to_neg1_1, 
                                         validation_split=train_test_ratio, batch_size=batch_size)
-    loss = DENSE_LOSS(image_shape)
+    loss = VGG_LOSS(image_shape)
 
     batch_count = int((len(os.listdir(os.path.join(input_dirs[1], 'ignore'))) / batch_size)  * (1-train_test_ratio))
 
@@ -87,13 +95,28 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     print('memory usage discriminator: ', get_model_memory_usage(batch_size, discriminator))
 
     optimizer = Utils_model.get_optimizer()
-    generator.compile(loss=loss.loss, optimizer=optimizer)
-    discriminator.compile(loss="binary_crossentropy", optimizer=optimizer)
+    
+    try:
+        print("multi_gpu_model generator")
+        par_generator = multi_gpu_model(generator, gpus=2)
+    except:
+        par_generator = generator
+        print("single_gpu_model generator")
+        
+    try:
+        print("multi_gpu_model discriminator")
+        par_discriminator = multi_gpu_model(discriminator, gpus=2)
+    except:
+        par_discriminator = discriminator
+        print("single_gpu_model discriminator")
+    
+    par_generator.compile(loss=loss.loss, optimizer=optimizer)
+    par_discriminator.compile(loss="binary_crossentropy", optimizer=optimizer)
 
-    gan = get_gan_network(discriminator, lr_shape, generator,
+    gan, par_gan = get_gan_network(par_discriminator, lr_shape, par_generator,
                           optimizer, loss.loss, batch_size)
 
-    gan.summary()
+    par_gan.summary()
 
     loss_file = open(model_save_dir + 'losses.txt', 'w+')
     loss_file.close()
@@ -105,17 +128,17 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
             batch = next(img_train_gen)
             image_batch_hr = batch[1]
             image_batch_lr = batch[0]
-            generated_images_sr = generator.predict(image_batch_lr)
+            generated_images_sr = par_generator.predict(image_batch_lr)
 
             real_data_Y = np.ones(batch_size) - \
                 np.random.random_sample(batch_size)*0.2
             fake_data_Y = np.random.random_sample(batch_size)*0.2
 
-            discriminator.trainable = True
+            par_discriminator.trainable = True
 
-            d_loss_real = discriminator.train_on_batch(
+            d_loss_real = par_discriminator.train_on_batch(
                 image_batch_hr, real_data_Y)
-            d_loss_fake = discriminator.train_on_batch(
+            d_loss_fake = par_discriminator.train_on_batch(
                 generated_images_sr, fake_data_Y)
             discriminator_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
 
@@ -126,7 +149,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
             gan_Y = np.ones(batch_size) - \
                 np.random.random_sample(batch_size)*0.2
             discriminator.trainable = False
-            gan_loss = gan.train_on_batch(
+            gan_loss = par_gan.train_on_batch(
                 image_batch_lr, [image_batch_hr, gan_Y])
 
         print("discriminator_loss : %f" % discriminator_loss)
@@ -140,7 +163,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
         if e == 1 or e % 5 == 0:
             Utils.generate_test_image(output_dir, e, generator, test_image)
-        if e % 500 == 0:
+        if e % 25 == 0:
             generator.save(model_save_dir + 'gen_model%d.h5' % e)
             discriminator.save(model_save_dir + 'dis_model%d.h5' % e)
 
@@ -148,8 +171,8 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 if __name__ == "__main__":
     image_shape = (168, 168, 3)
 
-    epochs = 5
-    batch_size = 32
+    epochs = 200
+    batch_size = 64
     train_test_ratio = 0.1
     rescaling_factor = 4
 

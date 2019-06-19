@@ -111,15 +111,15 @@ class Discriminator(object):
         
         dis_input = Input(shape = self.image_shape)
         
-        model = Conv2D(filters = 16, kernel_size = 3, strides = 1, padding = "same")(dis_input)
+        model = Conv2D(filters = 32, kernel_size = 3, strides = 1, padding = "same")(dis_input)
         model = LeakyReLU(alpha = 0.2)(model)
         
-        model = discriminator_block(model, 16, 3, 2)
-        model = discriminator_block(model, 32, 3, 1)
         model = discriminator_block(model, 32, 3, 2)
-        #model = discriminator_block(model, 128, 3, 1)
-        #model = discriminator_block(model, 256, 3, 2)
         model = discriminator_block(model, 64, 3, 1)
+        model = discriminator_block(model, 64, 3, 2)
+        model = discriminator_block(model, 128, 3, 1)
+        model = discriminator_block(model, 256, 3, 2)
+        #model = discriminator_block(model, 512, 3, 1)
         #model = discriminator_block(model, 512, 3, 2)
         
         model = Flatten()(model)
