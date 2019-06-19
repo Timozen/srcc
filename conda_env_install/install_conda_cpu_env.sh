@@ -4,12 +4,11 @@ conda install -n srcc -y numpy
 conda install -n srcc -y scipy
 conda install -n srcc -y pandas
 conda install -n srcc -y matplotlib
-conda install -n srcc -y tensorflow-gpu
+conda install -n srcc -y tensorflow
 conda install -n srcc -y keras
 conda install -n srcc -y autopep8
 conda install -n srcc -y pylint
 conda install -n srcc -y opencv
-conda install -n srcc -y scikit-image
 conda install -n srcc -y tqdm
 conda install -n srcc -y graphviz
 conda install -n srcc -y pydot

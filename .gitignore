@@ -191,3 +191,14 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+# image directories
+raw_images/
+
+raw_data/
+DSIDS/
+*.pdf
+neural networks/srdense/*.txt
+
+# ingore the log folder for tensorboard
+logs
