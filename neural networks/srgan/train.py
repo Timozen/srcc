@@ -161,9 +161,9 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
             e, gan_loss, discriminator_loss))
         loss_file.close()
 
-        if e == 1 or e % 5 == 0:
-            Utils.generate_test_image(output_dir, e, generator, test_image)
-        if e % 25 == 0:
+        
+        Utils.generate_test_image(output_dir, e, generator, test_image)
+        if e % 5 == 0:
             generator.save(model_save_dir + 'gen_model%d.h5' % e)
             discriminator.save(model_save_dir + 'dis_model%d.h5' % e)
 
