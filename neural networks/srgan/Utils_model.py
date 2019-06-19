@@ -14,6 +14,7 @@ C. Ledig et al., “Photo-Realistic Single Image Super-Resolution Using a Genera
 #python_version  :3.5.4
 
 from keras.applications.vgg19 import VGG19
+from keras.applications.densenet import DenseNet121
 import keras.backend as K
 from keras.models import Model
 from keras.optimizers import Adam
@@ -25,9 +26,9 @@ class VGG_LOSS(object):
         self.image_shape = image_shape
 
     # computes VGG loss or content loss
-    def vgg_loss(self, y_true, y_pred):
-    
+    def loss(self, y_true, y_pred):
         vgg19 = VGG19(include_top=False, weights='imagenet', input_shape=self.image_shape)
+        
         vgg19.trainable = False
         # Make trainable as False
         for l in vgg19.layers:
@@ -36,6 +37,27 @@ class VGG_LOSS(object):
         model.trainable = False
     
         return K.mean(K.square(model(y_true) - model(y_pred)))
+        
+class DENSE_LOSS(object):
+
+    def __init__(self, image_shape):
+        
+        self.image_shape = image_shape
+
+    # computes VGG loss or content loss
+    def loss(self, y_true, y_pred):
+        densenet = DenseNet121(include_top=False, weights='imagenet', input_shape=self.image_shape)
+        
+        densenet.trainable = False
+        # Make trainable as False
+        for l in densenet.layers:
+            l.trainable = False
+
+        model = Model(inputs=densenet.input, outputs=densenet.layers[-1].output)
+        model.trainable = False
+    
+        return K.mean(K.square(model(y_true) - model(y_pred)))
+    
     
 def get_optimizer():
  

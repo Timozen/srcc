@@ -16,8 +16,9 @@ C. Ledig et al., “Photo-Realistic Single Image Super-Resolution Using a Genera
 from Network import Generator, Discriminator
 from data_generator import create_data_generator, rescale_imgs_to_neg1_1
 import Utils_model, Utils
-from Utils_model import VGG_LOSS
+from Utils_model import VGG_LOSS, DENSE_LOSS
 from memory_usage import get_model_memory_usage
+from model_check import check_model
 
 from keras.models import Model
 from keras.layers import Input
@@ -31,14 +32,14 @@ np.random.seed(10)
 
 
 # Combined network
-def get_gan_network(discriminator, shape, generator, optimizer, vgg_loss, batch_size):
+def get_gan_network(discriminator, shape, generator, optimizer, loss, batch_size):
     '''this function creates the GAN and compiles it
 
     discriminator -- the discriminator model
     shape -- the shape of the lr noise
     generator -- the generator model
     optimizer -- the optimizer used to optimize the gan
-    vgg_loss -- the perceptural loss to compare generated and original img
+    loss -- the perceptural loss to compare generated and original img
     '''
     discriminator.trainable = False
     gan_input = Input(shape=shape)
@@ -48,7 +49,7 @@ def get_gan_network(discriminator, shape, generator, optimizer, vgg_loss, batch_
 
     print('memory usage gan: ', get_model_memory_usage(batch_size, gan))
 
-    gan.compile(loss=[vgg_loss, "binary_crossentropy"],
+    gan.compile(loss=[loss, "binary_crossentropy"],
                 loss_weights=[1., 1e-3],
                 optimizer=optimizer)
 
@@ -56,7 +57,8 @@ def get_gan_network(discriminator, shape, generator, optimizer, vgg_loss, batch_
 
 
 
-def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_dir, model_save_dir, train_test_ratio):
+def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_dir, model_save_dir, train_test_ratio):    
+    
     lr_shape = (img_shape[0]//rescaling_factor,
              img_shape[1]//rescaling_factor, img_shape[2])
 
@@ -67,9 +69,9 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
                                         rescale_lr=1.0/255, 
                                         preproc_hr=rescale_imgs_to_neg1_1, 
                                         validation_split=train_test_ratio, batch_size=batch_size)
-    loss = VGG_LOSS(image_shape)
+    loss = DENSE_LOSS(image_shape)
 
-    batch_count = int(len(os.listdir(os.path.join(input_dirs[1], 'ignore'))) / batch_size)
+    batch_count = int((len(os.listdir(os.path.join(input_dirs[1], 'ignore'))) / batch_size)  * (1-train_test_ratio))
 
     test_image = []
     for img in os.listdir(os.path.join(input_dirs[1], 'ignore')):
@@ -85,11 +87,13 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     print('memory usage discriminator: ', get_model_memory_usage(batch_size, discriminator))
 
     optimizer = Utils_model.get_optimizer()
-    generator.compile(loss=loss.vgg_loss, optimizer=optimizer)
+    generator.compile(loss=loss.loss, optimizer=optimizer)
     discriminator.compile(loss="binary_crossentropy", optimizer=optimizer)
 
     gan = get_gan_network(discriminator, lr_shape, generator,
-                          optimizer, loss.vgg_loss, batch_size)
+                          optimizer, loss.loss, batch_size)
+
+    gan.summary()
 
     loss_file = open(model_save_dir + 'losses.txt', 'w+')
     loss_file.close()
@@ -144,8 +148,8 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 if __name__ == "__main__":
     image_shape = (168, 168, 3)
 
-    epochs = 5000
-    batch_size = 64
+    epochs = 5
+    batch_size = 32
     train_test_ratio = 0.1
     rescaling_factor = 4
 

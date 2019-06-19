@@ -76,16 +76,16 @@ class Generator(object):
         
 	    gen_input = Input(shape = self.noise_shape)
 	    
-	    model = Conv2D(filters = 64, kernel_size = 9, strides = 1, padding = "same")(gen_input)
+	    model = Conv2D(filters = 32, kernel_size = 9, strides = 1, padding = "same")(gen_input)
 	    model = PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(model)
 	    
 	    gen_model = model
         
         # Using 16 Residual Blocks
 	    for index in range(16):
-	        model = res_block_gen(model, 3, 64, 1)
+	        model = res_block_gen(model, 3, 32, 1)
 	    
-	    model = Conv2D(filters = 64, kernel_size = 3, strides = 1, padding = "same")(model)
+	    model = Conv2D(filters = 32, kernel_size = 3, strides = 1, padding = "same")(model)
 	    model = BatchNormalization(momentum = 0.5)(model)
 	    model = add([gen_model, model])
 	    
@@ -111,19 +111,19 @@ class Discriminator(object):
         
         dis_input = Input(shape = self.image_shape)
         
-        model = Conv2D(filters = 64, kernel_size = 3, strides = 1, padding = "same")(dis_input)
+        model = Conv2D(filters = 16, kernel_size = 3, strides = 1, padding = "same")(dis_input)
         model = LeakyReLU(alpha = 0.2)(model)
         
-        model = discriminator_block(model, 64, 3, 2)
-        model = discriminator_block(model, 128, 3, 1)
-        model = discriminator_block(model, 128, 3, 2)
-        model = discriminator_block(model, 256, 3, 1)
-        model = discriminator_block(model, 256, 3, 2)
-        model = discriminator_block(model, 512, 3, 1)
-        model = discriminator_block(model, 512, 3, 2)
+        model = discriminator_block(model, 16, 3, 2)
+        model = discriminator_block(model, 32, 3, 1)
+        model = discriminator_block(model, 32, 3, 2)
+        #model = discriminator_block(model, 128, 3, 1)
+        #model = discriminator_block(model, 256, 3, 2)
+        model = discriminator_block(model, 64, 3, 1)
+        #model = discriminator_block(model, 512, 3, 2)
         
         model = Flatten()(model)
-        model = Dense(1024)(model)
+        model = Dense(512)(model)
         model = LeakyReLU(alpha = 0.2)(model)
        
         model = Dense(1)(model)
