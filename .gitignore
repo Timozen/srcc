@@ -195,3 +195,5 @@ lint/tmp/
 # image directories
 raw_images/
 DSIDS/
+
+*.h5
