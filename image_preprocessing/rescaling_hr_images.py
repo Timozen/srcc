@@ -11,6 +11,8 @@ DOWN_SCALING_FACTOR = 4
 # area vs cubic vs linear vs nearest vs lanczos
 INTERPOLATION = 'cubic'
 
+shape = (336,336)
+
 
 # using correct constant for the given INTERPOLATION
 if INTERPOLATION == 'area':
@@ -35,9 +37,9 @@ def main():
     # change into the srcc directory
     os.chdir('..')
     # path to the HR images
-    src = os.path.join(os.getcwd(), 'DSIDS', 'HR', 'tiles', 'ignore')
+    src = os.path.join(os.getcwd(), 'DSIDS', 'HR', 'tiles_'+str(shape[0]), 'ignore')
     # path to the destination folder
-    dst = os.path.join(os.getcwd(), 'DSIDS', 'LR', 'tiles',
+    dst = os.path.join(os.getcwd(), 'DSIDS', 'LR', 'tiles_'+str(shape[0]),
                        str(DOWN_SCALING_FACTOR)+'x_'+INTERPOLATION, 'ignore')
 
     # create the destination directory if necessary

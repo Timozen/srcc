@@ -13,7 +13,7 @@ Example usage:
 tiles all the images in the -d directory into the standard size 336x336.
 '''
 
-TILE_SHAPE = (168,168)
+TILE_SHAPE = (336,336)
 
 def parse_command_line_args():
     """A function for passing command line arguments.
@@ -54,7 +54,7 @@ def main():
     # parsing the command line arguments
     src = parse_command_line_args()
     # path to the destination folder
-    dst = os.path.join(os.getcwd(), 'DSIDS', 'HR', 'tiles', 'ignore')
+    dst = os.path.join(os.getcwd(), 'DSIDS', 'HR', 'tiles_'+str(TILE_SHAPE[0]), 'ignore')
 
     # create the destination directory if necessary
     if not os.path.isdir(dst):
