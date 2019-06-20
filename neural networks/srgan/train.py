@@ -149,8 +149,14 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
             gan_Y = np.ones(batch_size) - \
                 np.random.random_sample(batch_size)*0.2
             discriminator.trainable = False
-            gan_loss = par_gan.train_on_batch(
-                image_batch_lr, [image_batch_hr, gan_Y])
+            
+            if image_batch_hr.shape[0] == batch_size:
+                gan_loss = par_gan.train_on_batch(image_batch_lr, [image_batch_hr, gan_Y])
+            else:
+                print("weird batch error: ")
+                print("hr batch shape: ", image_batch_hr.shape)
+                print("lr batch shape: ", image_batch_lr.shape)
+                print("gan y shape: ", gan_Y.shape)
 
         print("discriminator_loss : %f" % discriminator_loss)
         print("gan_loss :", gan_loss)
