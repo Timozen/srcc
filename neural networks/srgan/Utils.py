@@ -159,7 +159,7 @@ def load_test_data(directory, ext, number_of_images = 100):
 
 def generate_test_image(output_dir, epoch, generator, image_tiles):
     for i,tile in enumerate(image_tiles):
-        cv2.imwrite(os.path.join(output_dir, f"img_{epoch:04d}_{i:04d}"), denormalize(generator.predict(np.expand_dims(tile, axis=0))))
+        cv2.imwrite(os.path.join(output_dir, f"img_{epoch:04d}_{i:04d}.jpg"), denormalize(generator.predict(np.expand_dims(tile, axis=0))[0,:]))
 
 
     
