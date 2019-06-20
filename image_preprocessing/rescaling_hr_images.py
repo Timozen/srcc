@@ -11,7 +11,7 @@ DOWN_SCALING_FACTOR = 4
 # area vs cubic vs linear vs nearest vs lanczos
 INTERPOLATION = 'cubic'
 
-shape = (504,504)
+shape = (336,336)
 
 
 # using correct constant for the given INTERPOLATION
