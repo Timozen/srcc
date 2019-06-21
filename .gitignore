@@ -202,3 +202,6 @@ neural networks/srdense/*.txt
 
 # ingore the log folder for tensorboard
 logs
+
+*.h5
+*.jpg
