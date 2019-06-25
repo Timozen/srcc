@@ -2,7 +2,10 @@ package com.srcc.cameraapp;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
+
+import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 public class MyTextureView extends TextureView {
     private int mRatioWidth = 0;
@@ -34,13 +37,14 @@ public class MyTextureView extends TextureView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
+
         if (0 == mRatioWidth || 0 == mRatioHeight) {
             setMeasuredDimension(width, height);
         } else {
             if (width < height * mRatioWidth / mRatioHeight) {
-                setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
-            } else {
                 setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
+            } else {
+                setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
             }
         }
     }

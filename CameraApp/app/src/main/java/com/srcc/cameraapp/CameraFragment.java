@@ -154,7 +154,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     };
 
-
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 2;
 
@@ -312,7 +311,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         view.findViewById(R.id.picture).setOnClickListener(this);
-        view.findViewById(R.id.info).setOnClickListener(this);
+        //view.findViewById(R.id.info).setOnClickListener(this);
         mTextureView = (MyTextureView) view.findViewById(R.id.texture);
         view.setOnTouchListener(this);
     }
@@ -445,6 +444,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             if(zoom != null){
                 captureBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoom);
             }
+
             captureBuilder.addTarget(mImageReader.getSurface());
 
 
@@ -556,8 +556,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         mTextureView.setTransform(matrix);
     }
 
-    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
-            = new ImageReader.OnImageAvailableListener() {
+    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
 
         @Override
         public void onImageAvailable(ImageReader reader) {
@@ -569,6 +568,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
+    private int largest_width = 4032;
+    private int largest_height = 3024;
 
     private void setUpCameraOutPuts(int width, int height) {
         Activity activity = getActivity();
@@ -586,10 +587,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 if (map == null) {
                     continue;
                 }
-                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
-                mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(), ImageFormat.JPEG, 2);
-                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
-
 
                 //orientations stuff
                 int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
@@ -613,6 +610,14 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                         Log.e("CAMERA_APP", "Display rotation is invalid: " + displayRotation);
                 }
 
+                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
+
+                largest_width = largest.getWidth();
+                largest_height = largest.getHeight();
+
+                mImageReader = ImageReader.newInstance(largest_width, largest_height, ImageFormat.JPEG, 2);
+                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
+
                 Point displaySize = new Point();
                 activity.getWindowManager().getDefaultDisplay().getSize(displaySize);
                 int rotatedPreviewWidth = width;
@@ -620,13 +625,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 int maxPreviewWidth = displaySize.x;
                 int maxPreviewHeight = displaySize.y;
 
+
                 if (swappedDimensions) {
                     rotatedPreviewWidth = height;
                     rotatedPreviewHeight = width;
                     maxPreviewWidth = displaySize.y;
                     maxPreviewHeight = displaySize.x;
                 }
-
                 if (maxPreviewWidth > MAX_PREVIEW_WIDTH) {
                     maxPreviewWidth = MAX_PREVIEW_WIDTH;
                 }
@@ -634,11 +639,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 if (maxPreviewHeight > MAX_PREVIEW_HEIGHT) {
                     maxPreviewHeight = MAX_PREVIEW_HEIGHT;
                 }
-
                 // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
                 // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
                 // garbage capture data.
+                //mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight);
                 mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
+
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = getResources().getConfiguration().orientation;
@@ -663,6 +669,20 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
+    private static Size chooseOptimalSize(Size[] choices, int width, int height){
+        List<Size> bigEnough = new ArrayList<>();
+        for (Size option: choices){
+            if(option.getHeight() == option.getWidth() * height / width && option.getWidth() >= width && option.getHeight() >=height){
+                bigEnough.add(option);
+            }
+        }
+        if(bigEnough.size() > 0){
+            return Collections.max(bigEnough, new CompareSizesByArea());
+        } else {
+            return choices[0];
+        }
+    }
+
     private static Size chooseOptimalSize(Size[] choices, int textureViewWidth, int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 
         // Collect the supported resolutions that are at least as big as the preview Surface
@@ -672,8 +692,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         int w = aspectRatio.getWidth();
         int h = aspectRatio.getHeight();
         for (Size option : choices) {
-            if (option.getWidth() <= maxWidth && option.getHeight() <= maxHeight &&
-                    option.getHeight() == option.getWidth() * h / w) {
+            if (option.getWidth() <= maxWidth && option.getHeight() <= maxHeight && option.getHeight() == option.getWidth() * h / w) {
                 if (option.getWidth() >= textureViewWidth &&
                         option.getHeight() >= textureViewHeight) {
                     bigEnough.add(option);
@@ -746,13 +765,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                         if((maxZoom - zoom_level) <= delta){
                             delta = maxZoom - zoom_level;
                         }
-                        zoom_level = zoom_level + delta;
+                        zoom_level = maxZoom; //zoom_level + delta;
                     }
                     if(currentFingerSpacing < fingerSpacing){
                         if((zoom_level - delta) <= 1f){
                             delta = zoom_level - 1f;
                         }
-                        zoom_level = zoom_level - delta;
+                        zoom_level = 1;// zoom_level - delta;
                     }
 
                     float ratio = (float) 1 / zoom_level;
