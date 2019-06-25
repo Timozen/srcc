@@ -1,0 +1,10 @@
+epoch1 : gan_loss = [0.002196505, 0.00031336272, 1.8831422] ; discriminator_loss = 8.036654
+epoch2 : gan_loss = [0.0016533111, 0.00023202585, 1.4212852] ; discriminator_loss = 7.872416
+epoch3 : gan_loss = [0.0019850708, 0.00028396072, 1.7011099] ; discriminator_loss = 7.928056
+epoch4 : gan_loss = [0.0020162656, 0.00034045294, 1.6758127] ; discriminator_loss = 7.789354
+epoch5 : gan_loss = [0.0017700673, 0.00029465242, 1.4754148] ; discriminator_loss = 7.757242
+epoch6 : gan_loss = [0.0018489285, 0.00028832292, 1.5606055] ; discriminator_loss = 7.984672
+epoch7 : gan_loss = [0.0014697823, 0.0003043147, 1.1654676] ; discriminator_loss = 7.918294
+epoch8 : gan_loss = [0.001930295, 0.00031295177, 1.6173432] ; discriminator_loss = 7.965098
+epoch9 : gan_loss = [0.0017932832, 0.0002604293, 1.5328537] ; discriminator_loss = 7.771598
+epoch10 : gan_loss = [0.0018170013, 0.00023361243, 1.5833888] ; discriminator_loss = 7.604759

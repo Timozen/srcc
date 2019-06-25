@@ -13,6 +13,7 @@ C. Ledig et al., “Photo-Realistic Single Image Super-Resolution Using a Genera
 # usage           :python train.py --options
 # python_version  :3.5.4
 
+from __future__ import division
 from Network import Generator, Discriminator
 from data_generator import create_data_generator, rescale_imgs_to_neg1_1
 import Utils_model, Utils
@@ -74,7 +75,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
                                         input_dirs[1], input_dirs[0], 
                                         target_size_lr=(lr_shape[0], lr_shape[1]),
                                         target_size_hr=(img_shape[0],img_shape[1]),
-                                        rescale_lr=1.0/255, 
+                                        preproc_lr=rescale_imgs_to_neg1_1, 
                                         preproc_hr=rescale_imgs_to_neg1_1, 
                                         validation_split=train_test_ratio, batch_size=batch_size)
     loss = VGG_LOSS(image_shape)
@@ -84,7 +85,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     test_image = []
     for img in os.listdir(os.path.join(input_dirs[1], 'ignore')):
         if 'niklas_city_0009' in img:
-            test_image.append(cv2.imread(os.path.join(input_dirs[1], 'ignore', img)).astype(np.float32)/255)
+            test_image.append(rescale_imgs_to_neg1_1(cv2.imread(os.path.join(input_dirs[1], 'ignore', img))))
 
     print("test length: ",len(test_image))
 
@@ -115,7 +116,9 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
     gan, par_gan = get_gan_network(par_discriminator, lr_shape, par_generator,
                           optimizer, loss.loss, batch_size)
-
+    
+    par_discriminator.summary()
+    par_generator.summary()
     par_gan.summary()
 
     loss_file = open(model_save_dir + 'losses.txt', 'w+')
@@ -135,12 +138,18 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
             fake_data_Y = np.random.random_sample(batch_size)*0.2
 
             par_discriminator.trainable = True
-
-            d_loss_real = par_discriminator.train_on_batch(
-                image_batch_hr, real_data_Y)
-            d_loss_fake = par_discriminator.train_on_batch(
-                generated_images_sr, fake_data_Y)
-            discriminator_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
+            
+            if image_batch_hr.shape[0] == batch_size:
+                d_loss_real = par_discriminator.train_on_batch(
+                    image_batch_hr, real_data_Y)
+                d_loss_fake = par_discriminator.train_on_batch(
+                    generated_images_sr, fake_data_Y)
+                discriminator_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
+            else:
+                print("weird multi_gpu_model batch error dis: ")
+                print("hr batch shape: ", image_batch_hr.shape)
+                print("lr batch shape: ", image_batch_lr.shape)
+                print("gan y shape: ", gan_Y.shape)
 
             batch = next(img_train_gen)
             image_batch_hr = batch[1]
@@ -153,7 +162,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
             if image_batch_hr.shape[0] == batch_size:
                 gan_loss = par_gan.train_on_batch(image_batch_lr, [image_batch_hr, gan_Y])
             else:
-                print("weird batch error: ")
+                print("weird multi_gpu_model batch error gan: ")
                 print("hr batch shape: ", image_batch_hr.shape)
                 print("lr batch shape: ", image_batch_lr.shape)
                 print("gan y shape: ", gan_Y.shape)
@@ -162,16 +171,16 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
         print("gan_loss :", gan_loss)
         gan_loss = str(gan_loss)
 
-        loss_file = open(model_save_dir + 'losses.txt', 'a')
+        loss_file = open(model_save_dir + '_losses.txt', 'a')
         loss_file.write('epoch%d : gan_loss = %s ; discriminator_loss = %f\n' % (
             e, gan_loss, discriminator_loss))
         loss_file.close()
 
-        
-        Utils.generate_test_image(output_dir, e, generator, test_image)
+        if e == 1 or e % 5 == 0:
+            Utils.generate_test_image(output_dir, e, generator, test_image)
         if e % 5 == 0:
-            generator.save(model_save_dir + 'gen_model%d.h5' % e)
-            discriminator.save(model_save_dir + 'dis_model%d.h5' % e)
+            generator.save(os.path.join(model_save_dir , 'gen_model%d.h5' % e))
+            discriminator.save(os.path.join(model_save_dir , 'dis_model%d.h5' % e))
 
 
 if __name__ == "__main__":

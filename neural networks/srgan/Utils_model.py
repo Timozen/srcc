@@ -36,7 +36,7 @@ class VGG_LOSS(object):
         model = Model(inputs=vgg19.input, outputs=vgg19.get_layer('block5_conv4').output)
         model.trainable = False
     
-        return K.mean(K.square(model(y_true) - model(y_pred)))
+        return 0.006* K.mean(K.square(model(y_true) - model(y_pred)))
         
 class DENSE_LOSS(object):
 
@@ -56,10 +56,10 @@ class DENSE_LOSS(object):
         model = Model(inputs=densenet.input, outputs=densenet.layers[-1].output)
         model.trainable = False
     
-        return K.mean(K.square(model(y_true) - model(y_pred)))
+        return 0.006 * K.mean(K.square(model(y_true) - model(y_pred)))
     
     
 def get_optimizer():
  
-    adam = Adam(lr=1E-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    adam = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     return adam
