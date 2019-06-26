@@ -568,8 +568,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
-    private int largest_width = 4032;
-    private int largest_height = 3024;
+    private int largest_width = 1008;
+    private int largest_height = 756;
 
     private void setUpCameraOutPuts(int width, int height) {
         Activity activity = getActivity();
@@ -612,8 +612,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
                 Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
 
-                largest_width = largest.getWidth();
-                largest_height = largest.getHeight();
+                largest_width = largest.getWidth() / 4;
+                largest_height = largest.getHeight() / 4;
+
+                Log.i("CAMERA_APP", "w " + largest_width + " h " + largest_height);
 
                 mImageReader = ImageReader.newInstance(largest_width, largest_height, ImageFormat.JPEG, 2);
                 mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
@@ -642,8 +644,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
                 // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
                 // garbage capture data.
-                //mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight);
-                mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
+                mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight);
+                //mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth, maxPreviewHeight, largest);
 
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
