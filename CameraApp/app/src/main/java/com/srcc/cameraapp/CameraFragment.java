@@ -42,10 +42,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -67,6 +69,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class CameraFragment extends Fragment implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, View.OnTouchListener {
+
+    public static final String TAG = "SRCC_CAMERA_APP";
 
     private static final int STATE_PREVIEW = 0;
     private static final int STATE_WAITING_LOCK = 1;
@@ -312,8 +316,18 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         view.findViewById(R.id.picture).setOnClickListener(this);
         //view.findViewById(R.id.info).setOnClickListener(this);
+        view.findViewById(R.id.show_images).setOnClickListener(this);
         mTextureView = (MyTextureView) view.findViewById(R.id.texture);
         view.setOnTouchListener(this);
+
+        getActivity().getWindow().getDecorView().setSystemUiVisibility(
+                  View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+
     }
 
     @Override
@@ -389,11 +403,130 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 takePicture();
                 break;
             }
-            case R.id.info: {
-                break;
+            case R.id.show_images: {
+               showImages();
+               break;
             }
         }
     }
+
+    final GestureDetector gesture = new GestureDetector(getActivity(), new GestureDetector.OnGestureListener() {
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return false;
+        }
+
+        @Override
+        public void onShowPress(MotionEvent e) {
+
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            return false;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            return false;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            Log.i(TAG, "onFling has been called!");
+            final int SWIPE_MIN_DISTANCE = 120;
+            final int SWIPE_MAX_OFF_PATH = 250;
+            final int SWIPE_THRESHOLD_VELOCITY = 200;
+            try {
+                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+                    return false;
+                if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    Log.i(TAG, "Right to Left");
+                    showImages();
+                } else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    Log.i(TAG, "Left to Right");
+                }
+            } catch (Exception e) {
+                // nothing
+            }
+            return true; //super.onFling(e1, e2, velocityX, velocityY);
+        }
+    });
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        gesture.onTouchEvent(event);
+        try{
+            Activity activity = getActivity();
+            CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(mCameraId);
+
+            maxZoom = 4;//(characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
+
+            Rect rect = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            int action = event.getAction();
+            float currentFingerSpacing;
+
+            if(event.getPointerCount() > 1){
+                currentFingerSpacing = getFingerSpacing(event);
+                float delta = 0.1f; //zoom speed
+
+                if(fingerSpacing != 0){
+                    if(currentFingerSpacing > fingerSpacing){
+                        if((maxZoom - zoom_level) <= delta){
+                            delta = maxZoom - zoom_level;
+                        }
+                        zoom_level = maxZoom; //zoom_level + delta;
+                    }
+                    if(currentFingerSpacing < fingerSpacing){
+                        if((zoom_level - delta) <= 1f){
+                            delta = zoom_level - 1f;
+                        }
+                        zoom_level = 1;// zoom_level - delta;
+                    }
+
+                    float ratio = (float) 1 / zoom_level;
+
+                    int croppedWidth = (rect.width() - Math.round((float) rect.width() * ratio))/2;
+                    int croppedHeight = (rect.height() - Math.round((float) rect.height() * ratio))/2;
+
+                    zoom = new Rect(croppedWidth, croppedHeight, rect.width() - croppedWidth, rect.height() - croppedHeight);
+                    mPreviewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoom);
+                }
+                fingerSpacing = currentFingerSpacing;
+            } else {
+                if(action == MotionEvent.ACTION_UP){
+                    //single touch
+                }
+            }
+            try {
+                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback, null);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    private void showImages(){
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.setCustomAnimations(R.anim.enter, R.anim.exit, R.anim.pop_enter, R.anim.pop_exit);
+        ft.replace(R.id.container, ShowImagesFragment.newInstance());
+        ft.addToBackStack("CAMERA");
+        ft.commit();
+    }
+
+
 
     private void takePicture() {
         lockFocus();
@@ -744,63 +877,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private Rect zoom;
     private float maxZoom;
 
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        try{
-            Activity activity = getActivity();
-            CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
-            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(mCameraId);
 
-            maxZoom = 4;//(characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
-
-            Rect rect = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-            int action = event.getAction();
-            float currentFingerSpacing;
-
-            if(event.getPointerCount() > 1){
-                currentFingerSpacing = getFingerSpacing(event);
-                float delta = 0.1f; //zoom speed
-
-                if(fingerSpacing != 0){
-                    if(currentFingerSpacing > fingerSpacing){
-                        if((maxZoom - zoom_level) <= delta){
-                            delta = maxZoom - zoom_level;
-                        }
-                        zoom_level = maxZoom; //zoom_level + delta;
-                    }
-                    if(currentFingerSpacing < fingerSpacing){
-                        if((zoom_level - delta) <= 1f){
-                            delta = zoom_level - 1f;
-                        }
-                        zoom_level = 1;// zoom_level - delta;
-                    }
-
-                    float ratio = (float) 1 / zoom_level;
-
-                    int croppedWidth = (rect.width() - Math.round((float) rect.width() * ratio))/2;
-                    int croppedHeight = (rect.height() - Math.round((float) rect.height() * ratio))/2;
-
-                    zoom = new Rect(croppedWidth, croppedHeight, rect.width() - croppedWidth, rect.height() - croppedHeight);
-                    mPreviewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoom);
-                }
-                fingerSpacing = currentFingerSpacing;
-            } else {
-                if(action == MotionEvent.ACTION_UP){
-                    //single touch
-                }
-            }
-            try {
-                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback, null);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
 
     private float getFingerSpacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
