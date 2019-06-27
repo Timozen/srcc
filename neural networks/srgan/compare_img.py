@@ -101,7 +101,7 @@ def predict_images(model_path, images):
 
 def main():
     image_shape = (336, 336)
-    image = "niklas_city_0009_"
+    image = "niklas_city_0049_"
     
     path_lr = os.path.join('..', '..', 'DSIDS', 'LR', 'tiles_'+str(image_shape[0]) ,'4x_cubic', 'ignore')
     path_hr = os.path.join('..', '..', 'DSIDS', 'HR', 'tiles_'+str(image_shape[0]), 'ignore')

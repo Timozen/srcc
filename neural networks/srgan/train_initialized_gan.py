@@ -135,7 +135,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     for e in range(1, epochs+1):
         print('-'*15, 'Epoch %d' % e, '-'*15)
         
-        if e == 100:
+        if e == 50:
             optimizer.lr = 1e-5
         
         for i in tqdm(range(batch_count)):
@@ -196,15 +196,15 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
 
 if __name__ == "__main__":
-    image_shape = (336, 336, 3)
+    image_shape = (504, 504, 3)
 
-    epochs = 300
-    batch_size = 16
-    train_test_ratio = 0.1
+    epochs = 100
+    batch_size = 8
+    train_test_ratio = 0
     rescaling_factor = 4
 
-    input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR', 'tiles_'+str(image_shape[0])),
-                  os.path.join('..', '..', 'DSIDS', 'LR', 'tiles_'+str(image_shape[0]) ,'4x_cubic')]
+    input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR', 'tiles__'+str(image_shape[0])),
+                  os.path.join('..', '..', 'DSIDS', 'LR', 'tiles__'+str(image_shape[0]) ,'4x_cubic')]
     output_dir = os.path.join(os.getcwd(), 'output')
     model_save_dir = os.path.join(os.getcwd(), 'model')
 

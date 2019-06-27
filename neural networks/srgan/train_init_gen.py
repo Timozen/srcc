@@ -98,18 +98,20 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
             Utils.generate_test_image(output_dir, e, generator, test_image)
         if e % 5 == 0:
             generator.save(os.path.join(model_save_dir , 'init_gen_model%d.h5' % e))
+            
+    generator.save(os.path.join(model_save_dir , 'init_gen_model.h5' % e))
 
 
 if __name__ == "__main__":
-    image_shape = (336, 336, 3)
+    image_shape = (504, 504, 3)
 
     epochs = 50
-    batch_size = 16
+    batch_size = 4
     train_test_ratio = 0
     rescaling_factor = 4
 
-    input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR', 'tiles_'+str(image_shape[0])),
-                  os.path.join('..', '..', 'DSIDS', 'LR', 'tiles_'+str(image_shape[0]) ,'4x_cubic')]
+    input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR', 'tiles__'+str(image_shape[0])),
+                  os.path.join('..', '..', 'DSIDS', 'LR', 'tiles__'+str(image_shape[0]) ,'4x_cubic')]
     output_dir = os.path.join(os.getcwd(), 'output_init')
     model_save_dir = os.path.join(os.getcwd(), 'model')
 
@@ -119,5 +121,5 @@ if __name__ == "__main__":
         os.makedirs(model_save_dir)
 
     train(image_shape, epochs, batch_size, rescaling_factor, input_dirs,
-          output_dir, model_save_dir, train_test_ratio)
+          output_dir, model_save_dir, train_test_ratio, gpu=1)
  

@@ -26,3 +26,5 @@ epoch25 : gan_loss = [0.0015508147, 7.3268464e-05, 1.4775462] ; discriminator_lo
 epoch26 : gan_loss = [0.0011954511, 5.058092e-05, 1.1448702] ; discriminator_loss = 8.157879
 epoch27 : gan_loss = [0.0019414286, 6.225559e-05, 1.879173] ; discriminator_loss = 8.168346
 epoch28 : gan_loss = [0.0018075408, 5.086588e-05, 1.7566748] ; discriminator_loss = 8.032064
+epoch29 : gan_loss = [0.0010459115, 5.0143444e-05, 0.99576795] ; discriminator_loss = 7.985281
+epoch30 : gan_loss = [0.0014664046, 5.657364e-05, 1.4098309] ; discriminator_loss = 8.047817
