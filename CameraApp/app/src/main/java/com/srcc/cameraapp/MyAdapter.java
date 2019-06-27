@@ -1,7 +1,11 @@
 package com.srcc.cameraapp;
 
+import android.app.Activity;
 import android.content.Context;
-import android.speech.tts.TextToSpeech;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -11,51 +15,98 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
 import java.util.ArrayList;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
-
     private ArrayList<ImageCell> gallery;
+    private Activity mActivity;
     private Context mContext;
 
-    public MyAdapter(Context context, ArrayList<ImageCell> gallery) {
-        mContext = context;
-        this.gallery = gallery;
+    private Cursor mGalleryCursor;
+
+    public MyAdapter(final Activity activity){
+        mActivity = activity;
+        mContext = mActivity.getApplicationContext();
     }
+
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.image_cell, viewGroup, false);
-        view.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(mContext, "Image ", Toast.LENGTH_SHORT).show();
-            }
-        });
-        return new ViewHolder(view);
+        ViewHolder vh = new ViewHolder(view);
+        view.setOnClickListener(vh);
+        return vh;
     }
 
     @Override
     public void onBindViewHolder(@NonNull MyAdapter.ViewHolder viewHolder, int i) {
-        viewHolder.title.setText(gallery.get(i).getTitle());
-        viewHolder.image.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        viewHolder.image.setImageURI(gallery.get(i).getImage());
+        Uri imageUri = getUriFromMediaStore(i);
+        Glide.with(mActivity).load(imageUri).centerCrop().into(viewHolder.getImageView());
+        viewHolder.setUri(imageUri);
+        viewHolder.setTitle(imageUri.toString());
     }
 
     @Override
     public int getItemCount() {
-        return gallery.size();
+        return (mGalleryCursor == null) ? 0 : mGalleryCursor.getCount();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
-        private TextView title;
-        private ImageView image;
+    private Cursor swapCursor(Cursor cursor){
+        if(mGalleryCursor == cursor){
+            return null;
+        }
+        Cursor oldCursor = mGalleryCursor;
+        mGalleryCursor = cursor;
+        if(mGalleryCursor != null){
+            this.notifyDataSetChanged();
+        }
+        return oldCursor;
+    }
+
+    public void changeCursor(Cursor cursor){
+        Cursor oldCursor = swapCursor(cursor);
+        if(oldCursor != null){
+            oldCursor.close();
+        }
+    }
+
+    private Uri getUriFromMediaStore(int position){
+        int dataIndex = mGalleryCursor.getColumnIndex(MediaStore.Images.Media.DATA);
+
+        mGalleryCursor.moveToPosition(position);
+        String dataString = mGalleryCursor.getString(dataIndex);
+        return Uri.parse("file://" + dataString);
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        private TextView mTitle;
+        private ImageView mImageView;
+        private Uri mUri;
 
         public ViewHolder(View view) {
             super(view);
-            title = (TextView) view.findViewById(R.id.title);
-            image = (ImageView) view.findViewById(R.id.image);
+            mTitle = view.findViewById(R.id.title);
+            mImageView = view.findViewById(R.id.image);
+        }
+
+        public ImageView getImageView() {
+            return mImageView;
+        }
+
+        public void setUri(Uri mUri) {
+            this.mUri = mUri;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(v.getContext(), "Image Uri = " + mUri.toString(), Toast.LENGTH_SHORT).show();
+        }
+
+        public void setTitle(String title) {
+            mTitle.setText(title);
         }
     }
 }

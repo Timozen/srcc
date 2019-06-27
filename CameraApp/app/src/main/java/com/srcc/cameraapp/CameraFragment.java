@@ -8,6 +8,7 @@ import android.app.Dialog;
 import android.app.assist.AssistStructure;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -30,8 +31,10 @@ import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.net.wifi.aware.Characteristics;
 import android.os.Bundle;
 import android.os.Environment;
@@ -324,32 +327,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         super.onActivityCreated(savedInstanceState);
     }
 
-    private void requestFileStoragePermission() {
+    public void requestFileStoragePermission() {
         if(shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
             new ConfirmationDialogFile().show(getChildFragmentManager(), FRAGMENT_DIALOG);
         } else {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
         }
     }
-
-
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
-    }
-
-    public File getPublicAlbumStorageDir(String albumName) {
-        // Get the directory for the user's public pictures directory.
-        File file = new File(Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_PICTURES), albumName);
-        if (!file.mkdirs()) {
-            Log.e("CAMERA_APP", "Directory not created");
-        }
-        return file;
-    }
-
 
     // this will show in the texture if the the TextureView is not available
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
@@ -483,6 +467,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
+    private String timeValue = "";
+
     private void captureStillPicture() {
         try {
             final Activity activity = getActivity();
@@ -490,9 +476,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 return;
             }
 
-            if(isExternalStorageWritable()){
-                File root = getPublicAlbumStorageDir("srcc");
-                mFile = new File(root.getAbsolutePath(), String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())) + ".jpg");
+            if(Utils.isExternalStorageWritable()){
+                File root = Utils.getPublicAlbumStorageDir(Utils.IMAGE_FOLDER_NAME);
+                timeValue = String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+                mFile = new File(root.getAbsolutePath(), timeValue + "_lr.jpg");
             } else {
                 mFile = new File(getActivity().getExternalFilesDir(null), "local_save.jpg");
             }
@@ -514,6 +501,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
             captureBuilder.set(CaptureRequest.JPEG_QUALITY, (byte)100);
+            captureBuilder.set(CaptureRequest.JPEG_THUMBNAIL_QUALITY, (byte)100);
 
             CameraCaptureSession.CaptureCallback CaptureCallback = new CameraCaptureSession.CaptureCallback() {
 
@@ -618,7 +606,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile, zoom));
+            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile, getContext()));
         }
 
     };
@@ -810,6 +798,34 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         return (float) Math.sqrt(x*x + y*y);
     }
 
+    public static class ConfirmationDialogFile extends DialogFragment {
+
+        @NonNull
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            final Fragment parent = getParentFragment();
+            return new AlertDialog.Builder(getActivity())
+                    .setMessage(R.string.request_permission)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            parent.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Activity activity = parent.getActivity();
+                                    if (activity != null) {
+                                        activity.finish();
+                                    }
+                                }
+                            })
+                    .create();
+        }
+    }
+
     /**
      * Shows an error message dialog.
      */
@@ -887,43 +903,16 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-    public static class ConfirmationDialogFile extends DialogFragment {
 
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            final Fragment parent = getParentFragment();
-            return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.request_permission)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            parent.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
-                        }
-                    })
-                    .setNegativeButton(android.R.string.cancel,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Activity activity = parent.getActivity();
-                                    if (activity != null) {
-                                        activity.finish();
-                                    }
-                                }
-                            })
-                    .create();
-        }
-    }
 
     private static class ImageSaver implements Runnable {
         private final Image mImage;
         private final File mFile;
-        private Rect mZoom;
-
-        ImageSaver(Image image, File file, Rect zoom) {
+        private final Context mContext;
+        ImageSaver(Image image, File file, Context context) {
             mImage = image;
             mFile = file;
-            mZoom = zoom;
+            mContext = context;
         }
 
         @Override
@@ -931,18 +920,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
-            /*Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-            Bitmap bm;
-            if(mZoom != null) {
-                bm = Bitmap.createBitmap(bitmapImage, 0, 0, mZoom.width(), mZoom.height());
-            } else {
-                bm = Bitmap.createBitmap(bitmapImage, 0, 0, 4032, 3024);
-            }*/
+
             FileOutputStream output = null;
             try {
                 output = new FileOutputStream(mFile);
                 output.write(bytes);
-                //bm.compress(Bitmap.CompressFormat.JPEG, 100, output);
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -950,12 +932,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 if (null != output) {
                     try {
                         output.close();
+                        mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(mFile)));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             }
         }
-
     }
 }
