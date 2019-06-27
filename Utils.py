@@ -30,3 +30,48 @@ def crop_lr_image(img, hr_shape=(336,336), overlap=False):
     # return the list of tiles
     return tile_list
 
+
+def crop_into_lr_shape(img, shape=(756, 1008)):
+    """function to crop one slightly to big lr image into the correct shape.
+
+    img -- the a little to big lr image as a numpy array
+    shape -- the correct lr shape   
+    """
+    rot = False
+    # check if its wrongly rotated
+    if(img.shape[0] > img.shape[1]):
+        img = np.rot90(img)
+        rot = True
+
+    # check if it has too many rows
+    if(img.shape[0] > shape[0]):
+        # calculate the difference
+        diff = img.shape[0] - shape[0]
+        # check if the difference is even
+        if diff % 2 == 0:
+            # crop the image
+            img = img[int(diff/2):-int(diff/2), :, :]
+        else:
+            # crop the image
+            img = img[int(diff/2)+1:-int(diff/2), :, :]
+
+    # check if it has too many columns
+    if(img.shape[1] > shape[1]):
+        # calculate the difference
+        diff = img.shape[1] - shape[1]
+        # check if the difference is even
+        if diff % 2 == 0:
+            # crop the image
+            img = img[:, int(diff/2):-int(diff/2), :]
+        else:
+            # crop the image
+            img = img[:, int(diff/2)+1:-int(diff/2), :]
+
+    # rotate back if it was rotated
+    if rot:
+        img = np.rot90(img, k=3)
+    
+    # return cropped image
+    return img
+
+    
