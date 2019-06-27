@@ -20,7 +20,7 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-public class ShowImagesFragment extends Fragment implements View.OnClickListener, View.OnTouchListener {
+public class ShowImagesFragment extends Fragment {
     public static final String TAG = "SRCC_SHOW_IMAGES";
 
     public static ShowImagesFragment newInstance(){
@@ -55,8 +55,6 @@ public class ShowImagesFragment extends Fragment implements View.OnClickListener
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.gallery);
         recyclerView.setHasFixedSize(true);
 
@@ -67,8 +65,6 @@ public class ShowImagesFragment extends Fragment implements View.OnClickListener
         ArrayList<ImageCell> cells = prepareData();
         MyAdapter adapter = new MyAdapter(getContext().getApplicationContext(), cells);
         recyclerView.setAdapter(adapter);
-
-        view.setOnTouchListener(this);
     }
 
     private ArrayList<ImageCell> prepareData() {
@@ -88,67 +84,4 @@ public class ShowImagesFragment extends Fragment implements View.OnClickListener
         return (int) (screenWidthDp / columnWidthDp + 0.5);
     }
 
-
-    @Override
-    public void onClick(View v) {
-        returnToPrev();
-    }
-
-    private void returnToPrev(){
-        getFragmentManager().popBackStack();
-    }
-
-    final GestureDetector gesture = new GestureDetector(getActivity(), new GestureDetector.OnGestureListener() {
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return false;
-        }
-
-        @Override
-        public void onShowPress(MotionEvent e) {
-
-        }
-
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            return false;
-        }
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            return false;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            Log.i(TAG, "onFling has been called!");
-            final int SWIPE_MIN_DISTANCE = 120;
-            final int SWIPE_MAX_OFF_PATH = 250;
-            final int SWIPE_THRESHOLD_VELOCITY = 200;
-            try {
-                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
-                    return false;
-                if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                    Log.i(TAG, "Right to Left");
-
-                } else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                   returnToPrev();
-                }
-            } catch (Exception e) {
-                // nothing
-            }
-            return true; //super.onFling(e1, e2, velocityX, velocityY);
-        }
-    });
-
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        gesture.onTouchEvent(event);
-        return true;
-    }
 }
