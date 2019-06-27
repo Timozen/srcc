@@ -50,11 +50,10 @@ public class ShowImagesFragment extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.gallery);
         recyclerView.setHasFixedSize(true);
 
-
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext().getApplicationContext(), calculateNoOfColumns(getContext().getApplicationContext(), 220));
         recyclerView.setLayoutManager(layoutManager);
 
-        myAdapter = new MyAdapter(getActivity());
+        myAdapter = new MyAdapter(getActivity(), getFragmentManager());
         recyclerView.setAdapter(myAdapter);
         myAdapter.changeCursor(queryThumbnails());
     }

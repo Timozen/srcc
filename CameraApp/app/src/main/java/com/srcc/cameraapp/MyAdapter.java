@@ -2,11 +2,12 @@ package com.srcc.cameraapp;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,18 +18,17 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.util.ArrayList;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
-    private ArrayList<ImageCell> gallery;
     private Activity mActivity;
     private Context mContext;
-
+    private FragmentManager mFragmentManager;
     private Cursor mGalleryCursor;
 
-    public MyAdapter(final Activity activity){
+    public MyAdapter(final Activity activity, FragmentManager fragmentManager){
         mActivity = activity;
         mContext = mActivity.getApplicationContext();
+        mFragmentManager = fragmentManager;
     }
 
 
@@ -100,13 +100,20 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             this.mUri = mUri;
         }
 
-        @Override
-        public void onClick(View v) {
-            Toast.makeText(v.getContext(), "Image Uri = " + mUri.toString(), Toast.LENGTH_SHORT).show();
+        public void setTitle(String title) {
+            String temp = title.split("\\.")[0];
+            String temp2[] = temp.split("\\/");
+            mTitle.setText(temp2[temp2.length-1]);
         }
 
-        public void setTitle(String title) {
-            mTitle.setText(title);
+        @Override
+        public void onClick(View v) {
+            //Toast.makeText(v.getContext(), "Image Uri = " + mUri.toString(), Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(mActivity, ViewImageActivity.class);
+            intent.putExtra("Uri", mUri.toString());
+            mActivity.startActivity(intent);
+
         }
     }
 }
