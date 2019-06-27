@@ -83,7 +83,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     batch_count = int((len(os.listdir(os.path.join(input_dirs[1], 'ignore'))) / batch_size)  * (1-train_test_ratio))
 
     test_image = []
-    for img in os.listdir(os.path.join(input_dirs[1], 'ignore')):
+    for img in sorted(os.listdir(os.path.join(input_dirs[1], 'ignore'))):
         if 'niklas_city_0009' in img:
             test_image.append(rescale_imgs_to_neg1_1(cv2.imread(os.path.join(input_dirs[1], 'ignore', img))))
 
@@ -126,12 +126,16 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
     for e in range(1, epochs+1):
         print('-'*15, 'Epoch %d' % e, '-'*15)
+        
+        if e == 100:
+            optimizer.lr = 1e-5
+        
         for i in tqdm(range(batch_count)):
             
             batch = next(img_train_gen)
             image_batch_hr = batch[1]
             image_batch_lr = batch[0]
-            generated_images_sr = par_generator.predict(image_batch_lr)
+            generated_images_sr = generator.predict(image_batch_lr)
 
             real_data_Y = np.ones(batch_size) - \
                 np.random.random_sample(batch_size)*0.2
@@ -139,7 +143,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
             par_discriminator.trainable = True
             
-            if image_batch_hr.shape[0] == batch_size:
+            if image_batch_hr.shape[0] == batch_size and image_batch_lr.shape[0] == batch_size:
                 d_loss_real = par_discriminator.train_on_batch(
                     image_batch_hr, real_data_Y)
                 d_loss_fake = par_discriminator.train_on_batch(
@@ -159,7 +163,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
                 np.random.random_sample(batch_size)*0.2
             discriminator.trainable = False
             
-            if image_batch_hr.shape[0] == batch_size:
+            if image_batch_hr.shape[0] == batch_size and image_batch_lr.shape[0] == batch_size:
                 gan_loss = par_gan.train_on_batch(image_batch_lr, [image_batch_hr, gan_Y])
             else:
                 print("weird multi_gpu_model batch error gan: ")

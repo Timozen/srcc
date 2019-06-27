@@ -197,3 +197,5 @@ raw_images/
 DSIDS/
 
 *.h5
+
+neural\ networks/srgan/output/

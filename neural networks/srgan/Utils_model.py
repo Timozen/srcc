@@ -19,6 +19,10 @@ import keras.backend as K
 from keras.models import Model
 from keras.optimizers import Adam
 
+def MSE(y_true, y_pred):
+    return K.mean(K.square(y_true - y_pred))
+    
+
 class VGG_LOSS(object):
 
     def __init__(self, image_shape):
@@ -37,7 +41,7 @@ class VGG_LOSS(object):
         model.trainable = False
     
         return 0.006* K.mean(K.square(model(y_true) - model(y_pred)))
-        
+
 class DENSE_LOSS(object):
 
     def __init__(self, image_shape):

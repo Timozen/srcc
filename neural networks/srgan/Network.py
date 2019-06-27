@@ -27,6 +27,7 @@ from keras.layers import add
 import keras
 import math
 import Utils
+import tensorflow as tf
 
 # Residual block
 def res_block_gen(model, kernal_size, filters, strides):
