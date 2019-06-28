@@ -40,3 +40,4 @@ epoch39 : gan_loss = [0.001391067, 6.873624e-05, 1.3223307] ; discriminator_loss
 epoch40 : gan_loss = [0.0022194071, 6.236248e-05, 2.1570444] ; discriminator_loss = 7.985133
 epoch41 : gan_loss = [0.0015048567, 6.706162e-05, 1.437795] ; discriminator_loss = 7.687591
 epoch42 : gan_loss = [0.0018358055, 3.9914576e-05, 1.7958908] ; discriminator_loss = 7.817980
+epoch43 : gan_loss = [0.0013506686, 4.7457102e-05, 1.3032115] ; discriminator_loss = 7.998985

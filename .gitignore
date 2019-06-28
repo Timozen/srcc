@@ -194,9 +194,14 @@ lint/tmp/
 
 # image directories
 raw_images/
+
 DSIDS/
 
 *.h5
 
 neural\ networks/srgan/output/
 neural\ networks/srgan/output_init/
+
+raw_data/
+DSIDS/
+

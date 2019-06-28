@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import cv2
+from tqdm import tqdm
 
 '''
 Expects a folder DSIDS/HR and DSIDS/LR in the srcc directory.
@@ -9,6 +10,8 @@ Expects a folder DSIDS/HR and DSIDS/LR in the srcc directory.
 DOWN_SCALING_FACTOR = 4
 # area vs cubic vs linear vs nearest vs lanczos
 INTERPOLATION = 'cubic'
+
+shape = (336,336)
 
 
 # using correct constant for the given INTERPOLATION
@@ -34,20 +37,20 @@ def main():
     # change into the srcc directory
     os.chdir('..')
     # path to the HR images
-    src = os.path.join(os.getcwd(), 'DSIDS', 'HR')
+    src = os.path.join(os.getcwd(), 'DSIDS', 'HR', 'tiles_'+str(shape[0]), 'ignore')
     # path to the destination folder
-    dst = os.path.join(os.getcwd(), 'DSIDS', 'LR',
-                       str(DOWN_SCALING_FACTOR)+'x_'+INTERPOLATION)
+    dst = os.path.join(os.getcwd(), 'DSIDS', 'LR', 'tiles_'+str(shape[0]),
+                       str(DOWN_SCALING_FACTOR)+'x_'+INTERPOLATION, 'ignore')
 
     # create the destination directory if necessary
     if not os.path.isdir(dst):
-        os.mkdir(dst)
+        os.makedirs(dst)
 
     # builds a list with all file names
     img_list = os.listdir(src)
 
     # iterate over all files
-    for i, img in enumerate(img_list):
+    for i, img in tqdm(enumerate(img_list)):
         # load image
         hr = cv2.imread(os.path.join(src, img), cv2.IMREAD_COLOR)
         # resize the image with bicubic interpolation
@@ -57,13 +60,6 @@ def main():
                         interpolation=cv2.INTER_CUBIC)
         # save the resized image
         cv2.imwrite(os.path.join(dst, img), lr)
-
-        # progression output after every 50
-        if (i+1) % 50 == 0:
-            print('rescaled {0} out of {1} images.'.format(i+1, len(img_list)))
-
-    print('finished rescaling!')
-
 
 if __name__ == '__main__':
     main()
