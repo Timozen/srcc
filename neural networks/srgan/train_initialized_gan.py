@@ -30,6 +30,7 @@ import numpy as np
 import argparse
 import os
 import cv2
+import tensorflow as tf
 
 np.random.seed(10)
 
@@ -90,14 +91,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
 
     print("test length: ",len(test_image))
 
-    ### load the initialized gen:
-    model = load_model(gen_init_path, custom_objects={"tf": tf})
-    _in = Input(shape=lr_shape)
-    _out = model(_in)
-    generator = Model(_in, _out)
-    
-    
-    
+    generator = Generator(lr_shape, rescaling_factor).generator()    
     discriminator = Discriminator(img_shape).discriminator()
 
     print('memory usage generator: ', get_model_memory_usage(batch_size, generator))
@@ -120,6 +114,8 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
         print("single_gpu_model discriminator")
     
     par_generator.compile(loss=loss.loss, optimizer=optimizer)
+    generator.load_weights(gen_init_path)
+    
     par_discriminator.compile(loss="binary_crossentropy", optimizer=optimizer)
 
     gan, par_gan = get_gan_network(par_discriminator, lr_shape, par_generator,
@@ -129,7 +125,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
     par_generator.summary()
     par_gan.summary()
 
-    loss_file = open(model_save_dir + 'losses.txt', 'w+')
+    loss_file = open(model_save_dir + '__losses.txt', 'w+')
     loss_file.close()
 
     for e in range(1, epochs+1):
@@ -183,7 +179,7 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
         print("gan_loss :", gan_loss)
         gan_loss = str(gan_loss)
 
-        loss_file = open(model_save_dir + '_losses.txt', 'a')
+        loss_file = open(model_save_dir + '__losses.txt', 'a')
         loss_file.write('epoch%d : gan_loss = %s ; discriminator_loss = %f\n' % (
             e, gan_loss, discriminator_loss))
         loss_file.close()
@@ -191,15 +187,15 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
         if e == 1 or e % 5 == 0:
             Utils.generate_test_image(output_dir, e, generator, test_image)
         if e % 5 == 0:
-            generator.save(os.path.join(model_save_dir , 'gen_model%d.h5' % e))
-            discriminator.save(os.path.join(model_save_dir , 'dis_model%d.h5' % e))
+            generator.save(os.path.join(model_save_dir , 'initialized_gen_model%d.h5' % e))
+            discriminator.save(os.path.join(model_save_dir , 'initialized_dis_model%d.h5' % e))
 
 
 if __name__ == "__main__":
     image_shape = (504, 504, 3)
 
     epochs = 100
-    batch_size = 8
+    batch_size = 4
     train_test_ratio = 0
     rescaling_factor = 4
 
@@ -207,6 +203,8 @@ if __name__ == "__main__":
                   os.path.join('..', '..', 'DSIDS', 'LR', 'tiles__'+str(image_shape[0]) ,'4x_cubic')]
     output_dir = os.path.join(os.getcwd(), 'output')
     model_save_dir = os.path.join(os.getcwd(), 'model')
+    
+    init_gen = os.path.join('model', 'init_gen_model10.h5')
 
     if(not os.path.isdir(output_dir)):
         os.makedirs(output_dir)
@@ -214,5 +212,5 @@ if __name__ == "__main__":
         os.makedirs(model_save_dir)
 
     train(image_shape, epochs, batch_size, rescaling_factor, input_dirs,
-          output_dir, model_save_dir, train_test_ratio)
+          output_dir, model_save_dir, train_test_ratio, init_gen)
  

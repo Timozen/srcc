@@ -199,3 +199,4 @@ DSIDS/
 *.h5
 
 neural\ networks/srgan/output/
+neural\ networks/srgan/output_init/

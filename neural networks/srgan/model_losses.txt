@@ -28,3 +28,15 @@ epoch27 : gan_loss = [0.0019414286, 6.225559e-05, 1.879173] ; discriminator_loss
 epoch28 : gan_loss = [0.0018075408, 5.086588e-05, 1.7566748] ; discriminator_loss = 8.032064
 epoch29 : gan_loss = [0.0010459115, 5.0143444e-05, 0.99576795] ; discriminator_loss = 7.985281
 epoch30 : gan_loss = [0.0014664046, 5.657364e-05, 1.4098309] ; discriminator_loss = 8.047817
+epoch31 : gan_loss = [0.0016179285, 5.78493e-05, 1.5600791] ; discriminator_loss = 7.915500
+epoch32 : gan_loss = [0.0017533808, 4.8891274e-05, 1.7044894] ; discriminator_loss = 7.940107
+epoch33 : gan_loss = [0.0018967119, 5.6330922e-05, 1.8403809] ; discriminator_loss = 8.315958
+epoch34 : gan_loss = [0.001583055, 5.3102423e-05, 1.5299525] ; discriminator_loss = 7.925393
+epoch35 : gan_loss = [0.0014156918, 6.994962e-05, 1.3457421] ; discriminator_loss = 8.098694
+epoch36 : gan_loss = [0.0014299158, 4.548654e-05, 1.3844292] ; discriminator_loss = 7.817940
+epoch37 : gan_loss = [0.0015491137, 4.2017728e-05, 1.5070958] ; discriminator_loss = 7.933861
+epoch38 : gan_loss = [0.0016028384, 5.9517442e-05, 1.5433209] ; discriminator_loss = 8.079970
+epoch39 : gan_loss = [0.001391067, 6.873624e-05, 1.3223307] ; discriminator_loss = 7.996745
+epoch40 : gan_loss = [0.0022194071, 6.236248e-05, 2.1570444] ; discriminator_loss = 7.985133
+epoch41 : gan_loss = [0.0015048567, 6.706162e-05, 1.437795] ; discriminator_loss = 7.687591
+epoch42 : gan_loss = [0.0018358055, 3.9914576e-05, 1.7958908] ; discriminator_loss = 7.817980
