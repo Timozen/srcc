@@ -16,6 +16,7 @@ import argparse
 import os
 import cv2
 import tensorflow as tf
+import Utils_images
 
 import matplotlib.pyplot as plt
 
@@ -29,17 +30,28 @@ for img in sorted(os.listdir(os.path.join(input_dirs[1], 'ignore'))):
     if 'niklas_city_0009' in img:
         test_images.append(rescale_imgs_to_neg1_1(cv2.imread(os.path.join(input_dirs[1], 'ignore', img))))
             
-test = rescale_imgs_to_neg1_1(cv2.imread(os.path.join('..', '..', 'DSIDS' ,'HR', 'niklas_city_0009.jpg'),cv2.IMREAD_COLOR))
-            
-model = load_model(os.path.join("model", "gen_model10.h5"), custom_objects={"tf": tf})
+test = rescale_imgs_to_neg1_1(cv2.imread(os.path.join('..', '..', 'DSIDS' ,'LR', '4x_cubic', 'niklas_landscape_0001.jpg'),cv2.IMREAD_COLOR))
+#test = rescale_imgs_to_neg1_1(cv2.imread("1008.jpg",cv2.IMREAD_COLOR))
+
+tile_list = Utils_images.crop_lr_image(test, hr_shape=(336,336), overlap=True)
+
+model = load_model(os.path.join("model", "gen_model40.h5"), custom_objects={"tf": tf})
 model.summary()
 model.layers.pop(0)
 
-_in = Input(shape=(3024, 4032, 3))
+_in = Input(shape=(756, 1008, 3))
+#_in = Input(shape=(189, 252, 3))
 _out = model(_in)
 
 _model = Model(_in, _out)
 
 test_ = Utils.denormalize(np.squeeze(_model.predict(np.expand_dims(test, axis=0)), axis=0))
+cv2.imwrite(os.path.join("test.jpg"), test_)
 
-cv2.imwrite("test.jpg", test_)
+
+'''
+for i,tile in enumerate(tile_list):
+
+    tile_ = Utils.denormalize(np.squeeze(model.predict(np.expand_dims(tile, axis=0)), axis=0))
+
+    cv2.imwrite(os.path.join("overlap", format(i, "04d")+".jpg"), tile_)'''
