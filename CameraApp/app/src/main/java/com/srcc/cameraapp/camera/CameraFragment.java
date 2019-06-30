@@ -1,4 +1,4 @@
-package com.srcc.cameraapp;
+package com.srcc.cameraapp.camera;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -49,6 +49,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.srcc.cameraapp.R;
+import com.srcc.cameraapp.other.Utils;
 import com.srcc.cameraapp.api.ApiService;
 
 import java.io.File;
@@ -77,49 +79,57 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Retrofit;
 
+/**
+ * This fragment will handle taking a picture, saving it, sending it to the server
+ */
 public class CameraFragment extends Fragment implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, View.OnTouchListener {
 
+    /**
+     * This Builder pattern for creating the fragment
+     */
     public static class Builder {
 
         private CompositeDisposable compositeDisposable;
-        private Retrofit mClient;
-        private ApiService mApiConnection;
+        private Retrofit client;
+        private ApiService apiService;
 
         public Builder setCompositeDisposable(CompositeDisposable compositeDisposable) {
             this.compositeDisposable = compositeDisposable;
             return this;
         }
 
-        public Builder setmClient(Retrofit mClient) {
-            this.mClient = mClient;
+        public Builder setClient(Retrofit client) {
+            this.client = client;
             return this;
         }
 
-        public Builder setmApiConnection(ApiService mApiConnection) {
-            this.mApiConnection = mApiConnection;
+        public Builder setApiService(ApiService apiService) {
+            this.apiService = apiService;
             return this;
         }
 
         public CameraFragment createCameraFragment() {
-            return new CameraFragment(compositeDisposable, mClient, mApiConnection);
+            return new CameraFragment(compositeDisposable, client, apiService);
         }
     }
 
-
     private static final String TAG = "SRCC_CAMERA_APP";
 
+    //api variables
     private final CompositeDisposable compositeDisposable;
     private final Retrofit mClient;
     private final ApiService mApiConnection;
 
-
-
+    //picture state variables
+    private int mState = STATE_PREVIEW;
     private static final int STATE_PREVIEW = 0;
     private static final int STATE_WAITING_LOCK = 1;
     private static final int STATE_WAITING_PRECAPTURE = 2;
     private static final int STATE_WAITING_NON_PRECAPTURE = 3;
     private static final int STATE_PICTURE_TAKEN = 4;
 
+    //orientations
+    private Integer mSensorOrientation;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -128,34 +138,43 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    private MyTextureView mTextureView;
-    private Size mPreviewSize;
+    //capture variables
+    private String mCameraId;
+    private CameraDevice mCameraDevice;
+    private CaptureRequest.Builder mPreviewRequestBuilder;
+    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+    private CameraTextureView mTextureView;
     private CameraCaptureSession mCaptureSession;
     private CaptureRequest mPreviewRequest;
+    private Size mPreviewSize;
+    private boolean mFlashSupported;
+
+    //file handling
+    private File mFile;
+    private String timeValue = "";
     private ImageReader mImageReader;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
-    private Integer mSensorOrientation;
-    private boolean mFlashSupported;
-    private File mFile;
-    private int mState = STATE_PREVIEW;
 
+    //zooma and size variables
+    private Rect zoom;
     private float fingerSpacing = 0;
     private float zoom_level = 1f;
-    private Rect zoom;
-    private float maxZoom;
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
-    private int largest_width = 1008;
-    private int largest_height = 756;
+    //Permission
+    private static final int REQUEST_CAMERA_PERMISSION = 1;
+    private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 2;
+    private static final String FRAGMENT_DIALOG = "dialog";
 
-    public CameraFragment(CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection) {
-        this.compositeDisposable = compositeDisposable;
-        this.mClient = mClient;
-        this.mApiConnection = mApiConnection;
-    }
+    /*
+    Here are the callbacks
+     */
 
+    /**
+     * This callback is used to handle the actions which are necessary for taking a picture
+     */
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
 
         private void process(CaptureResult result) {
@@ -212,20 +231,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     };
 
-    private static final int REQUEST_CAMERA_PERMISSION = 1;
-    private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 2;
-
-    private static final String FRAGMENT_DIALOG = "dialog";
-
-    // we should close the camera before we exit
-    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-
-    private String mCameraId;
-    private CameraDevice mCameraDevice;
-    private CaptureRequest.Builder mPreviewRequestBuilder;
-
-    //here comes the code
+    /**
+     * This callback will handle the state of the camera
+     */
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
+
+        /**
+         * Set the semaphore so only we can use it and start the preview
+         * @param camera our camera
+         */
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
             mCameraOpenCloseLock.release();
@@ -233,6 +247,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             createCameraPreviewSession();
         }
 
+        /**
+         * Close the camera, so we dont leak anything
+         * @param camera our camera
+         */
         @Override
         public void onDisconnected(@NonNull CameraDevice camera) {
             mCameraOpenCloseLock.release();
@@ -240,6 +258,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             mCameraDevice = null;
         }
 
+        /**
+         * If there is any error with camera, close our parts
+         * and kill the app
+         * @param camera our camera
+         * @param error what happened
+         */
         @Override
         public void onError(@NonNull CameraDevice camera, int error) {
             mCameraOpenCloseLock.release();
@@ -251,6 +275,187 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             }
         }
     };
+
+    // this will show in the texture if the the TextureView is not available
+    private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
+        /**
+         * If we create our texture view we want to display our camera image
+         * @param surface our texture view
+         * @param width of it
+         * @param height of it
+         */
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+            openCamera(width, height);
+        }
+
+        /**
+         * Most likely by rotation, update the view
+         * @param surface our texture view
+         * @param width of it
+         * @param height of it
+         */
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            configureTransform(width, height);
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+            return true;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        }
+    };
+
+    /**
+     * Callback for what we do if our image is ready for saving from the preview
+     */
+    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
+
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            ImageSaver is = new ImageSaver.Builder()
+                    .setmImage(reader.acquireNextImage())
+                    .setmFile(mFile)
+                    .setTime(timeValue)
+                    .setmContext(getContext())
+                    .setCompositeDisposable(compositeDisposable)
+                    .setmApiConnection(mApiConnection)
+                    .setmClient(mClient)
+                    .createImageSaver();
+            mBackgroundHandler.post(is);
+        }
+
+    };
+
+
+    /*
+    End of the callbacks
+     */
+
+    private CameraFragment(CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection) {
+        this.compositeDisposable = compositeDisposable;
+        this.mClient = mClient;
+        this.mApiConnection = mApiConnection;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    // attach the fragment to the activity
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+        return inflater.inflate(R.layout.camera_fragment, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        view.findViewById(R.id.picture).setOnClickListener(this);
+        mTextureView = view.findViewById(R.id.texture);
+        view.setOnTouchListener(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        startBackgroundThread();
+
+        if(mTextureView.isAvailable()) {
+            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+        } else {
+            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        closeCamera();
+        stopBackgroundThread();
+        super.onPause();
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.picture: {
+                takePicture();
+                break;
+            }
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        try{
+            Activity activity = getActivity();
+            CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(mCameraId);
+
+            float maxZoom = 4;//(characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
+
+            Rect rect = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            int action = event.getAction();
+            float currentFingerSpacing;
+
+            if(event.getPointerCount() > 1){
+                currentFingerSpacing = getFingerSpacing(event);
+                float delta = 0.1f; //zoom speed
+
+                if(fingerSpacing != 0){
+                    if(currentFingerSpacing > fingerSpacing){
+                        if((maxZoom - zoom_level) <= delta){
+                            delta = maxZoom - zoom_level;
+                        }
+                        zoom_level = maxZoom; //zoom_level + delta;
+                    }
+                    if(currentFingerSpacing < fingerSpacing){
+                        if((zoom_level - delta) <= 1f){
+                            delta = zoom_level - 1f;
+                        }
+                        zoom_level = 1;// zoom_level - delta;
+                    }
+
+                    float ratio = (float) 1 / zoom_level;
+
+                    int croppedWidth = (rect.width() - Math.round((float) rect.width() * ratio))/2;
+                    int croppedHeight = (rect.height() - Math.round((float) rect.height() * ratio))/2;
+
+                    zoom = new Rect(croppedWidth, croppedHeight, rect.width() - croppedWidth, rect.height() - croppedHeight);
+                    mPreviewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoom);
+                }
+                fingerSpacing = currentFingerSpacing;
+            } else {
+                if(action == MotionEvent.ACTION_UP){
+                    //single touch
+                }
+            }
+            try {
+                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback, null);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+
+
+    public void requestFileStoragePermission() {
+        if(shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+            new ConfirmationDialogFile().show(getChildFragmentManager(), FRAGMENT_DIALOG);
+        } else {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
+    }
 
     private void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("CameraBackground");
@@ -361,134 +566,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     }
     // end of request stuff...
 
-    // attach the fragment to the activity
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        return inflater.inflate(R.layout.camera_fragment, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        view.findViewById(R.id.picture).setOnClickListener(this);
-        mTextureView = (MyTextureView) view.findViewById(R.id.texture);
-        view.setOnTouchListener(this);
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
-    public void requestFileStoragePermission() {
-        if(shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-            new ConfirmationDialogFile().show(getChildFragmentManager(), FRAGMENT_DIALOG);
-        } else {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
-        }
-    }
-
-    // this will show in the texture if the the TextureView is not available
-    private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            openCamera(width, height);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-            configureTransform(width, height);
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-        }
-    };
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        startBackgroundThread();
-
-        if(mTextureView.isAvailable()) {
-            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
-        } else {
-            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-        }
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.picture: {
-                takePicture();
-                break;
-            }
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        try{
-            Activity activity = getActivity();
-            CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
-            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(mCameraId);
-
-            maxZoom = 4;//(characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
-
-            Rect rect = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-            int action = event.getAction();
-            float currentFingerSpacing;
-
-            if(event.getPointerCount() > 1){
-                currentFingerSpacing = getFingerSpacing(event);
-                float delta = 0.1f; //zoom speed
-
-                if(fingerSpacing != 0){
-                    if(currentFingerSpacing > fingerSpacing){
-                        if((maxZoom - zoom_level) <= delta){
-                            delta = maxZoom - zoom_level;
-                        }
-                        zoom_level = maxZoom; //zoom_level + delta;
-                    }
-                    if(currentFingerSpacing < fingerSpacing){
-                        if((zoom_level - delta) <= 1f){
-                            delta = zoom_level - 1f;
-                        }
-                        zoom_level = 1;// zoom_level - delta;
-                    }
-
-                    float ratio = (float) 1 / zoom_level;
-
-                    int croppedWidth = (rect.width() - Math.round((float) rect.width() * ratio))/2;
-                    int croppedHeight = (rect.height() - Math.round((float) rect.height() * ratio))/2;
-
-                    zoom = new Rect(croppedWidth, croppedHeight, rect.width() - croppedWidth, rect.height() - croppedHeight);
-                    mPreviewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoom);
-                }
-                fingerSpacing = currentFingerSpacing;
-            } else {
-                if(action == MotionEvent.ACTION_UP){
-                    //single touch
-                }
-            }
-            try {
-                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback, null);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
-
     private void takePicture() {
         lockFocus();
     }
@@ -519,7 +596,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-    private String timeValue = "";
 
     private void captureStillPicture() {
         try {
@@ -595,12 +671,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-    @Override
-    public void onPause() {
-        closeCamera();
-        stopBackgroundThread();
-        super.onPause();
-    }
+
 
     private void openCamera(int width, int height) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -653,23 +724,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         mTextureView.setTransform(matrix);
     }
 
-    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
-
-        @Override
-        public void onImageAvailable(ImageReader reader) {
-            ImageSaver is = new ImageSaver.Builder()
-                    .setmImage(reader.acquireNextImage())
-                    .setmFile(mFile)
-                    .setTime(timeValue)
-                    .setmContext(getContext())
-                    .setCompositeDisposable(compositeDisposable)
-                    .setmApiConnection(mApiConnection)
-                    .setmClient(mClient)
-                    .createImageSaver();
-            mBackgroundHandler.post(is);
-        }
-
-    };
 
 
     private void setUpCameraOutPuts(int width, int height) {
@@ -713,8 +767,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
                 Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
 
-                largest_width = largest.getWidth() / 4;
-                largest_height = largest.getHeight() / 4;
+                int largest_width = largest.getWidth() / 4;
+                int largest_height = largest.getHeight() / 4;
 
                 Log.i("CAMERA_APP", "w " + largest_width + " h " + largest_height);
 

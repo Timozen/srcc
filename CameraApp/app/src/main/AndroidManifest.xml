@@ -19,14 +19,14 @@
         android:theme="@style/AppTheme.NoTitleBar"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".MainActivity">
+        <activity android:name=".main.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ViewImageActivity"></activity>
+        <activity android:name=".gallery.GallerySingleImageActivity"></activity>
     </application>
 
 
