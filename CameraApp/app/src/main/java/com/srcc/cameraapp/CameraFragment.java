@@ -49,9 +49,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.srcc.cameraapp.api.ApiService;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,9 +65,54 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Retrofit;
+
 public class CameraFragment extends Fragment implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, View.OnTouchListener {
 
-    public static final String TAG = "SRCC_CAMERA_APP";
+    public static class Builder {
+
+        private CompositeDisposable compositeDisposable;
+        private Retrofit mClient;
+        private ApiService mApiConnection;
+
+        public Builder setCompositeDisposable(CompositeDisposable compositeDisposable) {
+            this.compositeDisposable = compositeDisposable;
+            return this;
+        }
+
+        public Builder setmClient(Retrofit mClient) {
+            this.mClient = mClient;
+            return this;
+        }
+
+        public Builder setmApiConnection(ApiService mApiConnection) {
+            this.mApiConnection = mApiConnection;
+            return this;
+        }
+
+        public CameraFragment createCameraFragment() {
+            return new CameraFragment(compositeDisposable, mClient, mApiConnection);
+        }
+    }
+
+
+    private static final String TAG = "SRCC_CAMERA_APP";
+
+    private final CompositeDisposable compositeDisposable;
+    private final Retrofit mClient;
+    private final ApiService mApiConnection;
+
+
 
     private static final int STATE_PREVIEW = 0;
     private static final int STATE_WAITING_LOCK = 1;
@@ -91,8 +140,20 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private File mFile;
     private int mState = STATE_PREVIEW;
 
-    public static CameraFragment newInstance(){
-        return new CameraFragment();
+    private float fingerSpacing = 0;
+    private float zoom_level = 1f;
+    private Rect zoom;
+    private float maxZoom;
+    private static final int MAX_PREVIEW_WIDTH = 1920;
+    private static final int MAX_PREVIEW_HEIGHT = 1080;
+
+    private int largest_width = 1008;
+    private int largest_height = 756;
+
+    public CameraFragment(CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection) {
+        this.compositeDisposable = compositeDisposable;
+        this.mClient = mClient;
+        this.mApiConnection = mApiConnection;
     }
 
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
@@ -163,6 +224,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private CameraDevice mCameraDevice;
     private CaptureRequest.Builder mPreviewRequestBuilder;
 
+    //here comes the code
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
@@ -533,7 +595,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-
     @Override
     public void onPause() {
         closeCamera();
@@ -596,16 +657,20 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile, getContext()));
+            ImageSaver is = new ImageSaver.Builder()
+                    .setmImage(reader.acquireNextImage())
+                    .setmFile(mFile)
+                    .setTime(timeValue)
+                    .setmContext(getContext())
+                    .setCompositeDisposable(compositeDisposable)
+                    .setmApiConnection(mApiConnection)
+                    .setmClient(mClient)
+                    .createImageSaver();
+            mBackgroundHandler.post(is);
         }
 
     };
 
-    private static final int MAX_PREVIEW_WIDTH = 1920;
-    private static final int MAX_PREVIEW_HEIGHT = 1080;
-
-    private int largest_width = 1008;
-    private int largest_height = 756;
 
     private void setUpCameraOutPuts(int width, int height) {
         Activity activity = getActivity();
@@ -774,14 +839,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-
-    private float fingerSpacing = 0;
-    private float zoom_level = 1f;
-    private Rect zoom;
-    private float maxZoom;
-
-
-
     private float getFingerSpacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
@@ -816,9 +873,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-    /**
-     * Shows an error message dialog.
-     */
     public static class ErrorDialog extends DialogFragment {
 
         private static final String ARG_MESSAGE = "message";
@@ -848,9 +902,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     }
 
-    /**
-     * Compares two {@code Size}s based on their areas.
-     */
     static class CompareSizesByArea implements Comparator<Size> {
 
         @Override
@@ -862,9 +913,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     }
 
-    /**
-     * Shows OK/Cancel confirmation dialog about camera permission.
-     */
     public static class ConfirmationDialog extends DialogFragment {
 
         @NonNull
@@ -893,16 +941,76 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-
-
     private static class ImageSaver implements Runnable {
+
+        static class Builder {
+
+            private Image mImage;
+            private File mFile;
+            private Context mContext;
+            private CompositeDisposable compositeDisposable;
+            private Retrofit mClient;
+            private ApiService mApiConnection;
+            private String timeValue;
+
+            Builder setmImage(Image mImage) {
+                this.mImage = mImage;
+                return this;
+            }
+
+            Builder setmFile(File mFile) {
+                this.mFile = mFile;
+                return this;
+            }
+
+            Builder setmContext(Context mContext) {
+                this.mContext = mContext;
+                return this;
+            }
+
+            Builder setCompositeDisposable(CompositeDisposable compositeDisposable) {
+                this.compositeDisposable = compositeDisposable;
+                return this;
+            }
+
+            Builder setmClient(Retrofit mClient) {
+                this.mClient = mClient;
+                return this;
+            }
+
+            Builder setmApiConnection(ApiService mApiConnection) {
+                this.mApiConnection = mApiConnection;
+                return this;
+            }
+            Builder setTime(String timeValue) {
+                this.timeValue = timeValue;
+                return this;
+            }
+
+            ImageSaver createImageSaver() {
+                return new ImageSaver(mImage, mFile, mContext, compositeDisposable, mClient, mApiConnection, timeValue);
+            }
+
+
+        }
+
+
         private final Image mImage;
         private final File mFile;
         private final Context mContext;
-        ImageSaver(Image image, File file, Context context) {
-            mImage = image;
-            mFile = file;
-            mContext = context;
+        private CompositeDisposable compositeDisposable;
+        private Retrofit mClient;
+        private ApiService mApiConnection;
+        private String timeValue;
+
+        ImageSaver(Image mImage, File mFile, Context mContext, CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection, String timeValue) {
+            this.mImage = mImage;
+            this.mFile = mFile;
+            this.mContext = mContext;
+            this.compositeDisposable = compositeDisposable;
+            this.mClient = mClient;
+            this.mApiConnection = mApiConnection;
+            this.timeValue = timeValue;
         }
 
         @Override
@@ -928,6 +1036,88 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                     }
                 }
             }
+
+            uploadFile(mFile);
+        }
+
+        private void uploadFile(File file){
+            Log.i(TAG, "Prepare for upload of the taken picture");
+
+            RequestBody requestFile = RequestBody.create(MediaType.parse("image"), file);
+
+            MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
+
+            RequestBody description = RequestBody.create(MultipartBody.FORM, "description...");
+
+            Single<ResponseBody> single = mApiConnection.sendImage(description, body);
+
+            single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<ResponseBody>() {
+                @Override
+                public void onSubscribe(Disposable d) {
+                    Log.i(TAG, "OnSubscribe triggered");
+                    compositeDisposable.add(d);
+                }
+
+                @Override
+                public void onSuccess(ResponseBody responseBody) {
+                    Log.i(TAG, "Upload successful and got return");
+
+                    try {
+                        File root = Utils.getPublicAlbumStorageDir(Utils.IMAGE_FOLDER_NAME);
+                        File hrImage = new File(root.getAbsolutePath(), timeValue + "_hr.jpg");
+
+                        InputStream inputStream = null;
+                        OutputStream outputStream = null;
+
+                        try {
+                            byte[] fileReader = new byte[4096];
+
+                            long fileSize = responseBody.contentLength();
+                            long fileSizeDownloaded = 0;
+
+                            inputStream = responseBody.byteStream();
+                            outputStream = new FileOutputStream(hrImage);
+
+                            while (true) {
+                                int read = inputStream.read(fileReader);
+
+                                if (read == -1) {
+                                    break;
+                                }
+
+                                outputStream.write(fileReader, 0, read);
+
+                                fileSizeDownloaded += read;
+
+                                Log.d(TAG, "file download: " + fileSizeDownloaded + " of " + fileSize);
+                            }
+
+                            outputStream.flush();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            if (inputStream != null) {
+                                inputStream.close();
+                            }
+
+                            if (outputStream != null) {
+                                outputStream.close();
+                            }
+                            mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(hrImage)));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    Log.e(TAG, "Upload somehow failed");
+                    Log.e(TAG, e.getMessage());
+                    e.printStackTrace();
+                }
+            });
         }
     }
 }

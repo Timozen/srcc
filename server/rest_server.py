@@ -83,7 +83,6 @@ class SendImage(Resource):
             return "{'errorcode' : 'NOT_ALLOWED_IMAGE_FORMAT', 'field':'image', 'message':'Image format now allowed'}"
 
         # TODO add some logging maybe...
-        print("Image received successfully")
         # get the filename for saving it in the upload folder
         filename = secure_filename(image.filename)
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
