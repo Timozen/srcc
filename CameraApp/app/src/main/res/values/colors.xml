@@ -3,6 +3,4 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#CD859F</color>
-    <color name="control_background">#000000</color>
-    <color name="DarkRed">#DF0004</color>
 </resources>

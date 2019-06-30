@@ -108,7 +108,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
 
         @Override
         public void onClick(View v) {
-            //Toast.makeText(v.getContext(), "Image Uri = " + mUri.toString(), Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent(mActivity, ViewImageActivity.class);
             intent.putExtra("Uri", mUri.toString());
