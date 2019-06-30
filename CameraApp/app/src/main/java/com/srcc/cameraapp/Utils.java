@@ -21,7 +21,9 @@ public class Utils {
         // Get the directory for the user's public pictures directory.
         File file = new File(Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_PICTURES), albumName);
         if (!file.mkdirs()) {
-            Log.e("CAMERA_APP", "Directory not created");
+            Log.i("CAMERA_APP", "Directory not created");
+        } else {
+            Log.i("CAMERA_APP", "Directory was created");
         }
         return file;
     }
