@@ -39,9 +39,9 @@ class Home(Resource):
     This will just return the name of the api.
     """
 
-    def get(self):
+    def post(self):
         """
-        Return the GET-Response upon request.
+        Return the Post-Response upon request.
 
         This will just return the name 'srcc-rest-api'
         """
@@ -99,7 +99,7 @@ class SendImage(Resource):
 
 
 # register the api call addresses
-api.add_resource(Home, '/')
+api.add_resource(Home, '/api/Home')
 api.add_resource(SendImage, '/api/SendImage')
 
 if __name__ == '__main__':

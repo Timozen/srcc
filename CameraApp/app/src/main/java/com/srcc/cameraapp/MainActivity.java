@@ -6,7 +6,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.srcc.cameraapp.api.ApiService;
-import com.srcc.cameraapp.api.Todo;
+import com.srcc.cameraapp.api.Home;
 
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
@@ -33,28 +33,30 @@ public class MainActivity extends AppCompatActivity {
         compositeDisposable = new CompositeDisposable();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://jsonplaceholder.typicode.com/")
+                .baseUrl("http://192.168.178.44:5000/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
 
         ApiService apiService = retrofit.create(ApiService.class);
-        Single<Todo> person = apiService.getTodo(1);
+        Single<Home> home = apiService.getHome();
 
-        person.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<Todo>() {
+        home.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<Home>() {
             @Override
             public void onSubscribe(Disposable d) {
+                Log.i(TAG, "OnSubscribe triggered");
                 compositeDisposable.add(d);
             }
 
             @Override
-            public void onSuccess(Todo todo) {
-                Log.i(TAG, todo.getTitle());
+            public void onSuccess(Home home) {
+                Log.i(TAG, home.getName());
             }
 
             @Override
             public void onError(Throwable e) {
-
+                Log.i(TAG, "onError triggered");
+                e.printStackTrace();
             }
         });
 
