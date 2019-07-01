@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from tqdm import tqdm
 
-def crop_lr_image(img, hr_shape=(336,336), overlap=False):
+def tile_lr_image(img, hr_shape=(336,336), overlap=False):
     """function to crop one lr image into tiles for prediction.
 
     img -- the lr image as a numpy array
