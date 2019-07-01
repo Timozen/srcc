@@ -20,8 +20,8 @@ def main():
                    os.path.join("..", "models", "initialized_gen_model20.h5")]
 
     # corresponding names of the models
-    model_names = ["SRDense Type 3 after epoch 4",
-                   "SRDense Type 3 after epoch 80",
+    model_names = ["SRDense Type 3 after 4 epochs",
+                   "SRDense Type 3 after 80 epochs",
                    "SRGAN github confg after 5 epochs",
                    "SRGAN github confg after 90 epochs",
                    "SRResnet after 50 epochs",
