@@ -26,7 +26,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".gallery.GallerySingleImageActivity"></activity>
+        <activity android:name=".gallery.GallerySingleImageActivity" />
+        <activity android:name=".main.IntroActivity"/>
     </application>
 
 
