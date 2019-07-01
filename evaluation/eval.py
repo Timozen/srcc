@@ -8,6 +8,8 @@ from Utils_model import VGG_LOSS
 from data_generator import rescale_imgs_to_neg1_1
 import tensorflow as tf
 from tqdm import tqdm
+from keras.models import Model
+from keras.layers import Input
 
 
 def main():
@@ -110,12 +112,70 @@ def main():
             print(ssim)
 
         # ninth step: append the mean metric for this model
-        tile_performance[model_names[i]] = "MSE = " + str(np.mean(mse)) + ", PSNR = " + str(np.mean(psnr)) + ", SSIM = " + str(np.mean(ssim))
+        tile_performance[model_names[i]] = (np.mean(mse), np.mean(psnr), np.mean(ssim))
 
     # final output
     print("Performance on single tiles:")
+    f = open("tile_performance.txt", "w")
     for key in tile_performance:
-        print(key, ":   ", tile_performance[key])
+        print(key+ ":   MSE = " + str(tile_performance[key][0]) + ", PSNR = " + str(tile_performance[key][1]) + ", SSIM = " + str(tile_performance[key][2]))
+        f.write(key+ ":   MSE = " + str(tile_performance[key][0]) + ", PSNR = " + str(tile_performance[key][1]) + ", SSIM = " + str(tile_performance[key][2]) + "\n")
+    f.close()
+
+
+    '''
+    Second calculating performance metrics on a single upscaled image
+    '''
+
+    img_performance = {}
+    for i,mp in tqdm(enumerate(model_paths)):
+        # first step: load the model
+        model = load_model(mp, custom_objects=custom_objects[i])
+
+        # second step: changing the input layer
+        _in = Input(shape=test_images[0][0].shape)
+        _out = model(_in)
+        _model = Model(_in, _out)
+
+        mse = []
+        psnr = []
+        ssim = []
+        # third step: iterate over the test images
+        for test_pair in test_images:
+            # fourth step: calculate the sr image
+            try:
+                if i > 1:
+                    sr = Utils.denormalize(np.squeeze(_model.predict(np.expand_dims(rescale_imgs_to_neg1_1(test_pair[0]), axis=0)), axis=0))
+                else:
+                    sr = np.squeeze(_model.predict(np.expand_dims(test_pair[0], axis=0))).astype(np.uint8)
+
+                # fifth step: append the metric for this image 
+                mse.append( metrics.MSE(test_pair[1], sr) )
+                psnr.append( metrics.MSE(test_pair[1], sr) )
+                ssim.append( metrics.MSE(test_pair[1], sr) )
+            except:
+                mse.append("err")
+                psnr.append("err")
+                ssim.append("err")
+            
+            # control
+            print(mse)
+            print(psnr)
+            print(ssim)
+
+        # sixth step: append the mean metric for this model
+        try:
+            img_performance[model_names[i]] = (np.mean(mse), np.mean(psnr), np.mean(ssim))
+        except:
+            img_performance[model_names[i]] = ("err", "err", "err")
+
+    # final output
+    print("Performance on whole lr:")
+    f = open("img_performance.txt", "w")
+    for key in img_performance:
+        print(key+ ":   MSE = " + str(img_performance[key][0]) + ", PSNR = " + str(img_performance[key][1]) + ", SSIM = " + str(img_performance[key][2]))
+        f.write(key+ ":   MSE = " + str(img_performance[key][0]) + ", PSNR = " + str(img_performance[key][1]) + ", SSIM = " + str(img_performance[key][2]) + "\n")
+    f.close()
 
                 
   
