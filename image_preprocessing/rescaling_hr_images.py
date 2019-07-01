@@ -7,7 +7,7 @@ from tqdm import tqdm
 '''
 Expects a folder DSIDS/HR and DSIDS/LR in the srcc directory.
 '''
-DOWN_SCALING_FACTOR = 16
+DOWN_SCALING_FACTOR = 4
 # area vs cubic vs linear vs nearest vs lanczos
 INTERPOLATION = 'cubic'
 
@@ -63,7 +63,7 @@ def main():
         lr = cv2.resize(hr, (0, 0),
                         fx=1/DOWN_SCALING_FACTOR,
                         fy=1/DOWN_SCALING_FACTOR,
-                        interpolation=cv2.INTER_CUBIC)
+                        interpolation=inter)
         # save the resized image
         cv2.imwrite(os.path.join(dst, img), lr)
 

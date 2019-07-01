@@ -2,7 +2,13 @@ import numpy as np
 import cv2
 from tqdm import tqdm
 
-def tile_lr_image(img, shape=(336,336), overlap=False):
+
+def denormalize(input_data):
+    input_data = (input_data + 1) * 127.5
+    return input_data.astype(np.uint8)
+
+
+def tile_image(img, shape=(336,336), overlap=False):
     """function to crop one lr image into tiles for prediction.
 
     img -- the lr image as a numpy array
