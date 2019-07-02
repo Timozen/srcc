@@ -10,6 +10,7 @@ import tensorflow as tf
 from tqdm import tqdm
 from keras.models import Model
 from keras.layers import Input
+import ImageStitching
 
 TILES = False
 WHOLE_LR = True
@@ -105,7 +106,7 @@ def main():
                     p.append( metrics.PSNR(hr, sr) )
                     s.append( metrics.SSIM(hr, sr) )
 
-                # eigth step: append the mean metric for this image 
+                # seventh step: append the mean metric for this image 
                 mse.append( np.mean(m) )
                 psnr.append( np.mean(p) )
                 ssim.append( np.mean(s) )
@@ -115,7 +116,7 @@ def main():
                 print(psnr)
                 print(ssim)
 
-            # ninth step: append the mean metric for this model
+            # eight step: append the mean metric for this model
             tile_performance[model_names[i]] = (np.mean(mse), np.mean(psnr), np.mean(ssim))
 
         # final output
@@ -188,7 +189,7 @@ def main():
         Second calculating performance metrics on a stitched image
         '''
 
-        tile_performance = {}
+        stitch_performance = {}
         for i,mp in tqdm(enumerate(model_paths)):
             # first step: load the model
             model = load_model(mp, custom_objects=custom_objects[i])
@@ -211,13 +212,12 @@ def main():
                         sr_tiles.append( np.squeeze(model.predict(np.expand_dims(lr, axis=0))).astype(np.uint8) )
 
                 # sixth step: stitch the image
+                sr = ImageStitching.stitching(sr_tiles, LR=test_pair[0])
                 
-
-
-                # eigth step: append the mean metric for this image 
-                mse.append( np.mean(m) )
-                psnr.append( np.mean(p) )
-                ssim.append( np.mean(s) )
+                # seventh step: append the mean metric for this image 
+                mse.append( metrics.MSE(test_pair[1], sr) )
+                psnr.append( metrics.PSNR(test_pair[1], sr) )
+                ssim.append( metrics.SSIM(test_pair[1], sr) )
                 
                 # control
                 print(mse)
@@ -225,14 +225,14 @@ def main():
                 print(ssim)
 
             # ninth step: append the mean metric for this model
-            tile_performance[model_names[i]] = (np.mean(mse), np.mean(psnr), np.mean(ssim))
+            stitch_performance[model_names[i]] = (np.mean(mse), np.mean(psnr), np.mean(ssim))
 
         # final output
-        print("Performance on single tiles:")
-        f = open("tile_performance.txt", "w")
-        for key in tile_performance:
-            print(key+ ":   MSE = " + str(tile_performance[key][0]) + ", PSNR = " + str(tile_performance[key][1]) + ", SSIM = " + str(tile_performance[key][2]))
-            f.write(key+ ":   MSE = " + str(tile_performance[key][0]) + ", PSNR = " + str(tile_performance[key][1]) + ", SSIM = " + str(tile_performance[key][2]) + "\n")
+        print("Performance on stitched images:")
+        f = open("stitch_performance.txt", "w")
+        for key in stitch_performance:
+            print(key+ ":   MSE = " + str(stitch_performance[key][0]) + ", PSNR = " + str(stitch_performance[key][1]) + ", SSIM = " + str(stitch_performance[key][2]))
+            f.write(key+ ":   MSE = " + str(stitch_performance[key][0]) + ", PSNR = " + str(stitch_performance[key][1]) + ", SSIM = " + str(stitch_performance[key][2]) + "\n")
         f.close()
 
                 
