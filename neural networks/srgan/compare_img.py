@@ -110,9 +110,9 @@ def main():
     lrs = load_images(image, path_lr)
     hrs = load_images(image, path_hr)
     
-    img_lr = stitch_images(lrs, int(image_shape[0]/4), int(image_shape[0]/4), int(4032/image_shape[0]), int(3024/image_shape[0]))
-    img_hr = stitch_images(hrs, image_shape[0], image_shape[0], int(4032/image_shape[0]), int(3024/image_shape[0]))
-    img_sr = stitch_images(preds, image_shape[0], image_shape[0], int(4032/image_shape[0]), int(3024/image_shape[0]))
+    img_lr = stitch_images(lrs, 4032, 3024, int(image_shape[0]/4), int(image_shape[0]/4), int(4032/image_shape[0]), int(3024/image_shape[0]))
+    img_hr = stitch_images(hrs, 4032, 3024,image_shape[0], image_shape[0], int(4032/image_shape[0]), int(3024/image_shape[0]))
+    img_sr = stitch_images(preds, 4032, 3024,image_shape[0], image_shape[0], int(4032/image_shape[0]), int(3024/image_shape[0]))
 
     img_sr_cleaned = remove_raster(img_sr,  image_shape[0], image_shape[0], int(4032/image_shape[0]), int(3024/image_shape[0]))
 
