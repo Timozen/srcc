@@ -27,18 +27,22 @@ public class MainActivity extends AppCompatActivity {
 
     private CompositeDisposable compositeDisposable;
     private ViewPager viewPager;
-
+    private static Context context;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = getApplicationContext();
 
         SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (sp.getBoolean("firstStart", true)) {
             Log.i(TAG, "App first start");
-            //SharedPreferences.Editor editor = sp.edit();
-            //editor.putBoolean("firstStart", true);
-            //editor.apply();
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putBoolean(getString(R.string.srdense_key), true);
+            editor.putBoolean(getString(R.string.srgan_key), false);
+            editor.putBoolean(getString(R.string.srresnet_key), false);
+            editor.apply();
+
             Intent intent = new Intent(MainActivity.this, IntroActivity.class);
             startActivityForResult(intent, 1);
             Log.i(TAG, "Should have started Intro");
@@ -151,5 +155,9 @@ public class MainActivity extends AppCompatActivity {
             compositeDisposable.dispose();
         }
         super.onDestroy();
+    }
+
+    public static Context getAppContext() {
+        return MainActivity.context;
     }
 }

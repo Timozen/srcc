@@ -1,5 +1,7 @@
 package com.srcc.cameraapp.main;
 
+import android.content.Context;
+
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -8,6 +10,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.srcc.cameraapp.api.ApiService;
 import com.srcc.cameraapp.camera.CameraFragment;
 import com.srcc.cameraapp.gallery.GalleryFragment;
+import com.srcc.cameraapp.settings.SettingsFragment;
 
 import io.reactivex.disposables.CompositeDisposable;
 import retrofit2.Retrofit;
@@ -28,6 +31,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         private CompositeDisposable compositeDisposable;
         private Retrofit client;
         private ApiService apiService;
+        private Context context;
 
         Builder setViewPager(ViewPager viewPager) {
             this.viewPager = viewPager;
@@ -55,7 +59,14 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         }
 
         ViewPagerAdapter createViewPagerAdapter() {
-            return new ViewPagerAdapter(viewPager, fragmentManager, compositeDisposable, client, apiService);
+            return new ViewPagerAdapter(viewPager, fragmentManager, compositeDisposable, client, apiService, context);
+        }
+
+
+
+        public Builder setContext(Context context) {
+            this.context = context;
+            return this;
         }
     }
 
@@ -64,18 +75,16 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     private final CompositeDisposable compositeDisposable;
     private final Retrofit client;
     private final ApiService apiService;
+    private Context context;
 
-    private ViewPagerAdapter(ViewPager mViewpager,
-                             FragmentManager mFragmentManager,
-                             CompositeDisposable compositeDisposable,
-                             Retrofit client,
-                             ApiService apiService) {
-        super(mFragmentManager);
-        this.viewPager = mViewpager;
-        this.fragmentManager = mFragmentManager;
+    public ViewPagerAdapter(ViewPager viewPager, FragmentManager fragmentManager, CompositeDisposable compositeDisposable, Retrofit client, ApiService apiService, Context context) {
+        super(fragmentManager);
+        this.viewPager = viewPager;
+        this.fragmentManager = fragmentManager;
         this.compositeDisposable = compositeDisposable;
         this.client = client;
         this.apiService = apiService;
+        this.context = context;
     }
 
     /**
@@ -90,16 +99,16 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     @Override
     public Fragment getItem(int i) {
         switch (i) {
-            // 0 is the camera and will be 1 as soon as the settings
-            // are added
             case 0:
+                return new SettingsFragment.Builder().createSettingsFragment();
+            case 1:
                 //Build the camera fragment with connection to the api
                 return new CameraFragment.Builder()
                         .setCompositeDisposable(compositeDisposable)
                         .setApiService(apiService)
                         .setClient(client)
                         .createCameraFragment();
-            case 1:
+            case 2:
                 return new GalleryFragment.Builder().createShowImagesFragment();
         }
         return null;
@@ -112,6 +121,6 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
      */
     @Override
     public int getCount() {
-        return 2;
+        return 3;
     }
 }

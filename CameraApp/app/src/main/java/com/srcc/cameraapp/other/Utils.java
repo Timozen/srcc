@@ -1,5 +1,7 @@
 package com.srcc.cameraapp.other;
 
+import android.app.Application;
+import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
@@ -8,7 +10,7 @@ import java.io.File;
 /**
  * This class collects all the useful functions we might need to use.
  */
-public class Utils {
+public class Utils extends Application {
 
     public static final String IMAGE_FOLDER_NAME = "srcc";
 
@@ -39,4 +41,6 @@ public class Utils {
         }
         return file;
     }
+
+
 }

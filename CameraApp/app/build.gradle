@@ -1,6 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.srcc.cameraapp"
@@ -51,4 +55,8 @@ dependencies {
 
     //app introduction screen
     implementation 'com.github.AppIntro:AppIntro:5.1.0'
+
+    //preference fragment
+    implementation 'androidx.preference:preference:1.0.0'
+    implementation 'com.github.addisonelliott:SegmentedButton:3.1.4'
 }
