@@ -156,8 +156,8 @@ def main():
 
                     # fifth step: append the metric for this image 
                     mse.append( metrics.MSE(test_pair[1], sr) )
-                    psnr.append( metrics.MSE(test_pair[1], sr) )
-                    ssim.append( metrics.MSE(test_pair[1], sr) )
+                    psnr.append( metrics.PSNR(test_pair[1], sr) )
+                    ssim.append( metrics.SSIM(test_pair[1], sr) )
                 except:
                     mse.append("err")
                     psnr.append("err")
