@@ -27,9 +27,9 @@ def load_images(file_name, path):
     return images
 
 
-def stitch_images(images, width, height, x_dim, y_dim):
-    total_width = width * x_dim
-    total_height = height * y_dim
+def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim):
+    #total_width = width * x_dim
+    #total_height = height * y_dim
 
     stitched_image = np.zeros((total_height, total_width, 3), dtype=np.uint8)
 
