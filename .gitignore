@@ -207,3 +207,12 @@ DSIDS/
 
 models/
 
+raw_data/
+DSIDS/
+*.pdf
+neural networks/srdense/*.txt
+
+# ingore the log folder for tensorboard
+logs
+models/
+>>>>>>> origin/ImageStitchingPrototype
