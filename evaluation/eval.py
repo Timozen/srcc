@@ -184,7 +184,56 @@ def main():
 
     
     if STITCHED:
-        pass
+        '''
+        Second calculating performance metrics on a stitched image
+        '''
+
+        tile_performance = {}
+        for i,mp in tqdm(enumerate(model_paths)):
+            # first step: load the model
+            model = load_model(mp, custom_objects=custom_objects[i])
+
+            mse = []
+            psnr = []
+            ssim = []
+            # second step: iterate over the test images
+            for test_pair in test_images:
+                # third step: tile the test image
+                lr_tiles = Utils.tile_image(test_pair[0], shape=tile_shapes[i][1])
+
+                sr_tiles = []
+                # fourth step: iterate over the tiles
+                for lr in lr_tiles:
+                    # fifth step: calculate the sr tiles
+                    if i > 1:
+                        sr_tiles.append( Utils.denormalize(np.squeeze(model.predict(np.expand_dims(rescale_imgs_to_neg1_1(lr), axis=0)), axis=0)) )
+                    else:
+                        sr_tiles.append( np.squeeze(model.predict(np.expand_dims(lr, axis=0))).astype(np.uint8) )
+
+                # sixth step: stitch the image
+                
+
+
+                # eigth step: append the mean metric for this image 
+                mse.append( np.mean(m) )
+                psnr.append( np.mean(p) )
+                ssim.append( np.mean(s) )
+                
+                # control
+                print(mse)
+                print(psnr)
+                print(ssim)
+
+            # ninth step: append the mean metric for this model
+            tile_performance[model_names[i]] = (np.mean(mse), np.mean(psnr), np.mean(ssim))
+
+        # final output
+        print("Performance on single tiles:")
+        f = open("tile_performance.txt", "w")
+        for key in tile_performance:
+            print(key+ ":   MSE = " + str(tile_performance[key][0]) + ", PSNR = " + str(tile_performance[key][1]) + ", SSIM = " + str(tile_performance[key][2]))
+            f.write(key+ ":   MSE = " + str(tile_performance[key][0]) + ", PSNR = " + str(tile_performance[key][1]) + ", SSIM = " + str(tile_performance[key][2]) + "\n")
+        f.close()
 
                 
   
