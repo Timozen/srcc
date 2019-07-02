@@ -1,26 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:minWidth="200dp"
+    android:minHeight="200dp">
+
+    <TextView
+        android:id="@+id/textView_backend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Backend"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.addisonelliott.segmentedbutton.SegmentedButtonGroup
         android:id="@+id/segmentedButtonGroup"
-        android:layout_width="match_parent"
+        android:layout_width="395dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:elevation="2dp"
         android:background="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:elevation="2dp"
         app:borderColor="@color/orange"
         app:borderWidth="0.5dp"
         app:draggable="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView_backend"
         app:radius="5dp"
         app:ripple="true"
         app:rippleColor="@color/orange"
@@ -28,32 +41,33 @@
         app:selectionAnimationDuration="300"
         app:selectionAnimationInterpolator="fastOutSlowIn">
 
+
         <com.addisonelliott.segmentedbutton.SegmentedButton
             android:id="@+id/button_srdense"
-            android:layout_width="0dp"
+            android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_weight="1"
+            app:selectedTextColor="@color/white"
             app:text="@string/srdense"
-            app:textStyle="bold"
-            app:selectedTextColor="@color/white" />
+            app:textStyle="bold" />
 
         <com.addisonelliott.segmentedbutton.SegmentedButton
             android:id="@+id/button_srgan"
-            android:layout_width="0dp"
+            android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_weight="1"
+            app:selectedTextColor="@color/white"
             app:text="@string/srgan"
-            app:textStyle="bold"
-            app:selectedTextColor="@color/white" />
+            app:textStyle="bold" />
 
         <com.addisonelliott.segmentedbutton.SegmentedButton
             android:id="@+id/button_srresnet"
-            android:layout_width="0dp"
+            android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_weight="1"
+            app:selectedTextColor="@color/white"
             app:text="@string/SRResNET"
-            app:textStyle="bold"
-            app:selectedTextColor="@color/white" />
+            app:textStyle="bold" />
 
     </com.addisonelliott.segmentedbutton.SegmentedButtonGroup>
 </androidx.constraintlayout.widget.ConstraintLayout>
