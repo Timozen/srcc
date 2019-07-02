@@ -33,35 +33,35 @@ public class IntroActivity extends AppIntro {
         welcomePage.setTitle("Welcome");
         welcomePage.setDescription("This app allows you to take camera pictures and those will quality will be improved.");
         welcomePage.setImageDrawable(R.drawable.ic_mood_black_128dp);
-        welcomePage.setBgColor(getColor(R.color.colorPrimary));
+        welcomePage.setBgColor(getColor(R.color.orange));
 
         //Camera Permission
         SliderPage cameraPage = new SliderPage();
         cameraPage.setTitle("Camera");
         cameraPage.setDescription("Because we'd like to take pictures, we need the permission of using the camera.");
         cameraPage.setImageDrawable(R.drawable.ic_photo_camera_black_128dp);
-        cameraPage.setBgColor(getColor(R.color.colorPrimary));
+        cameraPage.setBgColor(getColor(R.color.orange));
 
         //External Store Permission
         SliderPage storagePage = new SliderPage();
         storagePage.setTitle("Storage");
         storagePage.setDescription("The taken pictures and the improved pictures will be store on your phone. Therefore we need the storage permission.");
         storagePage.setImageDrawable(R.drawable.ic_storage_black_128dp);
-        storagePage.setBgColor(getColor(R.color.colorPrimary));
+        storagePage.setBgColor(getColor(R.color.orange));
 
         //Internet Permission
         SliderPage internetPage = new SliderPage();
         internetPage.setTitle("Internet");
         internetPage.setDescription("To create the improved pictures the app has to communicate with our server. Therefore we need to access the internet.");
         internetPage.setImageDrawable(R.drawable.ic_internet_black_128dp);
-        internetPage.setBgColor(getColor(R.color.colorPrimary));
+        internetPage.setBgColor(getColor(R.color.orange));
 
         //Usage
         SliderPage usagePage = new SliderPage();
         usagePage.setTitle("Usage");
         usagePage.setDescription("The main focus is the camera view. If you swipe to the left the settings will appear. Swiping to the right will show the taken pictures.");
         usagePage.setImageDrawable(R.drawable.ic_swipe_arrows_black_128dp);
-        usagePage.setBgColor(getColor(R.color.colorPrimary));
+        usagePage.setBgColor(getColor(R.color.orange));
 
 
         addSlide(AppIntroFragment.newInstance(welcomePage));
@@ -77,7 +77,7 @@ public class IntroActivity extends AppIntro {
 
         showSkipButton(false);
         showStatusBar(false);
-        setNavBarColor(R.color.colorPrimary);
+        setNavBarColor(R.color.orange);
 
     }
 
