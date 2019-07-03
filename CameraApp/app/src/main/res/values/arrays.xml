@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="Technology" >
+        <item>SRDense</item>
+        <item>SRGAN</item>
+    </string-array>
+    <integer-array name="TechnologyKey">
+        <item>1</item>
+        <item>2</item>
+    </integer-array>
+</resources>

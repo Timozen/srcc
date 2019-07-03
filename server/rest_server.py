@@ -39,9 +39,9 @@ class Home(Resource):
     This will just return the name of the api.
     """
 
-    def get(self):
+    def post(self):
         """
-        Return the GET-Response upon request.
+        Return the Post-Response upon request.
 
         This will just return the name 'srcc-rest-api'
         """
@@ -83,7 +83,6 @@ class SendImage(Resource):
             return "{'errorcode' : 'NOT_ALLOWED_IMAGE_FORMAT', 'field':'image', 'message':'Image format now allowed'}"
 
         # TODO add some logging maybe...
-
         # get the filename for saving it in the upload folder
         filename = secure_filename(image.filename)
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -99,8 +98,8 @@ class SendImage(Resource):
 
 
 # register the api call addresses
-api.add_resource(Home, '/')
+api.add_resource(Home, '/api/Home')
 api.add_resource(SendImage, '/api/SendImage')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")

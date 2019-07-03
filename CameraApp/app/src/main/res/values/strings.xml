@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">CameraApp</string>
+    <string name="request_permission">Permission</string>
+    <string name="camera_error">Camera Error</string>
+    <string name="srdense_key">use_srdense</string>
+    <string name="srgan_key">use_srgan</string>
+    <string name="srdense">SRDense</string>
+    <string name="srgan">SRGAN</string>
+    <string name="SRResNET">SRResNET</string>
+    <string name="srresnet_key">use_srresnet</string>
+    <string name="backend">Backend</string>
+    <string name="srdense_use_tiling">Use tiling</string>
+</resources>
