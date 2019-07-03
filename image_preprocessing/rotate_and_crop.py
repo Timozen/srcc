@@ -10,7 +10,7 @@ Example usage:
 
 rotates all images in the -d directory and clips too big images into the standard size.
 '''
-NEW_DIRECTORY = True
+NEW_DIRECTORY = False
 
 
 def parse_command_line_args():

@@ -195,6 +195,18 @@ lint/tmp/
 # image directories
 raw_images/
 
+DSIDS/
+
+*.h5
+
+neural\ networks/srgan/output/
+neural\ networks/srgan/output_init/
+
+raw_data/
+DSIDS/
+
+models/
+
 raw_data/
 DSIDS/
 *.pdf
@@ -202,5 +214,8 @@ neural networks/srdense/*.txt
 
 # ingore the log folder for tensorboard
 logs
+
 *.jpg
 *.h5
+models/
+>>>>>>> origin/ImageStitchingPrototype

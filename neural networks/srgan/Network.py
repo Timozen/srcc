@@ -14,7 +14,7 @@ C. Ledig et al., “Photo-Realistic Single Image Super-Resolution Using a Genera
 #python_version  :3.5.4 
 
 # Modules
-from keras.layers import Dense
+from keras.layers import Dense, Lambda
 from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import UpSampling2D
@@ -24,8 +24,10 @@ from keras.layers.convolutional import Conv2D, Conv2DTranspose
 from keras.models import Model
 from keras.layers.advanced_activations import LeakyReLU, PReLU
 from keras.layers import add
+import keras
 import math
-
+import Utils
+import tensorflow as tf
 
 # Residual block
 def res_block_gen(model, kernal_size, filters, strides):
@@ -49,8 +51,10 @@ def up_sampling_block(model, kernal_size, filters, strides):
     # In place of Conv2D and UpSampling2D we can also use Conv2DTranspose (Both are used for Deconvolution)
     # Even we can have our own function for deconvolution (i.e one made in Utils.py)
     #model = Conv2DTranspose(filters = filters, kernel_size = kernal_size, strides = strides, padding = "same")(model)
-    model = Conv2D(filters = filters, kernel_size = kernal_size, strides = strides, padding = "same")(model)
-    model = UpSampling2D(size = 2)(model)
+    #model = Conv2D(filters = filters, kernel_size = kernal_size, strides = strides, padding = "same")(model)
+    #model = UpSampling2D(size = (2,2))(model)
+    shape = keras.backend.shape(model)
+    model = Utils.SubpixelConv2D(shape, scale=2)(model)
     model = LeakyReLU(alpha = 0.2)(model)
     
     return model
@@ -123,7 +127,7 @@ class Discriminator(object):
         model = discriminator_block(model, 512, 3, 2)
         
         model = Flatten()(model)
-        model = Dense(1024)(model)
+        model = Dense(512)(model)
         model = LeakyReLU(alpha = 0.2)(model)
        
         model = Dense(1)(model)
