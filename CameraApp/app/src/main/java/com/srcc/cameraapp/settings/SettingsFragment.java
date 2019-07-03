@@ -17,15 +17,21 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.addisonelliott.segmentedbutton.SegmentedButtonGroup;
 import com.srcc.cameraapp.R;
 
+import org.w3c.dom.Text;
+
+import static androidx.core.content.res.ResourcesCompat.getColor;
+
 public class SettingsFragment extends Fragment implements View.OnClickListener {
 
     private static final String TAG = "SRCC_SETTIGNS";
-    private final int SRDENSE_TILE_SIZE = 44;
+    private final int SRDENSE_TILE_SIZE = 42;
+    private final int SRGAN_TILE_SIZE = 42;
 
     private SharedPreferences sharedPreferences;
 
@@ -62,41 +68,20 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         SegmentedButtonGroup segmentedButtonGroup = view.findViewById(R.id.segmentedButtonGroup);
         segmentedButtonGroup.setOnPositionChangedListener(position -> {
 
-            SharedPreferences.Editor editor = sharedPreferences.edit();
+            sharedPreferences.edit().putInt("backend", position).apply();
             switch (position) {
                 case 0:
-                    Log.i(TAG, "Clicked segment button " + srdense_key);
-                    editor.putBoolean(getString(R.string.srdense_key), true);
-                    editor.putBoolean(getString(R.string.srgan_key), false);
-                    editor.putBoolean(getString(R.string.srresnet_key), false);
                     loadSRDenseSettings();
                     break;
                 case 1:
-                    Log.i(TAG, "Clicked segment button " + srgan_key);
-                    editor.putBoolean(getString(R.string.srdense_key), false);
-                    editor.putBoolean(getString(R.string.srgan_key), true);
-                    editor.putBoolean(getString(R.string.srresnet_key), false);
-                    loadSRGANSettings();
-                    break;
-                case 2:
-                    Log.i(TAG, "Clicked segment button " + srresnet_key);
-                    editor.putBoolean(getString(R.string.srdense_key), false);
-                    editor.putBoolean(getString(R.string.srgan_key), false);
-                    editor.putBoolean(getString(R.string.srresnet_key), true);
                     loadSRResNetSettings();
                     break;
+                case 2:
+                    loadSRGANSettings();
+                    break;
             }
-            editor.apply();
         });
-
-        //activate the button which is currently active, should only be one...
-        if(sharedPreferences.getBoolean(srdense_key, true)){
-            segmentedButtonGroup.setPosition(0, false);
-        } else if(sharedPreferences.getBoolean(srgan_key, true)){
-            segmentedButtonGroup.setPosition(1, false);
-        } else if(sharedPreferences.getBoolean(srresnet_key, true)){
-            segmentedButtonGroup.setPosition(2, false);
-        }
+        segmentedButtonGroup.setPosition(sharedPreferences.getInt("backend", 0), false);
     }
 
     @Override
@@ -106,6 +91,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
     @SuppressLint("DefaultLocale")
     private void loadSRDenseSettings() {
+        //load the layout as a view
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View view = inflater.inflate(R.layout.settings_fragment_srdense, null, false);
         view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -113,22 +99,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         constraintLayout.addView(view);
 
         //set the switch to the settings value
-        Switch use_tiling = view.findViewById(R.id.switch1);
+        //Switch use_tiling = view.findViewById(R.id.switch1);
         TextView seekbar_value = view.findViewById(R.id.textView_seekbar_value);
         SeekBar seekBar = view.findViewById(R.id.seekBar);
-
-
-        use_tiling.setChecked(sharedPreferences.getBoolean("srdense_use_tiling", true));
-        use_tiling.setOnClickListener(v -> {
-            sharedPreferences.edit().putBoolean("srdense_use_tiling", use_tiling.isChecked()).apply();
-            seekBar.setEnabled(use_tiling.isChecked());
-        });
-
-        seekBar.setEnabled(use_tiling.isChecked());
+        SegmentedButtonGroup stitchingStyle = view.findViewById(R.id.srdense_button_group_stitching);
 
         //set the current saved tile size
         int seekbar_saved_value = sharedPreferences.getInt("srdense_tiling_size", 0);
-        seekbar_value.setText(String.format("%d", (seekbar_saved_value + 1 )* SRDENSE_TILE_SIZE));
+        seekbar_value.setText(String.format("%d", (seekbar_saved_value + 1 ) * SRDENSE_TILE_SIZE));
         seekBar.setProgress(seekbar_saved_value);
 
 
@@ -150,17 +128,248 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
             }
         });
+
+        stitchingStyle.setOnPositionChangedListener(position -> {
+            sharedPreferences.edit().putInt("srdense_stitch_style", position).apply();
+        });
+
+        stitchingStyle.setPosition(sharedPreferences.getInt("srdense_stitch_style", 0), false);
     }
+    @SuppressLint("DefaultLocale")
     private void loadSRGANSettings(){
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View view = inflater.inflate(R.layout.settings_fragment_srgan, null);
+        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         constraintLayout.removeAllViews();
         constraintLayout.addView(view);
+
+
+        Switch tilingSwitch = view.findViewById(R.id.srgan_tiling_switch);
+        SeekBar tilingSize = view.findViewById(R.id.srgan_seekBar);
+        TextView tilingSizeValue = view.findViewById(R.id.textView_srgan_seekbar_value);
+        SegmentedButtonGroup stitchingStyle = view.findViewById(R.id.srgan_button_group_stitching);
+        Switch initSwitch = view.findViewById(R.id.srgan_init_switch);
+        TextView textViewTilingSize = view.findViewById(R.id.textView_srgan_tiling_size);
+        TextView textViewSwitchingStyle = view.findViewById(R.id.textView_srgan_switching_style);
+
+
+        initSwitch.setChecked(sharedPreferences.getBoolean("srgan_use_init", true));
+        initSwitch.setOnClickListener(v -> {
+            sharedPreferences.edit().putBoolean("srgan_use_init", initSwitch.isChecked()).apply();
+        });
+
+
+        tilingSwitch.setChecked(sharedPreferences.getBoolean("srgan_use_tiling", true));
+        tilingSwitch.setOnClickListener(view1 -> {
+            sharedPreferences.edit().putBoolean("srgan_use_tiling", tilingSwitch.isChecked()).apply();
+            tilingSize.setEnabled(tilingSwitch.isChecked());
+            stitchingStyle.setEnabled(tilingSwitch.isChecked());
+
+            if(tilingSwitch.isChecked()){
+                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+                textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+                tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+
+                stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                        ContextCompat.getColor(getContext(), R.color.orange),
+                        stitchingStyle.getBorderDashWidth(),
+                        stitchingStyle.getBorderDashGap());
+
+
+                stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
+            } else {
+                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+                stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                        ContextCompat.getColor(getContext(), R.color.grey_500),
+                        stitchingStyle.getBorderDashWidth(),
+                        stitchingStyle.getBorderDashGap());
+                stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+
+            }
+
+        });
+
+        sharedPreferences.edit().putBoolean("srgan_use_tiling", tilingSwitch.isChecked()).apply();
+        tilingSize.setEnabled(tilingSwitch.isChecked());
+        stitchingStyle.setEnabled(tilingSwitch.isChecked());
+
+        if(tilingSwitch.isChecked()){
+            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+            textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+            tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+
+            stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                    ContextCompat.getColor(getContext(), R.color.orange),
+                    stitchingStyle.getBorderDashWidth(),
+                    stitchingStyle.getBorderDashGap());
+
+
+            stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
+        } else {
+            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+            textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+            tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+            stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                    ContextCompat.getColor(getContext(), R.color.grey_500),
+                    stitchingStyle.getBorderDashWidth(),
+                    stitchingStyle.getBorderDashGap());
+            stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+
+        }
+
+
+
+        int seekbar_saved_value = sharedPreferences.getInt("srgan_tiling_size", 0);
+        tilingSizeValue.setText(String.format("%d", (seekbar_saved_value + 1 ) * SRGAN_TILE_SIZE));
+        tilingSize.setProgress(seekbar_saved_value);
+
+
+        tilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @SuppressLint("DefaultLocale")
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                sharedPreferences.edit().putInt("srgan_tiling_size", progress).apply();
+                tilingSizeValue.setText(String.format("%d", (progress + 1)* SRGAN_TILE_SIZE));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+
+        stitchingStyle.setOnPositionChangedListener(position -> {
+            sharedPreferences.edit().putInt("srgan_stitch_style", position).apply();
+        });
+
+        stitchingStyle.setPosition(sharedPreferences.getInt("srgan_stitch_style", 0), false);
+
+
     }
     private void loadSRResNetSettings(){
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View view = inflater.inflate(R.layout.settings_fragment_srresnet, null);
+        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         constraintLayout.removeAllViews();
         constraintLayout.addView(view);
+
+
+        Switch tilingSwitch = view.findViewById(R.id.srresnet_tiling_switch);
+        SeekBar tilingSize = view.findViewById(R.id.srresnet_seekBar);
+        TextView tilingSizeValue = view.findViewById(R.id.textView_srresnet_seekbar_value);
+        SegmentedButtonGroup stitchingStyle = view.findViewById(R.id.srresnet_button_group_stitching);
+
+        TextView textViewTilingSize = view.findViewById(R.id.textView_srresnet_tiling_size);
+        TextView textViewSwitchingStyle = view.findViewById(R.id.textView_srresnet_switching_style);
+
+
+        tilingSwitch.setChecked(sharedPreferences.getBoolean("srresnet_use_tiling", true));
+        tilingSwitch.setOnClickListener(view1 -> {
+            sharedPreferences.edit().putBoolean("srresnet_use_tiling", tilingSwitch.isChecked()).apply();
+            tilingSize.setEnabled(tilingSwitch.isChecked());
+            stitchingStyle.setEnabled(tilingSwitch.isChecked());
+
+            if(tilingSwitch.isChecked()){
+                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+                textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+                tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+
+                stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                        ContextCompat.getColor(getContext(), R.color.orange),
+                        stitchingStyle.getBorderDashWidth(),
+                        stitchingStyle.getBorderDashGap());
+
+
+                stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
+            } else {
+                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+                stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                        ContextCompat.getColor(getContext(), R.color.grey_500),
+                        stitchingStyle.getBorderDashWidth(),
+                        stitchingStyle.getBorderDashGap());
+                stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+
+            }
+
+        });
+
+        sharedPreferences.edit().putBoolean("srresnet_use_tiling", tilingSwitch.isChecked()).apply();
+        tilingSize.setEnabled(tilingSwitch.isChecked());
+        stitchingStyle.setEnabled(tilingSwitch.isChecked());
+
+        if(tilingSwitch.isChecked()){
+            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+            textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+            tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+
+            stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                    ContextCompat.getColor(getContext(), R.color.orange),
+                    stitchingStyle.getBorderDashWidth(),
+                    stitchingStyle.getBorderDashGap());
+
+
+            stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
+        } else {
+            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+            textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+            tilingSizeValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+            stitchingStyle.setBorder(stitchingStyle.getBorderWidth(),
+                    ContextCompat.getColor(getContext(), R.color.grey_500),
+                    stitchingStyle.getBorderDashWidth(),
+                    stitchingStyle.getBorderDashGap());
+            stitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
+
+
+        }
+
+
+
+        int seekbar_saved_value = sharedPreferences.getInt("srresnet_tiling_size", 0);
+        tilingSizeValue.setText(String.format("%d", (seekbar_saved_value + 1 ) * SRGAN_TILE_SIZE));
+        tilingSize.setProgress(seekbar_saved_value);
+
+
+        tilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @SuppressLint("DefaultLocale")
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                sharedPreferences.edit().putInt("srresnet_tiling_size", progress).apply();
+                tilingSizeValue.setText(String.format("%d", (progress + 1)* SRGAN_TILE_SIZE));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+
+        stitchingStyle.setOnPositionChangedListener(position -> {
+            sharedPreferences.edit().putInt("srresnet_stitch_style", position).apply();
+        });
+
+        stitchingStyle.setPosition(sharedPreferences.getInt("srresnet_stitch_style", 0), false);
     }
 }

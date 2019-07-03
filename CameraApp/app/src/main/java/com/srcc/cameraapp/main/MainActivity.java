@@ -37,11 +37,11 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (sp.getBoolean("firstStart", true)) {
             Log.i(TAG, "App first start");
-            SharedPreferences.Editor editor = sp.edit();
+/*            SharedPreferences.Editor editor = sp.edit();
             editor.putBoolean(getString(R.string.srdense_key), true);
             editor.putBoolean(getString(R.string.srgan_key), false);
             editor.putBoolean(getString(R.string.srresnet_key), false);
-            editor.apply();
+            editor.apply();*/
 
             Intent intent = new Intent(MainActivity.this, IntroActivity.class);
             startActivityForResult(intent, 1);
@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
             viewPager.setAdapter(vpa);
             //set the starting page to the camera, currently on frame == 0
-            viewPager.setCurrentItem(1);
+            viewPager.setCurrentItem(0);
         }
     }
 

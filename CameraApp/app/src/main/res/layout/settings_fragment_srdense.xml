@@ -8,17 +8,6 @@
     android:orientation="vertical"
     >
 
-    <Switch
-        android:id="@+id/switch1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/srdense_use_tiling"
-        android:textSize="24sp"
-        android:theme="@style/Preference.Switch"
-        tools:checked="true"
-        android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"/>
-
     <TextView
         android:id="@+id/textView"
         android:layout_width="match_parent"
@@ -27,7 +16,9 @@
         android:layout_marginBottom="10dp"
         android:text="Tiling Size"
         android:textColor="#000000"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/linearLayout"
@@ -63,6 +54,66 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stitching Style"
+        android:textSize="24sp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:textColor="#000000"
+        />
+
+    <com.addisonelliott.segmentedbutton.SegmentedButtonGroup
+        android:id="@+id/srdense_button_group_stitching"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="@color/white"
+        android:elevation="2dp"
+        app:borderColor="@color/orange"
+        app:borderWidth="0.5dp"
+        app:draggable="true"
+        app:radius="5dp"
+        app:ripple="true"
+        app:rippleColor="@color/orange"
+        app:selectedBackground="@color/orange"
+        app:selectionAnimationDuration="300"
+        app:selectionAnimationInterpolator="fastOutSlowIn"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp">
+
+        <com.addisonelliott.segmentedbutton.SegmentedButton
+            android:id="@+id/seg1"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            app:selectedTextColor="@color/white"
+            app:text="Simple"
+            app:textStyle="bold" />
+
+        <com.addisonelliott.segmentedbutton.SegmentedButton
+            android:id="@+id/seg2"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            app:selectedTextColor="@color/white"
+            app:text="Advanced"
+            app:textStyle="bold" />
+
+        <com.addisonelliott.segmentedbutton.SegmentedButton
+            android:id="@+id/seg3"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            app:selectedTextColor="@color/white"
+            app:text="Advanced HSV"
+            app:textStyle="bold" />
+
+    </com.addisonelliott.segmentedbutton.SegmentedButtonGroup>
 
 </LinearLayout>

@@ -52,21 +52,21 @@
             app:textStyle="bold" />
 
         <com.addisonelliott.segmentedbutton.SegmentedButton
-            android:id="@+id/button_srgan"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            app:selectedTextColor="@color/white"
-            app:text="@string/srgan"
-            app:textStyle="bold" />
-
-        <com.addisonelliott.segmentedbutton.SegmentedButton
             android:id="@+id/button_srresnet"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_weight="1"
             app:selectedTextColor="@color/white"
             app:text="@string/SRResNET"
+            app:textStyle="bold" />
+
+        <com.addisonelliott.segmentedbutton.SegmentedButton
+            android:id="@+id/button_srgan"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            app:selectedTextColor="@color/white"
+            app:text="@string/srgan"
             app:textStyle="bold" />
 
     </com.addisonelliott.segmentedbutton.SegmentedButtonGroup>
