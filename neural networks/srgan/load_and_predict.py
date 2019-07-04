@@ -22,20 +22,20 @@ import matplotlib.pyplot as plt
 
 
 image_shape = (336, 336, 3)
-input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR', 'tiles_'+str(image_shape[0])),
-                  os.path.join('..', '..', 'DSIDS', 'LR', 'tiles_'+str(image_shape[0]) ,'4x_cubic')]
+#input_dirs = [os.path.join('..', '..', 'DSIDS', 'HR', 'tiles_'+str(image_shape[0])),
+#                 os.path.join('..', '..', 'DSIDS', 'LR', 'tiles_'+str(image_shape[0]) ,'4x_cubic')]
 
-test_images = []
-for img in sorted(os.listdir(os.path.join(input_dirs[1], 'ignore'))):
-    if 'niklas_city_0009' in img:
-        test_images.append(rescale_imgs_to_neg1_1(cv2.imread(os.path.join(input_dirs[1], 'ignore', img))))
+#test_images = []
+#for img in sorted(os.listdir(os.path.join(input_dirs[1], 'ignore'))):
+#    if 'niklas_city_0009' in img:
+#        test_images.append(rescale_imgs_to_neg1_1(cv2.imread(os.path.join(input_dirs[1], 'ignore', img))))
             
-test = rescale_imgs_to_neg1_1(cv2.imread(os.path.join('..', '..', 'DSIDS' ,'LR', '4x_cubic', 'niklas_landscape_0001.jpg'),cv2.IMREAD_COLOR))
+test = rescale_imgs_to_neg1_1(cv2.cvtColor(cv2.imread(os.path.join('..', '..', 'DSIDS' ,'LR', '4x_cubic', 'niklas_city_0009.jpg'),cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB))
 #test = rescale_imgs_to_neg1_1(cv2.imread("1008.jpg",cv2.IMREAD_COLOR))
 
 tile_list = Utils_images.crop_lr_image(test, hr_shape=(336,336), overlap=True)
 
-model = load_model(os.path.join("model", "gen_model40.h5"), custom_objects={"tf": tf})
+model = load_model(os.path.join("model", "gen_model90.h5"), custom_objects={"tf": tf})
 model.summary()
 model.layers.pop(0)
 
@@ -45,7 +45,7 @@ _out = model(_in)
 
 _model = Model(_in, _out)
 
-test_ = Utils.denormalize(np.squeeze(_model.predict(np.expand_dims(test, axis=0)), axis=0))
+test_ = cv2.cvtColor(Utils.denormalize(np.squeeze(_model.predict(np.expand_dims(test, axis=0)), axis=0)), cv2.COLOR_RGB2BGR)
 cv2.imwrite(os.path.join("test.jpg"), test_)
 
 

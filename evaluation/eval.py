@@ -12,7 +12,7 @@ from keras.models import Model
 from keras.layers import Input
 import ImageStitching
 
-TILES = True
+TILES = False
 WHOLE_LR = True
 STITCHED = True
 
@@ -32,7 +32,7 @@ def main():
                    "SRGAN github confg after 5 epochs",
                    "SRGAN github confg after 90 epochs",
                    "SRResnet after 50 epochs",
-                   "SRGAN paper config after 20 epochs"]
+                   "10 epoch SRResnet initialized SRGAN after 20 epochs"]
     
     # corresponding tile shapes
     tile_shapes = [((168, 168), (42, 42)),

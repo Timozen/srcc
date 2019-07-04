@@ -89,24 +89,27 @@ def remove_raster(image, width, height, x_dim, y_dim):
     return ret.astype(np.uint8)
 
 
-def predict_images(model_path, images):
+def predict_images(model_path, images, color=0):
     model = load_model(model_path, custom_objects={"tf": tf})
     
     preds = []
     for img in images:
-        preds.append(Utils.denormalize(np.squeeze(model.predict(np.expand_dims(data_generator.rescale_imgs(img, -1, 1), axis=0)), axis=0)))
+        if color == 0:
+            preds.append(Utils.denormalize(np.squeeze(model.predict(np.expand_dims(data_generator.rescale_imgs(img, -1, 1), axis=0)), axis=0)))
+        else:
+            preds.append(cv2.cvtColor(Utils.denormalize(np.squeeze(model.predict(np.expand_dims(data_generator.rescale_imgs(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), -1, 1), axis=0)), axis=0)), cv2.COLOR_RGB2BGR))
         
     return preds
 
 
 def main():
-    image_shape = (336, 336)
-    image = "niklas_city_0049_"
+    image_shape = (504, 504)
+    image = "niklas_city_0009_"
     
     path_lr = os.path.join('..', '..', 'DSIDS', 'LR', 'tiles_'+str(image_shape[0]) ,'4x_cubic', 'ignore')
     path_hr = os.path.join('..', '..', 'DSIDS', 'HR', 'tiles_'+str(image_shape[0]), 'ignore')
                            
-    preds = predict_images(os.path.join("model", "gen_model25.h5"), load_images(image, path_lr))
+    preds = predict_images(os.path.join("model", "initialized_gen_model20.h5"), load_images(image, path_lr), color=1)
     lrs = load_images(image, path_lr)
     hrs = load_images(image, path_hr)
     
