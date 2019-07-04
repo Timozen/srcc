@@ -39,7 +39,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int position) {
         //inflate the element layout to the root
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.image_cell, viewGroup, false);
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.gallery_item_view, viewGroup, false);
         ViewHolder vh = new ViewHolder(view);
         //set the onclick listener so we can handle clicks
         view.setOnClickListener(vh);
@@ -54,9 +54,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
      */
     @Override
     public void onBindViewHolder(@NonNull GalleryAdapter.ViewHolder viewHolder, int position) {
-        //load the image Uri from our MediaStore (should be descending order)
+        //load the imageView_gallery_item_image Uri from our MediaStore (should be descending order)
         Uri imageUri = getUriFromMediaStore(position);
-        //Use Glide to load the image and cache them in to the according image view
+        //Use Glide to load the imageView_gallery_item_image and cache them in to the according imageView_gallery_item_image view
         Glide.with(activity).load(imageUri).centerCrop().into(viewHolder.getImageView());
         //attach the data
         viewHolder.setUri(imageUri);
@@ -129,18 +129,18 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
      * This class will hold the information of our elements in the recycler view
      */
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView mTitle;
-        private ImageView mImageView;
+        private TextView textViewTitle;
+        private ImageView imageViewThumbnail;
         private Uri mUri;
 
         ViewHolder(View view) {
             super(view);
-            mTitle = view.findViewById(R.id.title);
-            mImageView = view.findViewById(R.id.image);
+            textViewTitle = view.findViewById(R.id.textView_image_title);
+            imageViewThumbnail = view.findViewById(R.id.imageView_gallery_item_image);
         }
 
         ImageView getImageView() {
-            return mImageView;
+            return imageViewThumbnail;
         }
 
         void setUri(Uri mUri) {
@@ -155,7 +155,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         void setTitle(String title) {
             String temp = title.split("\\.")[0];
             String[] temp2 = temp.split("\\/");
-            mTitle.setText(temp2[temp2.length - 1]);
+            textViewTitle.setText(temp2[temp2.length - 1]);
         }
 
         /**
@@ -167,7 +167,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         @Override
         public void onClick(View v) {
 
-            //Start a new GallerySingleImageActivity and give the Uri of the clicked image
+            //Start a new GallerySingleImageActivity and give the Uri of the clicked imageView_gallery_item_image
             Intent intent = new Intent(activity, GallerySingleImageActivity.class);
             intent.putExtra("Uri", mUri.toString());
             activity.startActivity(intent);

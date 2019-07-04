@@ -12,7 +12,7 @@ import com.ortiz.touchview.TouchImageView;
 import com.srcc.cameraapp.R;
 
 /**
- * This activity will display the image in full screen
+ * This activity will display the imageView_gallery_item_image in full screen
  */
 public class GallerySingleImageActivity extends Activity {
 
@@ -30,7 +30,7 @@ public class GallerySingleImageActivity extends Activity {
         Intent intent = getIntent();
         Uri imageUri = Uri.parse(intent.getStringExtra("Uri"));
 
-        //Load the image into the view
+        //Load the imageView_gallery_item_image into the view
         TouchImageView imageView = findViewById(R.id.bigimage);
         imageView.setMaxZoom(8);
         //just glide for fast loading and caching

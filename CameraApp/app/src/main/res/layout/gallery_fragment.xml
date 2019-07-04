@@ -16,6 +16,6 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:itemCount="8"
         tools:layoutManager="GridLayoutManager"
-        tools:listitem="@layout/image_cell"
+        tools:listitem="@layout/gallery_item_view"
         tools:spanCount="5" />
 </androidx.constraintlayout.widget.ConstraintLayout>

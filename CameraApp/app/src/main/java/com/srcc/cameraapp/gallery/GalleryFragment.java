@@ -47,7 +47,7 @@ public class GalleryFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //inflate the layout, but don't attach it to the root
-        return inflater.inflate(R.layout.show_images_fragment, container, false);
+        return inflater.inflate(R.layout.gallery_fragment, container, false);
     }
 
 

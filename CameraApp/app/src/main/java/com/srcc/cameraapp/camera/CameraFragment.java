@@ -279,7 +279,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     // this will show in the texture if the the TextureView is not available
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         /**
-         * If we create our texture view we want to display our camera image
+         * If we create our texture view we want to display our camera imageView_gallery_item_image
          * @param surface our texture view
          * @param width of it
          * @param height of it
@@ -311,7 +311,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     };
 
     /**
-     * Callback for what we do if our image is ready for saving from the preview
+     * Callback for what we do if our imageView_gallery_item_image is ready for saving from the preview
      */
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
 
