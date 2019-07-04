@@ -8,7 +8,7 @@
     <Switch
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/srgan_init_switch"
+        android:id="@+id/switch_srgan_init"
         android:theme="@style/Preference.Switch"
         android:text="Use initialisation"
         android:textSize="24sp"
@@ -19,7 +19,7 @@
     <Switch
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/srgan_tiling_switch"
+        android:id="@+id/switch_srgan_use_tiling"
         android:theme="@style/Preference.Switch"
         android:text="Use tiling"
         android:textSize="24sp"
@@ -45,7 +45,7 @@
         android:layout_height="wrap_content">
 
         <SeekBar
-            android:id="@+id/srgan_seekBar"
+            android:id="@+id/seekBar_srgan"
             android:layout_width="0dp"
             android:layout_height="17dp"
             android:layout_marginStart="8dp"
@@ -57,12 +57,12 @@
             android:progress="0"
             android:theme="@style/Preference.SeekBar"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/textView_srgan_seekbar_value"
+            app:layout_constraintEnd_toStartOf="@+id/textView_srgan_seekbar_progress"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView_srgan_seekbar_value"
+            android:id="@+id/textView_srgan_seekbar_progress"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -88,7 +88,7 @@
         />
 
     <com.addisonelliott.segmentedbutton.SegmentedButtonGroup
-        android:id="@+id/srgan_button_group_stitching"
+        android:id="@+id/segmentedButtonGroup_srgan_stitching_style"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"

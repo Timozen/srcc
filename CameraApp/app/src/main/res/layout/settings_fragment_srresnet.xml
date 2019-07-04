@@ -46,12 +46,12 @@
             android:progress="0"
             android:theme="@style/Preference.SeekBar"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/textView_srresnet_seekbar_value"
+            app:layout_constraintEnd_toStartOf="@+id/textView_srresnet_seekbar_progress"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView_srresnet_seekbar_value"
+            android:id="@+id/textView_srresnet_seekbar_progress"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -66,7 +66,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
-        android:id="@+id/textView_srresnet_switching_style"
+        android:id="@+id/textView_srresnet_stitching_style"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Stitching Style"
