@@ -15,17 +15,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.snackbar.Snackbar;
 import com.srcc.cameraapp.R;
+import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.other.Utils;
+
+import java.io.File;
+
+import io.reactivex.disposables.CompositeDisposable;
 
 
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder> {
     private Activity activity;
     private Cursor galleryCursor;
+    private final CompositeDisposable compositeDisposable;
+    private final ApiService mApiConnection;
 
-    GalleryAdapter(final Activity activity) {
+
+    GalleryAdapter(final Activity activity, final CompositeDisposable compositeDisposable, final ApiService apiService) {
         this.activity = activity;
+        this.mApiConnection = apiService;
+        this.compositeDisposable = compositeDisposable;
     }
 
     /**
@@ -44,6 +57,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         ViewHolder vh = new ViewHolder(view);
         //set the onclick listener so we can handle clicks
         view.setOnClickListener(vh);
+        view.setOnLongClickListener(vh);
         return vh;
     }
 
@@ -129,10 +143,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     /**
      * This class will hold the information of our elements in the recycler view
      */
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener{
         private TextView textViewTitle;
         private ImageView imageViewThumbnail;
         private Uri mUri;
+        private String title;
 
         ViewHolder(View view) {
             super(view);
@@ -156,7 +171,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         void setTitle(String title) {
             String temp = title.split("\\.")[0];
             String[] temp2 = temp.split("\\/");
-            textViewTitle.setText(temp2[temp2.length - 1]);
+            this.title = temp2[temp2.length - 1];
+            textViewTitle.setText(this.title);
         }
 
         /**
@@ -172,6 +188,20 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             Intent intent = new Intent(activity, GallerySingleImageActivity.class);
             intent.putExtra("Uri", mUri.toString());
             activity.startActivity(intent);
+        }
+
+
+        @Override
+        public boolean onLongClick(View v) {
+
+            Snackbar snackbar = Snackbar.make(v, "Create SR Version of image?", Snackbar.LENGTH_LONG);
+            snackbar.setAction("CREATE", v1 -> {
+                File f = new File(mUri.getPath());
+                Utils.sendImage(mApiConnection, f, compositeDisposable, this.title.split("_")[0], activity.getApplicationContext());
+            });
+            snackbar.show();
+
+            return true;
         }
     }
 }

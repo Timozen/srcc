@@ -17,23 +17,49 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.srcc.cameraapp.R;
+import com.srcc.cameraapp.api.ApiService;
 
 import java.util.Objects;
 
+import io.reactivex.disposables.CompositeDisposable;
+import retrofit2.Retrofit;
+
 public class GalleryFragment extends Fragment {
+
+    //api variables
+    private final CompositeDisposable compositeDisposable;
+    private final ApiService mApiConnection;
 
     /**
      * Builder pattern (not necessary but for consistency)
      */
     public static class Builder {
-        public GalleryFragment createShowImagesFragment() {
-            return new GalleryFragment();
+        private CompositeDisposable compositeDisposable;
+        private ApiService mApiConnection;
+
+        public Builder setCompositeDisposable(CompositeDisposable compositeDisposable) {
+            this.compositeDisposable = compositeDisposable;
+            return this;
+        }
+
+        public Builder setmApiConnection(ApiService mApiConnection) {
+            this.mApiConnection = mApiConnection;
+            return this;
+        }
+
+        public GalleryFragment createGalleryFragment() {
+            return new GalleryFragment(compositeDisposable, mApiConnection);
         }
     }
+
 
     private static final String TAG = "SRCC_SHOW_IMAGES";
     private GalleryAdapter myAdapter;
 
+    private GalleryFragment(CompositeDisposable compositeDisposable, ApiService mApiConnection) {
+        this.compositeDisposable = compositeDisposable;
+        this.mApiConnection = mApiConnection;
+    }
 
     /**
      * This function is called when the fragment is created. Here we just inflate
@@ -71,7 +97,7 @@ public class GalleryFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         //Load our gallery adapter to display the data after our rules
-        myAdapter = new GalleryAdapter(getActivity());
+        myAdapter = new GalleryAdapter(getActivity(), compositeDisposable, mApiConnection);
         recyclerView.setAdapter(myAdapter);
 
         //load the data into the cursor

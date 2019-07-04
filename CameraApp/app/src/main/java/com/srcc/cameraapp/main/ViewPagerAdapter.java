@@ -109,7 +109,10 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
                         .setClient(client)
                         .createCameraFragment();
             case 2:
-                return new GalleryFragment.Builder().createShowImagesFragment();
+                return new GalleryFragment.Builder()
+                        .setCompositeDisposable(compositeDisposable)
+                        .setmApiConnection(apiService)
+                        .createGalleryFragment();
         }
         return null;
     }
