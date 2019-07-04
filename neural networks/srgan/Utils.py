@@ -22,6 +22,7 @@ from numpy.random import randint
 from scipy.misc import imresize
 import os
 import sys
+import cv2
 
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
@@ -155,7 +156,14 @@ def load_test_data(directory, ext, number_of_images = 100):
     x_test_lr = normalize(x_test_lr)
     
     return x_test_lr
+
+def generate_test_image(output_dir, epoch, generator, image_tiles):
+    for i,tile in enumerate(image_tiles):
+        cv2.imwrite(os.path.join(output_dir, f"img_{epoch:04d}_{i:04d}.jpg"), denormalize(np.squeeze(generator.predict(np.expand_dims(tile, axis=0)), axis=0)))
+
+
     
+
 # While training save generated image(in form LR, SR, HR)
 # Save only one image as sample  
 def plot_generated_images(output_dir, epoch, generator, x_test_hr, x_test_lr , dim=(1, 3), figsize=(15, 5)):

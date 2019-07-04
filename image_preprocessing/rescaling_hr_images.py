@@ -11,6 +11,9 @@ DOWN_SCALING_FACTOR = 4
 # area vs cubic vs linear vs nearest vs lanczos
 INTERPOLATION = 'cubic'
 
+#shape = (504, 504) #tiles
+shape = (3024,4032)
+
 
 # using correct constant for the given INTERPOLATION
 if INTERPOLATION == 'area':
@@ -34,11 +37,16 @@ def main():
 
     # change into the srcc directory
     os.chdir('..')
+    
+    ''' #tiles
     # path to the HR images
-    src = os.path.join(os.getcwd(), 'DSIDS', 'HR', 'tiles', 'ignore')
+    src = os.path.join(os.getcwd(), 'DSIDS', 'HR', 'tiles_'+str(shape[0]), 'ignore')
     # path to the destination folder
-    dst = os.path.join(os.getcwd(), 'DSIDS', 'LR', 'tiles',
-                       str(DOWN_SCALING_FACTOR)+'x_'+INTERPOLATION, 'ignore')
+    dst = os.path.join(os.getcwd(), 'DSIDS', 'LR', 'tiles_'+str(shape[0]),
+                       str(DOWN_SCALING_FACTOR)+'x_'+INTERPOLATION, 'ignore')'''
+    
+    src = os.path.join(os.getcwd(), 'DSIDS', 'HR')
+    dst = os.path.join(os.getcwd(), 'DSIDS', 'LR', str(DOWN_SCALING_FACTOR)+'x_'+INTERPOLATION)
 
     # create the destination directory if necessary
     if not os.path.isdir(dst):
@@ -55,7 +63,7 @@ def main():
         lr = cv2.resize(hr, (0, 0),
                         fx=1/DOWN_SCALING_FACTOR,
                         fy=1/DOWN_SCALING_FACTOR,
-                        interpolation=cv2.INTER_CUBIC)
+                        interpolation=inter)
         # save the resized image
         cv2.imwrite(os.path.join(dst, img), lr)
 
