@@ -558,7 +558,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
         if(requestCode == REQUEST_CAMERA_PERMISSION){
             if(grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED){
-                ErrorDialog.newInstance(getString(R.string.request_permission)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
+                ErrorDialog.newInstance(getString(R.string.request_permission_text)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -822,7 +822,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
-            ErrorDialog.newInstance(getString(R.string.camera_error)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
+            ErrorDialog.newInstance(getString(R.string.error_text_camera)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
         }
     }
 
@@ -906,7 +906,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Fragment parent = getParentFragment();
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.request_permission)
+                    .setMessage(R.string.request_permission_text)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -974,7 +974,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Fragment parent = getParentFragment();
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.request_permission)
+                    .setMessage(R.string.request_permission_text)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {

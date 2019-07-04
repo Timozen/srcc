@@ -6,7 +6,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -32,46 +31,44 @@ public class IntroActivity extends AppIntro {
 
         //Initial welcome page
         SliderPage welcomePage = new SliderPage();
-        welcomePage.setTitle("Welcome");
-        welcomePage.setDescription("This app allows you to take camera pictures and those will quality will be improved.");
+        welcomePage.setTitle(getString(R.string.intro_welcome_title));
+        welcomePage.setDescription(getString(R.string.intro_welcome_description));
         welcomePage.setImageDrawable(R.drawable.ic_mood_black_128dp);
         welcomePage.setBgColor(color);
 
         //Camera Permission
         SliderPage cameraPage = new SliderPage();
-        cameraPage.setTitle("Camera");
-        cameraPage.setDescription("Because we'd like to take pictures, we need the permission of using the camera.");
+        cameraPage.setTitle(getString(R.string.intro_camera_title));
+        cameraPage.setDescription(getString(R.string.intro_camera_description));
         cameraPage.setImageDrawable(R.drawable.ic_photo_camera_black_128dp);
         cameraPage.setBgColor(color);
 
         //External Store Permission
         SliderPage storagePage = new SliderPage();
-        storagePage.setTitle("Storage");
-        storagePage.setDescription("The taken pictures and the improved pictures will be store on your phone. Therefore we need the storage permission.");
+        storagePage.setTitle(getString(R.string.intro_storage_title));
+        storagePage.setDescription(getString(R.string.intro_storage_description));
         storagePage.setImageDrawable(R.drawable.ic_storage_black_128dp);
         storagePage.setBgColor(color);
 
         //Internet Permission
         SliderPage internetPage = new SliderPage();
-        internetPage.setTitle("Internet");
-        internetPage.setDescription("To create the improved pictures the app has to communicate with our server. Therefore we need to access the internet.");
+        internetPage.setTitle(getString(R.string.intro_internet_title));
+        internetPage.setDescription(getString(R.string.intro_internet_description));
         internetPage.setImageDrawable(R.drawable.ic_internet_black_128dp);
         internetPage.setBgColor(color);
 
         //Usage
         SliderPage usagePage = new SliderPage();
-        usagePage.setTitle("Usage");
-        usagePage.setDescription("The main focus is the camera view. If you swipe to the left the settings will appear. Swiping to the right will show the taken pictures.");
+        usagePage.setTitle(getString(R.string.intro_usage_title));
+        usagePage.setDescription(getString(R.string.intro_usage_description));
         usagePage.setImageDrawable(R.drawable.ic_swipe_arrows_black_128dp);
         usagePage.setBgColor(color);
-
 
         addSlide(AppIntroFragment.newInstance(welcomePage));
         addSlide(AppIntroFragment.newInstance(cameraPage));
         addSlide(AppIntroFragment.newInstance(storagePage));
         addSlide(AppIntroFragment.newInstance(internetPage));
         addSlide(AppIntroFragment.newInstance(usagePage));
-
 
         askForPermissions(new String[]{Manifest.permission.CAMERA}, 2);
         askForPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 3);
@@ -80,13 +77,10 @@ public class IntroActivity extends AppIntro {
         showSkipButton(false);
         showStatusBar(false);
         setNavBarColor(R.color.orange_intro);
-
     }
 
     @Override
-    public void onBackPressed() {
-
-    }
+    public void onBackPressed() {}
 
     @Override
     public void onSkipPressed(Fragment currentFragment) {
@@ -96,15 +90,8 @@ public class IntroActivity extends AppIntro {
     @Override
     public void onDonePressed(Fragment currentFragment) {
         super.onDonePressed(currentFragment);
-
         SharedPreferences getPrefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        //  Make a new preferences editor
-        SharedPreferences.Editor e = getPrefs.edit();
-        //  Edit preference to make it false because we don't want this to run again
-        e.putBoolean("firstStart", false);
-        //  Apply changes
-        e.apply();
-
+        getPrefs.edit().putBoolean("firstStart", false).apply();
         finish();
     }
 

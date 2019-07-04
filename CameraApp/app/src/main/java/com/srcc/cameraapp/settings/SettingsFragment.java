@@ -23,15 +23,11 @@ import com.srcc.cameraapp.R;
 
 public class SettingsFragment extends Fragment implements View.OnClickListener {
 
-    private static final String TAG = "SRCC_SETTIGNS";
+    private static final String TAG = "SRCC_SETTINGS";
     private final int SRDENSE_TILE_SIZE = 42;
     private final int SRGAN_TILE_SIZE = 42;
 
     private SharedPreferences sharedPreferences;
-
-    private String srdense_key;
-    private String srgan_key;
-    private String srresnet_key;
     private ConstraintLayout constraintLayout;
 
     public static class Builder{
@@ -51,12 +47,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        constraintLayout = view.findViewById(R.id.backend_settings);
-
-        srdense_key = getString(R.string.srdense_key);
-        srgan_key = getString(R.string.srgan_key);
-        srresnet_key = getString(R.string.srresnet_key);
-
+        constraintLayout = view.findViewById(R.id.constraintLayout_settings_backend);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
 
         SegmentedButtonGroup segmentedButtonGroup = view.findViewById(R.id.segmentedButtonGroup);

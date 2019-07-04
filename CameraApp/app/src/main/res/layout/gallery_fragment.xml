@@ -17,5 +17,5 @@
         tools:itemCount="8"
         tools:layoutManager="GridLayoutManager"
         tools:listitem="@layout/gallery_item_view"
-        tools:spanCount="5" />
+        tools:spanCount="2" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:minWidth="200dp"
@@ -12,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/backend"
+        android:text="@string/settings_text_backend"
         android:textSize="30sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -48,7 +47,7 @@
             android:layout_height="50dp"
             android:layout_weight="1"
             app:selectedTextColor="@color/white"
-            app:text="@string/srdense"
+            app:text="@string/settings_text_option_srdense"
             app:textStyle="bold" />
 
         <com.addisonelliott.segmentedbutton.SegmentedButton
@@ -57,7 +56,7 @@
             android:layout_height="50dp"
             android:layout_weight="1"
             app:selectedTextColor="@color/white"
-            app:text="@string/SRResNET"
+            app:text="@string/settings_text_option_srresnet"
             app:textStyle="bold" />
 
         <com.addisonelliott.segmentedbutton.SegmentedButton
@@ -66,13 +65,13 @@
             android:layout_height="50dp"
             android:layout_weight="1"
             app:selectedTextColor="@color/white"
-            app:text="@string/srgan"
+            app:text="@string/settings_text_option_srgan"
             app:textStyle="bold" />
 
     </com.addisonelliott.segmentedbutton.SegmentedButtonGroup>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/backend_settings"
+        android:id="@+id/constraintLayout_settings_backend"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
