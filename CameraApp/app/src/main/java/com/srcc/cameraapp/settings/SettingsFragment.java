@@ -1,4 +1,3 @@
-
 package com.srcc.cameraapp.settings;
 
 import android.annotation.SuppressLint;
@@ -21,20 +20,16 @@ import androidx.fragment.app.Fragment;
 import com.addisonelliott.segmentedbutton.SegmentedButtonGroup;
 import com.srcc.cameraapp.R;
 
+import java.util.Objects;
+
 public class SettingsFragment extends Fragment implements View.OnClickListener {
 
-    private static final String TAG = "SRCC_SETTINGS";
     private final int SRDENSE_TILE_SIZE = 42;
     private final int SRGAN_TILE_SIZE = 42;
+    private final int SRRESNET_TILE_SIZE = 42;
 
     private SharedPreferences sharedPreferences;
-    private ConstraintLayout constraintLayout;
-
-    public static class Builder{
-        public SettingsFragment createSettingsFragment() {
-            return new SettingsFragment();
-        }
-    }
+    private ConstraintLayout constraintLayoutSettingsBackend;
 
     @Nullable
     @Override
@@ -42,12 +37,11 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         return inflater.inflate(R.layout.settings_fragment, container, false);
     }
 
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        constraintLayout = view.findViewById(R.id.constraintLayout_settings_backend);
+        constraintLayoutSettingsBackend = view.findViewById(R.id.constraintLayout_settings_backend);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
 
         SegmentedButtonGroup segmentedButtonGroup = view.findViewById(R.id.segmentedButtonGroup);
@@ -78,10 +72,10 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     private void loadSRDenseSettings() {
         //load the layout as a view
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        View view = inflater.inflate(R.layout.settings_fragment_srdense, null, false);
+        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.settings_fragment_srdense, null, false);
         view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        constraintLayout.removeAllViews();
-        constraintLayout.addView(view);
+        constraintLayoutSettingsBackend.removeAllViews();
+        constraintLayoutSettingsBackend.addView(view);
 
         TextView textViewTilingSize = view.findViewById(R.id.textView_srdense_tiling_size);
         TextView textViewSeekBarValue = view.findViewById(R.id.textView_seekbar_value);
@@ -98,8 +92,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             textViewTilingSize.setEnabled(switchUseTiling.isChecked());
             segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
 
-            if(switchUseTiling.isChecked()){
-                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+            if (switchUseTiling.isChecked()) {
+                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
                 textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
                 textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
 
@@ -113,7 +107,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
                 segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
             } else {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
                 textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
                 textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
 
@@ -132,8 +126,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         textViewTilingSize.setEnabled(switchUseTiling.isChecked());
         segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
 
-        if(switchUseTiling.isChecked()){
-            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+        if (switchUseTiling.isChecked()) {
+            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
             textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
             textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
 
@@ -145,7 +139,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             );
             segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
         } else {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
             textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
             textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
 
@@ -160,7 +154,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
         //set the current saved tile size
         int seekBarCurrentProgress = sharedPreferences.getInt("srdense_tiling_size", 0);
-        textViewSeekBarValue.setText(String.format("%d", (seekBarCurrentProgress + 1 ) * SRDENSE_TILE_SIZE));
+        textViewSeekBarValue.setText(String.format("%d", (seekBarCurrentProgress + 1) * SRDENSE_TILE_SIZE));
         seekBarTilingSize.setProgress(seekBarCurrentProgress);
 
         seekBarTilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -168,7 +162,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 sharedPreferences.edit().putInt("srdense_tiling_size", progress).apply();
-                textViewSeekBarValue.setText(String.format("%d", (progress + 1)* SRDENSE_TILE_SIZE));
+                textViewSeekBarValue.setText(String.format("%d", (progress + 1) * SRDENSE_TILE_SIZE));
             }
 
             @Override
@@ -182,19 +176,18 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             }
         });
 
-        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> {
-            sharedPreferences.edit().putInt("srdense_stitch_style", position).apply();
-        });
+        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> sharedPreferences.edit().putInt("srdense_stitch_style", position).apply());
 
         segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt("srdense_stitch_style", 0), false);
     }
+
     @SuppressLint("DefaultLocale")
-    private void loadSRGANSettings(){
+    private void loadSRGANSettings() {
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        View view = inflater.inflate(R.layout.settings_fragment_srgan, null);
+        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.settings_fragment_srgan, null);
         view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        constraintLayout.removeAllViews();
-        constraintLayout.addView(view);
+        constraintLayoutSettingsBackend.removeAllViews();
+        constraintLayoutSettingsBackend.addView(view);
 
         TextView textViewSeekBarProgress = view.findViewById(R.id.textView_srgan_seekbar_progress);
         TextView textViewTilingSize = view.findViewById(R.id.textView_srgan_tiling_size);
@@ -216,8 +209,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
             segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
 
-            if(switchUseTiling.isChecked()){
-                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+            if (switchUseTiling.isChecked()) {
+                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
                 textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
                 textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
 
@@ -229,7 +222,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
                 segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
             } else {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
                 textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
                 textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
 
@@ -248,8 +241,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
         segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
 
-        if(switchUseTiling.isChecked()){
-            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+        if (switchUseTiling.isChecked()) {
+            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
             textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
             textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
 
@@ -261,7 +254,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             );
             segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
         } else {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
             textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
             textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
 
@@ -274,7 +267,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
         }
         int seekBarCurrentProgress = sharedPreferences.getInt("srgan_tiling_size", 0);
-        textViewSeekBarProgress.setText(String.format("%d", (seekBarCurrentProgress + 1 ) * SRGAN_TILE_SIZE));
+        textViewSeekBarProgress.setText(String.format("%d", (seekBarCurrentProgress + 1) * SRGAN_TILE_SIZE));
         seekBarTilingSize.setProgress(seekBarCurrentProgress);
 
         seekBarTilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -282,7 +275,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 sharedPreferences.edit().putInt("srgan_tiling_size", progress).apply();
-                textViewSeekBarProgress.setText(String.format("%d", (progress + 1)* SRGAN_TILE_SIZE));
+                textViewSeekBarProgress.setText(String.format("%d", (progress + 1) * SRGAN_TILE_SIZE));
             }
 
             @Override
@@ -297,19 +290,18 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         });
 
 
-        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> {
-            sharedPreferences.edit().putInt("srgan_stitch_style", position).apply();
-        });
+        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> sharedPreferences.edit().putInt("srgan_stitch_style", position).apply());
 
         segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt("srgan_stitch_style", 0), false);
     }
+
     @SuppressLint("DefaultLocale")
-    private void loadSRResNetSettings(){
+    private void loadSRResNetSettings() {
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        View view = inflater.inflate(R.layout.settings_fragment_srresnet, null);
+        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.settings_fragment_srresnet, null);
         view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        constraintLayout.removeAllViews();
-        constraintLayout.addView(view);
+        constraintLayoutSettingsBackend.removeAllViews();
+        constraintLayoutSettingsBackend.addView(view);
 
         TextView textViewSeekBarProgress = view.findViewById(R.id.textView_srresnet_seekbar_progress);
         TextView textViewTilingSize = view.findViewById(R.id.textView_srresnet_tiling_size);
@@ -325,8 +317,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
             segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
 
-            if(switchUseTiling.isChecked()){
-                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+            if (switchUseTiling.isChecked()) {
+                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
                 textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
                 textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
 
@@ -338,7 +330,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
                 );
                 segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
             } else {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
                 textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
                 textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
 
@@ -356,8 +348,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
         segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
 
-        if(switchUseTiling.isChecked()){
-            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+        if (switchUseTiling.isChecked()) {
+            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
             textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
             textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
 
@@ -369,7 +361,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             );
             segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
         } else {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
             textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
             textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
 
@@ -381,7 +373,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
         }
         int seekBarCurrentProgress = sharedPreferences.getInt("srresnet_tiling_size", 0);
-        textViewSeekBarProgress.setText(String.format("%d", (seekBarCurrentProgress + 1 ) * SRGAN_TILE_SIZE));
+        textViewSeekBarProgress.setText(String.format("%d", (seekBarCurrentProgress + 1) * SRRESNET_TILE_SIZE));
         seekBarTilingSize.setProgress(seekBarCurrentProgress);
 
 
@@ -390,7 +382,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 sharedPreferences.edit().putInt("srresnet_tiling_size", progress).apply();
-                textViewSeekBarProgress.setText(String.format("%d", (progress + 1)* SRGAN_TILE_SIZE));
+                textViewSeekBarProgress.setText(String.format("%d", (progress + 1) * SRRESNET_TILE_SIZE));
             }
 
             @Override
@@ -405,10 +397,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         });
 
 
-        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> {
-            sharedPreferences.edit().putInt("srresnet_stitch_style", position).apply();
-        });
+        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> sharedPreferences.edit().putInt("srresnet_stitch_style", position).apply());
 
         segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt("srresnet_stitch_style", 0), false);
+    }
+
+    public static class Builder {
+        public SettingsFragment createSettingsFragment() {
+            return new SettingsFragment();
+        }
     }
 }
