@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CameraApp</string>
+    <string name="error_text_camera">Kamera Fehler</string>
+    <string name="intro_camera_title">Kamera</string>
+    <string name="intro_camera_description">Weil gerne Bilder machen wollen, brauchen wir die Erlaubnis auf die Kamera zugreifen zu dürfen.</string>
+    <string name="intro_internet_description">Um eine bessere Bildqualität zuerreichen muss die App mit unserem Server kommunizeren. Dazu wird eine Internetverbindung benötigt.</string>
+    <string name="intro_internet_title">Internet</string>
+    <string name="intro_storage_description">Damit die Bilder gespeichert werden können, brauche wie die Erlaubnis auf den Speicher zugreifen zu dürfen.</string>
+    <string name="intro_storage_title">Speicher</string>
+    <string name="intro_usage_title">Nutzungsweise</string>
+    <string name="intro_usage_description">Der Hauptaugenmerk liegt auf der Kamera. Wenn man nach links wischt, kommt man zu den Einstellung. Wenn man rechts wischt, kommt man zu den bereits aufgenommen Bildern.</string>
+    <string name="intro_welcome_description">Diese App erlaubt die Verbesserung der Qualität von Bildern.</string>
+    <string name="intro_welcome_title">Willkommen</string>
+    <string name="request_permission_text">Berechtigung</string>
+    <string name="settings_text_backend">Technologie</string>
+    <string name="settings_text_stitching_advanced">Erweitert</string>
+    <string name="settings_text_stitching_advanced_hsv">Erweitert HSV</string>
+    <string name="settings_text_stitching_simple">Einfach</string>
+    <string name="settings_text_stitching_style">Kachel Stil</string>
+    <string name="settings_text_tiling_size">Kachelgröße</string>
+    <string name="settings_text_use_init">Benutze Initialisierung</string>
+    <string name="settings_text_use_tiling">Benutze Kachelung</string>
+</resources>

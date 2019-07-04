@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">CameraApp</string>
     <string name="error_text_camera">Camera Error</string>
-    <string name="gallery_item_text_description">Thumbnail</string>
-    <string name="gallery_item_text_title">Title</string>
+    <string name="gallery_item_text_description" translatable="false">Thumbnail</string>
+    <string name="gallery_item_text_title" translatable="false">Title</string>
     <string name="intro_camera_description">Because we\'d like to take pictures, we need the permission of using the camera.</string>
     <string name="intro_camera_title">Camera</string>
     <string name="intro_internet_description">To create the improved pictures the app has to communicate with our server. Therefore we need to access the internet.</string>
@@ -16,14 +16,14 @@
     <string name="intro_welcome_title">Welcome</string>
     <string name="request_permission_text">Permission</string>
     <string name="settings_text_backend">Backend</string>
-    <string name="settings_text_option_srdense">SRDense</string>
-    <string name="settings_text_option_srgan">SRGAN</string>
-    <string name="settings_text_option_srresnet">SRResNET</string>
+    <string name="settings_text_option_srdense" translatable="false">SRDense</string>
+    <string name="settings_text_option_srgan" translatable="false">SRGAN</string>
+    <string name="settings_text_option_srresnet" translatable="false">SRResNET</string>
     <string name="settings_text_stitching_advanced">Advanced</string>
     <string name="settings_text_stitching_advanced_hsv">Advanced HSV</string>
     <string name="settings_text_stitching_simple">Simple</string>
     <string name="settings_text_stitching_style">Stitching Style</string>
     <string name="settings_text_tiling_size">Tiling Size</string>
-    <string name="settings_text_use_init">Use initialisation</string>
-    <string name="settings_text_use_tiling">Use tiling</string>
+    <string name="settings_text_use_init">Use Initialisation</string>
+    <string name="settings_text_use_tiling">Use Tiling</string>
 </resources>
