@@ -13,8 +13,10 @@ import android.view.View;
 
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.other.Utils;
 
 import io.reactivex.disposables.CompositeDisposable;
+import okhttp3.internal.Util;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -61,27 +63,9 @@ public class MainActivity extends AppCompatActivity {
             //attach the api requests to it
             ApiService mApiConnection = mClient.create(ApiService.class);
 
-//        re-enable this code once have to check the server connection
-//        Single<Home> home = mApiConnection.getHome();
-//
-//        home.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<Home>() {
-//            @Override
-//            public void onSubscribe(Disposable d) {
-//                Log.i(TAG, "OnSubscribe triggered");
-//                compositeDisposable.add(d);
-//            }
-//
-//            @Override
-//            public void onSuccess(Home home) {
-//                Log.i(TAG, home.getName());
-//            }
-//
-//            @Override
-//            public void onError(Throwable e) {
-//                Log.i(TAG, "onError triggered");
-//                e.printStackTrace();
-//            }
-//        });
+
+            Utils.sendImage(mApiConnection, null, compositeDisposable, "1234", getAppContext());
+
 
             viewPager = findViewById(R.id.view_pager);
 

@@ -2,10 +2,33 @@ package com.srcc.cameraapp.other;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.srcc.cameraapp.api.ApiService;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.Buffer;
+
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import okio.BufferedSink;
 
 /**
  * This class collects all the useful functions we might need to use.
@@ -42,5 +65,91 @@ public class Utils extends Application {
         return file;
     }
 
+    public static void sendImage(ApiService api, File image, CompositeDisposable compositeDisposable, String timeValue, Context context){
+        String TAG = "SEND_IMAGE";
+        //RequestBody requestFile = RequestBody.create(MediaType.parse("image"), image);
+
+        //MultipartBody.Part body = MultipartBody.Part.createFormData("image", image.getName(), requestFile);
+
+        RequestBody description = RequestBody.create(MultipartBody.FORM, "description...");
+
+
+        int backend = 0;
+        int tiling = 1;
+        int tile_size = 44;
+        int stitch_style = 1;
+        int initialization = 0;
+
+        Single<ResponseBody> single =  api.sendImage(backend, tiling, tile_size, stitch_style, initialization, null);
+
+        single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<ResponseBody>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                Log.i(TAG, "OnSubscribe triggered");
+                compositeDisposable.add(d);
+            }
+
+            @Override
+            public void onSuccess(ResponseBody responseBody) {
+                Log.i(TAG, "Upload successful and got return");
+
+                try {
+                    File root = Utils.getPublicAlbumStorageDir(Utils.IMAGE_FOLDER_NAME);
+                    File hrImage = new File(root.getAbsolutePath(), timeValue + "_hr.jpg");
+
+                    InputStream inputStream = null;
+                    OutputStream outputStream = null;
+
+                    try {
+                        byte[] fileReader = new byte[4096];
+
+                        long fileSize = responseBody.contentLength();
+                        long fileSizeDownloaded = 0;
+
+                        inputStream = responseBody.byteStream();
+                        outputStream = new FileOutputStream(hrImage);
+
+                        while (true) {
+                            int read = inputStream.read(fileReader);
+
+                            if (read == -1) {
+                                break;
+                            }
+
+                            outputStream.write(fileReader, 0, read);
+
+                            fileSizeDownloaded += read;
+
+                            Log.d(TAG, "file download: " + fileSizeDownloaded + " of " + fileSize);
+                        }
+
+                        outputStream.flush();
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (inputStream != null) {
+                            inputStream.close();
+                        }
+
+                        if (outputStream != null) {
+                            outputStream.close();
+                        }
+                        context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(hrImage)));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "Upload somehow failed");
+                Log.e(TAG, e.getMessage());
+                e.printStackTrace();
+            }
+        });
+
+    }
 
 }

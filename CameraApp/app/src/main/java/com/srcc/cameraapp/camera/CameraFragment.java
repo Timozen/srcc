@@ -77,6 +77,7 @@ import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import retrofit2.Retrofit;
 
 /**
@@ -1091,87 +1092,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 }
             }
 
-            uploadFile(mFile);
-        }
-
-        private void uploadFile(File file){
-            Log.i(TAG, "Prepare for upload of the taken picture");
-
-            RequestBody requestFile = RequestBody.create(MediaType.parse("image"), file);
-
-            MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
-
-            RequestBody description = RequestBody.create(MultipartBody.FORM, "description...");
-
-            Single<ResponseBody> single = mApiConnection.sendImage(description, body);
-
-            single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<ResponseBody>() {
-                @Override
-                public void onSubscribe(Disposable d) {
-                    Log.i(TAG, "OnSubscribe triggered");
-                    compositeDisposable.add(d);
-                }
-
-                @Override
-                public void onSuccess(ResponseBody responseBody) {
-                    Log.i(TAG, "Upload successful and got return");
-
-                    try {
-                        File root = Utils.getPublicAlbumStorageDir(Utils.IMAGE_FOLDER_NAME);
-                        File hrImage = new File(root.getAbsolutePath(), timeValue + "_hr.jpg");
-
-                        InputStream inputStream = null;
-                        OutputStream outputStream = null;
-
-                        try {
-                            byte[] fileReader = new byte[4096];
-
-                            long fileSize = responseBody.contentLength();
-                            long fileSizeDownloaded = 0;
-
-                            inputStream = responseBody.byteStream();
-                            outputStream = new FileOutputStream(hrImage);
-
-                            while (true) {
-                                int read = inputStream.read(fileReader);
-
-                                if (read == -1) {
-                                    break;
-                                }
-
-                                outputStream.write(fileReader, 0, read);
-
-                                fileSizeDownloaded += read;
-
-                                Log.d(TAG, "file download: " + fileSizeDownloaded + " of " + fileSize);
-                            }
-
-                            outputStream.flush();
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } finally {
-                            if (inputStream != null) {
-                                inputStream.close();
-                            }
-
-                            if (outputStream != null) {
-                                outputStream.close();
-                            }
-                            mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(hrImage)));
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public void onError(Throwable e) {
-                    Log.e(TAG, "Upload somehow failed");
-                    Log.e(TAG, e.getMessage());
-                    e.printStackTrace();
-                }
-            });
+            Utils.sendImage(mApiConnection, mFile, compositeDisposable, timeValue, mContext);
         }
     }
 }
