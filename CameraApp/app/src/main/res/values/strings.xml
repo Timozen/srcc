@@ -10,4 +10,6 @@
     <string name="srresnet_key">use_srresnet</string>
     <string name="backend">Backend</string>
     <string name="srdense_use_tiling">Use tiling</string>
+    <string name="gallery_item_description_text">Thumbnail</string>
+    <string name="gallery_item_title_text">Title</string>
 </resources>
