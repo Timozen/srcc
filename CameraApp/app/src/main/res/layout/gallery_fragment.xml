@@ -19,4 +19,17 @@
         tools:layoutManager="GridLayoutManager"
         tools:listitem="@layout/gallery_item_view"
         tools:spanCount="2" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/display"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible">
+
+        <ImageView
+            android:id="@+id/expanded_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
