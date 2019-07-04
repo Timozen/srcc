@@ -104,6 +104,14 @@ public class GalleryFragment extends Fragment {
         myAdapter.changeCursor(queryThumbnails());
     }
 
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if(isVisibleToUser){
+            myAdapter.changeCursor(queryThumbnails());
+        }
+    }
+
     /**
      * This function will be called once we go back to the app.
      * Just update the recycler view
