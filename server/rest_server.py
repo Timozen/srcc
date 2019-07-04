@@ -4,6 +4,9 @@ import werkzeug
 from flask import Flask, send_from_directory
 from flask_restful import Api, Resource, reqparse
 from werkzeug.utils import secure_filename
+from io import BytesIO
+from PIL import Image
+import numpy as np
 
 # helpful links
 # https://flask-restful.readthedocs.io/en/latest/quickstart.html#a-minimal-api
@@ -67,7 +70,32 @@ class SendImage(Resource):
 
         # we expect an image to be send, if not send message to the client
         parser.add_argument('image', required=True, type=werkzeug.datastructures.FileStorage, location='files')
+        parser.add_argument('backend', required=True, type=int)
+        parser.add_argument('initialization', required=False, type=bool)
+        parser.add_argument('tiling', required=True, type=bool)
+        parser.add_argument('tile_size', required=False, type=int)
+        parser.add_argument('stitch_type', required=False, type=int)
+
         args = parser.parse_args()
+
+        print(args["stitch_type"])
+
+        # check if backend is in the correct range
+        if not 0 <= args["backend"] <= 2:
+            return "{'errorcode' : 'WRONG_BACKEND', 'field':'backend', 'message':'the backend is not in the correct range'}"
+
+        # check if initialization is given by backend 2:
+        if args["backend"] == 2 and not args["initialization"]:
+            return "{'errorcode' : 'NO_INIT', 'field':'initialization', 'message':'backend 2 but no initialization specified'}"
+
+        # check if tile_size and stitch type is given when tiling is used
+        if args["tiling"] and (not args["tile_size"] or not args["stitch_type"]):
+            return "{'errorcode' : 'NO_TILING_PARAMETERS', 'field':'tile_size, stitch_type', 'message':'tile_size or stitchtype is missing'}"
+        
+        # if stitch_type is given check if it is in the correct range
+        if args["stitch_type"]:
+            if not 0 <= args["stitch_type"] <= 2:
+                return "{'errorcode' : 'WRONG_STITCH_TYPE', 'field':'stitch_type', 'message':'the stitch_type is not in the correct range'}"
 
         image = args['image']
         # check if the name is existing, real edge case, might never happen to us
@@ -88,6 +116,10 @@ class SendImage(Resource):
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
         # TODO in this part the NN has to create the SR image of the LR image
+        print(args["backend"])
+        if args["tiling"]:
+            print(args["tiling"])
+        
 
         # just echo the send image
         # from directory with a certain filename
