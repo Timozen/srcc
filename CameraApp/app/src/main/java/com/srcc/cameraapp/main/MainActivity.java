@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
             viewPager.setAdapter(vpa);
             //set the starting page to the camera, currently on frame == 0
-            viewPager.setCurrentItem(0);
+            viewPager.setCurrentItem(1);
         }
     }
 
