@@ -201,8 +201,13 @@ class SendImage(Resource):
         parser.add_argument('tiling', required=True, type=int)
         parser.add_argument('tile_size', required=False, type=int)
         parser.add_argument('stitch_type', required=False, type=int)
+        parser.add_argument('debug', required=False, type=int)
 
         args = parser.parse_args()
+
+        if args['debug'] is not None and args['debug'] == 1:
+            print(args)
+            return {"msg" : "nan"}   
 
         # check if backend is in the correct range
         if not 0 <= args["backend"] <= 2:

@@ -3,13 +3,16 @@ package com.srcc.cameraapp.other;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.settings.SettingsFragment;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,6 +37,12 @@ import okio.BufferedSink;
  * This class collects all the useful functions we might need to use.
  */
 public class Utils extends Application {
+
+    private static int debug = 1;
+
+    public static void setDebug(boolean d){
+        debug = d ? 1:0;
+    }
 
     public static final String IMAGE_FOLDER_NAME = "srcc";
 
@@ -67,21 +76,40 @@ public class Utils extends Application {
 
     public static void sendImage(ApiService api, File image, CompositeDisposable compositeDisposable, String timeValue, Context context){
         String TAG = "SEND_IMAGE";
-        //RequestBody requestFile = RequestBody.create(MediaType.parse("image"), image);
+        RequestBody requestFile = RequestBody.create(MediaType.parse("image"), image);
+        MultipartBody.Part body = MultipartBody.Part.createFormData("image", image.getName(), requestFile);
 
-        //MultipartBody.Part body = MultipartBody.Part.createFormData("image", image.getName(), requestFile);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-        RequestBody description = RequestBody.create(MultipartBody.FORM, "description...");
+        int backend = preferences.getInt("backend", 0);
+        int tiling=0, tile_size=0, stitch_style = 0, initialization=0;
+        switch (backend) {
+            case 0:
+                tiling = preferences.getBoolean("srdense_use_tiling", false) ? 1 : 0;
+                tile_size = (preferences.getInt("srdense_tiling_size", 0) + 1) * SettingsFragment.SRDENSE_TILE_SIZE;
+                stitch_style = preferences.getInt("srdense_stitch_style", 0);
+                initialization = 0;
+                break;
+            case 1:
+                tiling = preferences.getBoolean("srresnet_use_tiling", false) ? 1 : 0;
+                tile_size = (preferences.getInt("srresnet_tiling_size", 0) + 1) * SettingsFragment.SRRESNET_TILE_SIZE;
+                stitch_style = preferences.getInt("srresnet_stitch_style", 0);
+                initialization = 0;
+                break;
+            case 2:
+                tiling = preferences.getBoolean("srgan_use_tiling", false) ? 1 : 0;
+                tile_size = (preferences.getInt("srgan_tiling_size", 0) + 1) * SettingsFragment.SRGAN_TILE_SIZE;
+                stitch_style = preferences.getInt("srgan_stitch_style", 0);
+                initialization = preferences.getBoolean("srgan_use_init", true) ? 1 : 0;
+                break;
+        }
 
-
-        int backend = 0;
-        int tiling = 1;
-        int tile_size = 44;
-        int stitch_style = 1;
-        int initialization = 0;
-
-        Single<ResponseBody> single =  api.sendImage(backend, tiling, tile_size, stitch_style, initialization, null);
-
+        Single<ResponseBody> single;
+        if(debug==1){
+             single =  api.sendImage(debug, backend, tiling, tile_size, stitch_style, initialization, body);
+        } else {
+             single =  api.sendImage(backend, tiling, tile_size, stitch_style, initialization, body);
+        }
         single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<ResponseBody>() {
             @Override
             public void onSubscribe(Disposable d) {

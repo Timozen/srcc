@@ -6,6 +6,7 @@ import androidx.viewpager.widget.ViewPager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -15,8 +16,12 @@ import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
 import com.srcc.cameraapp.other.Utils;
 
+import java.io.File;
+
 import io.reactivex.disposables.CompositeDisposable;
+import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -53,20 +58,28 @@ public class MainActivity extends AppCompatActivity {
             //trashcan if somehow the connection is interrupted
             compositeDisposable = new CompositeDisposable();
 
+            //http logging
+            OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            clientBuilder.addInterceptor(loggingInterceptor);
+
+
             //create async client to our server (currently only local network)
             Retrofit mClient = new Retrofit.Builder()
                     .baseUrl("http://192.168.178.44:5000/")
+//                    .client(clientBuilder.build())
                     .addConverterFactory(GsonConverterFactory.create())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .build();
+
             Log.i(TAG, "Connect to server...");
             //attach the api requests to it
             ApiService mApiConnection = mClient.create(ApiService.class);
 
-
-            Utils.sendImage(mApiConnection, null, compositeDisposable, "1234", getAppContext());
-
-
+            Utils.setDebug(true);
+//            File f = new File("/storage/emulated/0/Pictures/srcc/1562248296_lr.jpg");
+//            Utils.sendImage(mApiConnection, f, compositeDisposable, "1234", getAppContext());
             viewPager = findViewById(R.id.view_pager);
 
             //create the fragment view for nice swiping

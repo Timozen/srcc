@@ -24,9 +24,9 @@ import java.util.Objects;
 
 public class SettingsFragment extends Fragment implements View.OnClickListener {
 
-    private final int SRDENSE_TILE_SIZE = 42;
-    private final int SRGAN_TILE_SIZE = 42;
-    private final int SRRESNET_TILE_SIZE = 42;
+    public static final int SRDENSE_TILE_SIZE = 42;
+    public static final int SRGAN_TILE_SIZE = 42;
+    public static final int SRRESNET_TILE_SIZE = 42;
 
     private SharedPreferences sharedPreferences;
     private ConstraintLayout constraintLayoutSettingsBackend;

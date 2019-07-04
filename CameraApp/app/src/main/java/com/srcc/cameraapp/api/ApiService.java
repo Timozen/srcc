@@ -20,13 +20,6 @@ public interface ApiService {
 
     @Multipart
     @POST("/api/SendImage")
-//    Single<ResponseBody> sendImage(@Part("description")RequestBody description, @Part MultipartBody.Part file);
-    Single<ResponseBody> sendImage(@Field("backend") int backend, @Field("tiling") int tiling, @Part MultipartBody.Part file);
-
-
-    @Multipart
-    @POST("/api/SendImage")
-//    Single<ResponseBody> sendImage(@Part("description")RequestBody description, @Part MultipartBody.Part file);
     Single<ResponseBody> sendImage(
             @Part("backend") int backend,
             @Part("tiling") int tiling,
@@ -35,4 +28,16 @@ public interface ApiService {
             @Part("initialization") int initialization,
             @Part MultipartBody.Part file);
 
+
+
+    @Multipart
+    @POST("/api/SendImage")
+    Single<ResponseBody> sendImage(
+            @Part("debug") int debug,
+            @Part("backend") int backend,
+            @Part("tiling") int tiling,
+            @Part("tile_size") int tiling_size,
+            @Part("stitch_type") int stitching_size,
+            @Part("initialization") int initialization,
+            @Part MultipartBody.Part file);
 }

@@ -1091,7 +1091,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                     }
                 }
             }
-
             Utils.sendImage(mApiConnection, mFile, compositeDisposable, timeValue, mContext);
         }
     }
