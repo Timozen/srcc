@@ -49,6 +49,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.other.Utils;
 import com.srcc.cameraapp.api.ApiService;
@@ -169,6 +170,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 2;
     private static final String FRAGMENT_DIALOG = "dialog";
 
+
+    private Activity activity;
     /*
     Here are the callbacks
      */
@@ -326,6 +329,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                     .setCompositeDisposable(compositeDisposable)
                     .setmApiConnection(mApiConnection)
                     .setmClient(mClient)
+                    .setActivity(activity)
                     .createImageSaver();
             mBackgroundHandler.post(is);
         }
@@ -359,6 +363,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         view.findViewById(R.id.picture).setOnClickListener(this);
         mTextureView = view.findViewById(R.id.texture);
         view.setOnTouchListener(this);
+        activity = getActivity();
     }
 
     @Override
@@ -996,7 +1001,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-    private static class ImageSaver implements Runnable {
+    static class ImageSaver implements Runnable {
 
         static class Builder {
 
@@ -1007,6 +1012,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             private Retrofit mClient;
             private ApiService mApiConnection;
             private String timeValue;
+            private Activity activity;
 
             Builder setmImage(Image mImage) {
                 this.mImage = mImage;
@@ -1042,14 +1048,17 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 return this;
             }
 
-            ImageSaver createImageSaver() {
-                return new ImageSaver(mImage, mFile, mContext, compositeDisposable, mClient, mApiConnection, timeValue);
+            Builder setActivity(Activity activity){
+                this.activity = activity;
+                return this;
             }
 
-
+            ImageSaver createImageSaver() {
+                return new ImageSaver(mImage, mFile, mContext, compositeDisposable, mClient, mApiConnection, timeValue, activity);
+            }
         }
 
-
+        private Activity activity;
         private final Image mImage;
         private final File mFile;
         private final Context mContext;
@@ -1058,7 +1067,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         private ApiService mApiConnection;
         private String timeValue;
 
-        ImageSaver(Image mImage, File mFile, Context mContext, CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection, String timeValue) {
+        ImageSaver(Image mImage, File mFile, Context mContext, CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection, String timeValue, Activity activity) {
             this.mImage = mImage;
             this.mFile = mFile;
             this.mContext = mContext;
@@ -1066,6 +1075,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             this.mClient = mClient;
             this.mApiConnection = mApiConnection;
             this.timeValue = timeValue;
+            this.activity = activity;
         }
 
         @Override
@@ -1091,7 +1101,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                     }
                 }
             }
-            Utils.sendImage(mApiConnection, mFile, compositeDisposable, timeValue, mContext);
+
+            Snackbar snackbar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), "Create SR Version of image?", Snackbar.LENGTH_LONG);
+            snackbar.setAction("CREATE", v1 -> {
+                Utils.sendImage(mApiConnection, mFile, compositeDisposable, timeValue, mContext);
+            });
+            snackbar.show();
         }
     }
 }
