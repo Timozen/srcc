@@ -7,8 +7,10 @@ import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -18,9 +20,10 @@ import android.provider.MediaStore;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +31,9 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.annotation.GlideModule;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.ortiz.touchview.TouchImageView;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
@@ -60,7 +66,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private TouchImageView touchImageView;
     private float startScaleFinal;
     private boolean itemWasDeleted = false;
-
+    private ViewPager viewPagerFullScreen;
 
     GalleryAdapter(final Activity activity, final CompositeDisposable compositeDisposable, final ApiService apiService, int rowCount) {
         this.activity = activity;
@@ -77,9 +83,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         gallery = activity.findViewById(R.id.constraintLayout_gallery_main);
         display = activity.findViewById(R.id.display);
-        touchImageView = activity.findViewById(R.id.expanded_image);
-        touchImageView.setMaxZoom(8);
-
 
         activity.findViewById(R.id.button_gallery_image_edit).setOnClickListener(v -> {
             ViewHolder vh = viewHolderList.get(currentPosition);
@@ -88,7 +91,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         });
 
         activity.findViewById(R.id.button_gallery_item_delete).setOnClickListener(v -> {
-            //TODO delete the image
             itemWasDeleted = true;
             ViewHolder current = viewHolderList.get(currentPosition);
             File toDelete = new File(current.getUri().getPath());
@@ -97,7 +99,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             ViewHolder next = viewHolderList.get(currentPosition + 1);
             if(next != null){
                 currentPosition += 1;
-                updateFullImage(next);
+                viewPagerFullScreen.setCurrentItem(currentPosition, true);
                 toDelete.delete();
                 activity.getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(toDelete)));
                 return;
@@ -105,14 +107,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             next = viewHolderList.get(currentPosition - 1);
             if(next != null){
                 currentPosition -= 1;
-                updateFullImage(next);
+                viewPagerFullScreen.setCurrentItem(currentPosition, true);
                 toDelete.delete();
                 activity.getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(toDelete)));
                 return;
             }
-            currentPosition -=1;
-            activity.getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(toDelete)));
+            currentPosition = -1;
             toDelete.delete();
+            activity.getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(toDelete)));
             returnFromFullImage();
         });
     }
@@ -149,15 +151,18 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         Uri imageUri = getUriFromMediaStore(position);
         //Use Glide to load the imageView_gallery_item_image and cache them in to the according imageView_gallery_item_image view
         Glide.with(activity).load(imageUri).centerCrop().into(viewHolder.getImageView());
+
         //attach the data
         viewHolder.setUri(imageUri);
         viewHolder.setTitle(imageUri.toString());
 
         viewHolderList.put(position, viewHolder);
-        Log.i("Gallery", "put " + position);
 
         viewHolder.getImageView().setOnClickListener(v -> {
             currentPosition = position;
+            viewPagerFullScreen = activity.findViewById(R.id.viewPager_fullscreen);
+            viewPagerFullScreen.setAdapter(new FullScreenPager(activity.getApplicationContext()));
+            viewPagerFullScreen.setCurrentItem(position);
             goToFullImage();
         });
 
@@ -264,21 +269,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         );
     }
 
-    private void updateFullImage(ViewHolder viewHolder){
-        //                Glide.with(activity).load(mUri).centerCrop().into(imageViewLarge);
-        touchImageView.setImageURI(viewHolder.getUri());
-    }
-
     private void goToFullImage(){
         if(currentAnimator != null){
             currentAnimator.cancel();
         }
 
         ViewHolder currentViewHolder = viewHolderList.get(currentPosition);
-
-        assert currentViewHolder != null;
-        updateFullImage(currentViewHolder);
-
         final Rect startBounds = new Rect();
         final Rect finalBounds = new Rect();
         final Point globalOffset = new Point();
@@ -333,19 +329,22 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         currentAnimator = set;
 
         startScaleFinal = startScale;
-        touchImageView.setOnClickListener(view1 -> {
-            returnFromFullImage();
-
-        });
+//        touchImageView.setOnClickListener(view1 -> {
+//            returnFromFullImage();
+//
+//        });
     }
 
     private void returnFromFullImage(){
-        touchImageView.resetZoom();
+//        touchImageView.resetZoom();
+
+        currentPosition = viewPagerFullScreen.getCurrentItem();
 
         if(itemWasDeleted){
             itemWasDeleted = false;
             display.setVisibility(View.GONE);
             changeCursor(queryThumbnails());
+            return;
         }
 
         if (currentAnimator != null) {
@@ -446,4 +445,49 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             return title;
         }
     }
+
+    class FullScreenPager extends PagerAdapter {
+        private Context context;
+
+        FullScreenPager(Context context){
+            this.context = context;
+        }
+
+        @NonNull
+        @Override
+        public Object instantiateItem(@NonNull ViewGroup container, int position) {
+            View view = LayoutInflater.from(context).inflate(R.layout.gallery_item_view_full, null);
+            TouchImageView touchImageView = view.findViewById(R.id.expanded_image);
+
+            touchImageView.setImageResource(R.drawable.ic_mood_black_128dp);
+            Glide.with(activity).load(viewHolderList.get(position).getUri())
+                    .thumbnail(0.5f)
+                    .placeholder(R.drawable.ic_mood_black_128dp)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .into(touchImageView);
+
+            touchImageView.setZoom(1f);
+
+            touchImageView.setOnClickListener(v -> returnFromFullImage());
+            touchImageView.setMaxZoom(8);
+            container.addView(touchImageView);
+            return touchImageView;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object view) {
+            container.removeView((View) view);
+        }
+
+        @Override
+        public int getCount() {
+            return viewHolderList.size();
+        }
+
+        @Override
+        public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
+            return view == object;
+        }
+    }
+
 }
