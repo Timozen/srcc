@@ -26,4 +26,5 @@
     <string name="settings_text_tiling_size">Tiling Size</string>
     <string name="settings_text_use_init">Use Initialisation</string>
     <string name="settings_text_use_tiling">Use Tiling</string>
+    <string name="settings_text_debug">Debug</string>
 </resources>

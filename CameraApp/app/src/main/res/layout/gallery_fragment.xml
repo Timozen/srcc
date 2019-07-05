@@ -10,23 +10,24 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/gallery"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:itemCount="8"
         tools:layoutManager="GridLayoutManager"
         tools:listitem="@layout/gallery_item_view"
-        tools:spanCount="2" />
+        tools:spanCount="2">
+
+    </androidx.recyclerview.widget.RecyclerView>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/display"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
         android:background="@color/black"
-        tools:visibility="visible">
+        android:visibility="invisible"
+        tools:visibility="invisible">
 
         <FrameLayout
             android:layout_width="match_parent"

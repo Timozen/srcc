@@ -6,6 +6,8 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -33,6 +35,7 @@ import com.srcc.cameraapp.other.Utils;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Objects;
 
 import io.reactivex.disposables.CompositeDisposable;
 
@@ -56,6 +59,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     private TouchImageView touchImageView;
     private float startScaleFinal;
+    private boolean itemWasDeleted = false;
+
 
     GalleryAdapter(final Activity activity, final CompositeDisposable compositeDisposable, final ApiService apiService, int rowCount) {
         this.activity = activity;
@@ -83,20 +88,31 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         });
 
         activity.findViewById(R.id.button_gallery_item_delete).setOnClickListener(v -> {
+            //TODO delete the image
+            itemWasDeleted = true;
+            ViewHolder current = viewHolderList.get(currentPosition);
+            File toDelete = new File(current.getUri().getPath());
+
             //check right one
             ViewHolder next = viewHolderList.get(currentPosition + 1);
             if(next != null){
                 currentPosition += 1;
                 updateFullImage(next);
+                toDelete.delete();
+                activity.getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(toDelete)));
                 return;
             }
             next = viewHolderList.get(currentPosition - 1);
             if(next != null){
                 currentPosition -= 1;
                 updateFullImage(next);
+                toDelete.delete();
+                activity.getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(toDelete)));
                 return;
             }
             currentPosition -=1;
+            activity.getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(toDelete)));
+            toDelete.delete();
             returnFromFullImage();
         });
     }
@@ -218,6 +234,36 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         return Uri.parse("file://" + dataString);
     }
 
+    /**
+     * This function will query the MediaStore to get the thumbnails of our
+     * pictures. The cursor will hold all the needed information inside.
+     *
+     * @return the cursor with the data
+     */
+    Cursor queryThumbnails() {
+        //get the content resolver which will take care of all the file handling
+        ContentResolver cr = Objects.requireNonNull(activity, "Activity should not be null").getContentResolver();
+
+        //which data we want to get from the media store
+        //id for row location, data_added for sorting, data for the actual location
+        String[] mProjection = {
+                MediaStore.Images.Media._ID,
+                MediaStore.Images.Media.DATE_ADDED,
+                MediaStore.Images.Media.DATA
+        };
+
+        //query the media store to get the data
+        //query the external storage only (also the place were we save everything)
+        //only query data which has "srcc" in the path and sort DESC
+        return cr.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                mProjection,
+                MediaStore.Images.Media.DATA + " like ? ",
+                new String[]{"%srcc%"},
+                MediaStore.Images.Media.DATE_ADDED + " DESC"
+        );
+    }
+
     private void updateFullImage(ViewHolder viewHolder){
         //                Glide.with(activity).load(mUri).centerCrop().into(imageViewLarge);
         touchImageView.setImageURI(viewHolder.getUri());
@@ -294,9 +340,18 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     private void returnFromFullImage(){
+        touchImageView.setZoom(1);
+
+        if(itemWasDeleted){
+            itemWasDeleted = false;
+            display.setVisibility(View.GONE);
+            changeCursor(queryThumbnails());
+        }
+
         if (currentAnimator != null) {
             currentAnimator.cancel();
         }
+
 
         ViewHolder currentViewHolder = viewHolderList.get(currentPosition);
 

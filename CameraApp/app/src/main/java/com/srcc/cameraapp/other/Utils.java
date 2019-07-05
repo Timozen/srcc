@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -37,14 +38,7 @@ import okio.BufferedSink;
  * This class collects all the useful functions we might need to use.
  */
 public class Utils extends Application {
-
-    private static int debug = 1;
-
-    public static void setDebug(boolean d){
-        debug = d ? 1:0;
-    }
-
-    public static final String IMAGE_FOLDER_NAME = "srcc";
+        public static final String IMAGE_FOLDER_NAME = "srcc";
 
     /**
      * Check if we can write in the external storage
@@ -105,8 +99,9 @@ public class Utils extends Application {
         }
 
         Single<ResponseBody> single;
-        if(debug==1){
-             single =  api.sendImage(debug, backend, tiling, tile_size, stitch_style, initialization, body);
+        boolean debug = preferences.getBoolean("debug", true);
+        if(debug){
+             single =  api.sendImage(debug ? 1 : 0, backend, tiling, tile_size, stitch_style, initialization, body);
         } else {
              single =  api.sendImage(backend, tiling, tile_size, stitch_style, initialization, body);
         }
@@ -175,6 +170,8 @@ public class Utils extends Application {
                 Log.e(TAG, "Upload somehow failed");
                 Log.e(TAG, e.getMessage());
                 e.printStackTrace();
+
+                Toast.makeText(context, "Server couldn't be reached! Try later again.", Toast.LENGTH_SHORT).show();
             }
         });
 

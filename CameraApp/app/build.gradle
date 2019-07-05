@@ -63,4 +63,5 @@ dependencies {
     //preference fragment
     implementation 'androidx.preference:preference:1.0.0'
     implementation 'com.github.addisonelliott:SegmentedButton:3.1.4'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 }

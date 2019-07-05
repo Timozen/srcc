@@ -101,14 +101,14 @@ public class GalleryFragment extends Fragment {
         recyclerView.setAdapter(myAdapter);
 
         //load the data into the cursor
-        myAdapter.changeCursor(queryThumbnails());
+        myAdapter.changeCursor(myAdapter.queryThumbnails());
     }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         if(isVisibleToUser){
-            myAdapter.changeCursor(queryThumbnails());
+            myAdapter.changeCursor(myAdapter.queryThumbnails());
         }
     }
 
@@ -121,7 +121,7 @@ public class GalleryFragment extends Fragment {
     @Override
     public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
-        myAdapter.changeCursor(queryThumbnails());
+        myAdapter.changeCursor(myAdapter.queryThumbnails());
     }
 
     /**
@@ -131,37 +131,8 @@ public class GalleryFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        myAdapter.changeCursor(queryThumbnails());
+        myAdapter.changeCursor(myAdapter.queryThumbnails());
     }
 
-    /**
-     * This function will query the MediaStore to get the thumbnails of our
-     * pictures. The cursor will hold all the needed information inside.
-     *
-     * @return the cursor with the data
-     */
-    private Cursor queryThumbnails() {
-        Log.i(TAG, "Query thumbnails");
-        //get the content resolver which will take care of all the file handling
-        ContentResolver cr = Objects.requireNonNull(getActivity(), "Activity should not be null").getContentResolver();
 
-        //which data we want to get from the media store
-        //id for row location, data_added for sorting, data for the actual location
-        String[] mProjection = {
-                MediaStore.Images.Media._ID,
-                MediaStore.Images.Media.DATE_ADDED,
-                MediaStore.Images.Media.DATA
-        };
-
-        //query the media store to get the data
-        //query the external storage only (also the place were we save everything)
-        //only query data which has "srcc" in the path and sort DESC
-        return cr.query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                mProjection,
-                MediaStore.Images.Media.DATA + " like ? ",
-                new String[]{"%srcc%"},
-                MediaStore.Images.Media.DATE_ADDED + " DESC"
-        );
-    }
 }

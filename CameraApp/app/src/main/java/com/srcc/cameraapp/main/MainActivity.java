@@ -75,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
             //attach the api requests to it
             ApiService mApiConnection = mClient.create(ApiService.class);
 
-            Utils.setDebug(true);
             viewPager = findViewById(R.id.view_pager);
 
             //create the fragment view for nice swiping

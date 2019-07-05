@@ -22,7 +22,7 @@ import com.srcc.cameraapp.R;
 
 import java.util.Objects;
 
-public class SettingsFragment extends Fragment implements View.OnClickListener {
+public class SettingsFragment extends Fragment {
 
     public static final int SRDENSE_TILE_SIZE = 42;
     public static final int SRGAN_TILE_SIZE = 42;
@@ -61,10 +61,10 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
             }
         });
         segmentedButtonGroup.setPosition(sharedPreferences.getInt("backend", 0), false);
-    }
 
-    @Override
-    public void onClick(View v) {
+        Switch switchDebug = view.findViewById(R.id.switch_debug);
+        switchDebug.setChecked(sharedPreferences.getBoolean("debug", true));
+        switchDebug.setOnClickListener(v -> sharedPreferences.edit().putBoolean("debug", switchDebug.isChecked()).apply());
 
     }
 
