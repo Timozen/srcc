@@ -390,36 +390,5 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         String getTitle() {
             return title;
         }
-
-        /**
-         * If we click on one element we want to open a new activity were can take
-         * a closer look
-         *
-         * @param v the view of the fragment
-         *//*
-        @Override
-        public void onClick(View v) {
-
-            //Start a new GallerySingleImageActivity and give the Uri of the clicked imageView_gallery_item_image
-            Intent intent = new Intent(activity, GallerySingleImageActivity.class);
-            intent.putExtra("Uri", mUri.toString());
-            activity.startActivity(intent);
-        }
-
-
-        @Override
-        public boolean onLongClick(View v) {
-
-            imageViewThumbnail.setColorFilter(Color.argb(50, 0, 0, 0));
-
-            Snackbar snackbar = Snackbar.make(v, "Create SR Version of image?", Snackbar.LENGTH_LONG);
-            snackbar.setAction("CREATE", v1 -> {
-                File f = new File(mUri.getPath());
-                Utils.sendImage(mApiConnection, f, compositeDisposable, this.title.split("_")[0], activity.getApplicationContext());
-            });
-            snackbar.show();
-
-            return true;
-        }*/
     }
 }

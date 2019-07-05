@@ -34,12 +34,11 @@ public class MainActivity extends AppCompatActivity {
 
     private CompositeDisposable compositeDisposable;
     private ViewPager viewPager;
-    private static Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context = getApplicationContext();
 
         SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (sp.getBoolean("firstStart", true)) {
@@ -64,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
             loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
             clientBuilder.addInterceptor(loggingInterceptor);
 
-
             //create async client to our server (currently only local network)
             Retrofit mClient = new Retrofit.Builder()
                     .baseUrl("http://192.168.178.44:5000/")
@@ -78,8 +76,6 @@ public class MainActivity extends AppCompatActivity {
             ApiService mApiConnection = mClient.create(ApiService.class);
 
             Utils.setDebug(true);
-//            File f = new File("/storage/emulated/0/Pictures/srcc/1562248296_lr.jpg");
-//            Utils.sendImage(mApiConnection, f, compositeDisposable, "1234", getAppContext());
             viewPager = findViewById(R.id.view_pager);
 
             //create the fragment view for nice swiping
@@ -92,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
                     .createViewPagerAdapter();
 
             viewPager.setAdapter(vpa);
-            //set the starting page to the camera, currently on frame == 0
+            //set the starting page to the camera, currently on frame == 1
             viewPager.setCurrentItem(1);
         }
     }
@@ -132,7 +128,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     @Override
     public void onActivityReenter(int resultCode, Intent data) {
         super.onActivityReenter(resultCode, data);
@@ -146,9 +141,5 @@ public class MainActivity extends AppCompatActivity {
             compositeDisposable.dispose();
         }
         super.onDestroy();
-    }
-
-    public static Context getAppContext() {
-        return MainActivity.context;
     }
 }
