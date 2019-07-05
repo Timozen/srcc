@@ -161,7 +161,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         viewHolder.getImageView().setOnClickListener(v -> {
             currentPosition = position;
             viewPagerFullScreen = activity.findViewById(R.id.viewPager_fullscreen);
-            viewPagerFullScreen.setAdapter(new FullScreenPager(activity.getApplicationContext()));
+
+            FullScreenPager pg = new FullScreenPager(activity.getApplicationContext());
+            viewPagerFullScreen.setAdapter(pg);
+            viewPagerFullScreen.addOnPageChangeListener(pg);
             viewPagerFullScreen.setCurrentItem(position);
             goToFullImage();
         });
@@ -446,7 +449,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         }
     }
 
-    class FullScreenPager extends PagerAdapter {
+    class FullScreenPager extends PagerAdapter implements ViewPager.OnPageChangeListener {
         private Context context;
 
         FullScreenPager(Context context){
@@ -474,6 +477,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             return touchImageView;
         }
 
+
+
         @Override
         public void destroyItem(ViewGroup container, int position, Object view) {
             container.removeView((View) view);
@@ -487,6 +492,21 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         @Override
         public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
             return view == object;
+        }
+
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            currentPosition = position;
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+
         }
     }
 
