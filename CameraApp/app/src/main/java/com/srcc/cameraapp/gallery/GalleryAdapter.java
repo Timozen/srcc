@@ -340,7 +340,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     private void returnFromFullImage(){
-        touchImageView.setZoom(1);
+        touchImageView.resetZoom();
 
         if(itemWasDeleted){
             itemWasDeleted = false;
