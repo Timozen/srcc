@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
+import com.ortiz.touchview.TouchImageView;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
 import com.srcc.cameraapp.other.Utils;
@@ -186,7 +187,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                     currentAnimator.cancel();
                 }
                 ConstraintLayout display = activity.findViewById(R.id.display);
-                ImageView imageViewLarge = activity.findViewById(R.id.expanded_image);
+                TouchImageView imageViewLarge = activity.findViewById(R.id.expanded_image);
 
 
                 Log.i("gallery", "image view is " + imageViewLarge.toString());
