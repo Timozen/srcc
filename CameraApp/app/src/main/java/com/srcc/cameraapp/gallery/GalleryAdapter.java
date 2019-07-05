@@ -29,7 +29,9 @@ import com.bumptech.glide.Glide;
 import com.ortiz.touchview.TouchImageView;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.other.Utils;
 
+import java.io.File;
 import java.util.HashMap;
 
 import io.reactivex.disposables.CompositeDisposable;
@@ -53,6 +55,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private ConstraintLayout gallery;
 
     private TouchImageView touchImageView;
+    private float startScaleFinal;
 
     GalleryAdapter(final Activity activity, final CompositeDisposable compositeDisposable, final ApiService apiService, int rowCount) {
         this.activity = activity;
@@ -70,6 +73,32 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         gallery = activity.findViewById(R.id.constraintLayout_gallery_main);
         display = activity.findViewById(R.id.display);
         touchImageView = activity.findViewById(R.id.expanded_image);
+        touchImageView.setMaxZoom(8);
+
+
+        activity.findViewById(R.id.button_gallery_image_edit).setOnClickListener(v -> {
+            ViewHolder vh = viewHolderList.get(currentPosition);
+            File f = new File(vh.getUri().getPath());
+            Utils.sendImage(mApiConnection, f, compositeDisposable, vh.getTitle().split("_")[0], activity.getApplicationContext());
+        });
+
+        activity.findViewById(R.id.button_gallery_item_delete).setOnClickListener(v -> {
+            //check right one
+            ViewHolder next = viewHolderList.get(currentPosition + 1);
+            if(next != null){
+                currentPosition += 1;
+                updateFullImage(next);
+                return;
+            }
+            next = viewHolderList.get(currentPosition - 1);
+            if(next != null){
+                currentPosition -= 1;
+                updateFullImage(next);
+                return;
+            }
+            currentPosition -=1;
+            returnFromFullImage();
+        });
     }
 
     /**
@@ -189,6 +218,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         return Uri.parse("file://" + dataString);
     }
 
+    private void updateFullImage(ViewHolder viewHolder){
+        //                Glide.with(activity).load(mUri).centerCrop().into(imageViewLarge);
+        touchImageView.setImageURI(viewHolder.getUri());
+    }
+
     private void goToFullImage(){
         if(currentAnimator != null){
             currentAnimator.cancel();
@@ -196,9 +230,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         ViewHolder currentViewHolder = viewHolderList.get(currentPosition);
 
-//                Glide.with(activity).load(mUri).centerCrop().into(imageViewLarge);
         assert currentViewHolder != null;
-        touchImageView.setImageURI(currentViewHolder.getUri());
+        updateFullImage(currentViewHolder);
 
         final Rect startBounds = new Rect();
         final Rect finalBounds = new Rect();
@@ -253,14 +286,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         set.start();
         currentAnimator = set;
 
-        final float startScaleFinal = startScale;
+        startScaleFinal = startScale;
         touchImageView.setOnClickListener(view1 -> {
-            returnFromFullImage(startScaleFinal);
+            returnFromFullImage();
 
         });
     }
 
-    private void returnFromFullImage(final float startScaleFinal){
+    private void returnFromFullImage(){
         if (currentAnimator != null) {
             currentAnimator.cancel();
         }
@@ -352,6 +385,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         Uri getUri() {
             return mUri;
+        }
+
+        String getTitle() {
+            return title;
         }
 
         /**
