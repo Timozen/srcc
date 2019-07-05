@@ -147,6 +147,7 @@ public class Utils extends Application {
                         }
 
                         outputStream.flush();
+                        Toast.makeText(context, "Received SR Image from server!", Toast.LENGTH_SHORT).show();
 
                     } catch (IOException e) {
                         e.printStackTrace();
