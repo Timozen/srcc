@@ -163,7 +163,7 @@ def get_shifted_images(images, total_width, total_height, width, height):
     xy_ = stitch_images(xy, total_width-k, total_height-n, k, n, k-1, n-1)
     img = stitch_images(norm, total_width, total_height, k, n, k, n)
 
-    return img, x_, y_, img
+    return img, x_, y_, xy_
 
 
 def main():
