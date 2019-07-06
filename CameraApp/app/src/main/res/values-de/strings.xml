@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">CameraApp</string>
     <string name="error_text_camera">Kamera Fehler</string>
     <string name="intro_camera_title">Kamera</string>
     <string name="intro_camera_description">Weil gerne Bilder machen wollen, brauchen wir die Erlaubnis auf die Kamera zugreifen zu dürfen.</string>
