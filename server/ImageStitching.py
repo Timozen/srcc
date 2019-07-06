@@ -117,35 +117,54 @@ def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
     y_offset = tile_dim_y//2
     output = img
 
-    def f_xy(x,y):
-        return ((-math.cos((2*math.pi)/tile_dim_x * x )+1)*(-math.cos((2*math.pi)/tile_dim_y * y)+1))/4
-    def f_x(x,y):
-        return ((-math.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-math.cos((2*math.pi)/tile_dim_y * y)+1))/4
-    def f_y(x,y):
-        return ((-math.cos((2*math.pi)/tile_dim_x * x )+1)*(-math.cos((2*math.pi)/tile_dim_y * y+math.pi)+1))/4
     def f(x,y):
-        return ((-math.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-math.cos((2*math.pi)/tile_dim_y * y+math.pi)+1))/4
+        return ((-np.cos((2*math.pi)/tile_dim_x * x )+1)*(-np.cos((2*math.pi)/tile_dim_y * y)+1))/4
+    def f_y(x,y):
+        return ((-np.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-np.cos((2*math.pi)/tile_dim_y * y)+1))/4
+    def f_x(x,y):
+        return ((-np.cos((2*math.pi)/tile_dim_x * x )+1)*(-np.cos((2*math.pi)/tile_dim_y * y+math.pi)+1))/4
+    def f_xy(x,y):
+        return ((-np.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-np.cos((2*math.pi)/tile_dim_y * y+math.pi)+1))/4
+
+    norm_weights = np.fromfunction(lambda i, j:  f(i,j), (img.shape[0], img.shape[1]), dtype=np.float32)
+    norm_weights = np.stack((norm_weights,norm_weights,norm_weights),axis=2)
+    #cv2.imwrite(os.path.join("ISTest","norm_weights.jpg"), np.interp(norm_weights, (0,1), (0,255))) This is for documentary
+
+    x_weights = np.fromfunction(lambda i, j:  f_x(i,j-y_offset), (img.shape[0], img.shape[1]-tile_dim_x), dtype=np.float32)
+    x_weights = np.stack((x_weights,x_weights,x_weights),axis=2)
+
+    y_weights = np.fromfunction(lambda i, j:  f_y(i-x_offset,j), (img.shape[0]-tile_dim_y, img.shape[1]), dtype=np.float32)
+    y_weights = np.stack((y_weights,y_weights,y_weights),axis=2)
+
+    xy_weights = np.fromfunction(lambda i, j:  f_xy(i-x_offset,j-y_offset), (img.shape[0]-tile_dim_y, img.shape[1]-tile_dim_x), dtype=np.float32)
+    xy_weights = np.stack((xy_weights,xy_weights,xy_weights),axis=2)
+
+    x_border_weights = np.fromfunction(lambda i, j:  (-np.cos((2*math.pi)/tile_dim_y * (i- y_offset)+math.pi)+1) / 2, (img.shape[0]-tile_dim_y, x_offset), dtype=np.float32)
+    x_border_weights = np.stack((x_border_weights,x_border_weights,x_border_weights),axis=2)
+
+    y_border_weights = np.fromfunction(lambda i, j:  (-np.cos((2*math.pi)/tile_dim_x * (j- x_offset)+math.pi)+1) / 2, (y_offset, img.shape[1]-tile_dim_x), dtype=np.float32)
+    y_border_weights = np.stack((y_border_weights,y_border_weights,y_border_weights),axis=2)
 
     def overlap(input_img):
         output = input_img
         print("Overlapping ")
-        for row in tqdm(range(input_img.shape[0])):
-            y = row                                    
-            for col in range(input_img.shape[1]):
-                x = col                              
-                if row >= y_offset and col >= x_offset and row < input_img.shape[0]-y_offset and col < input_img.shape[1]-x_offset: # Middle of the screen
-                    proportion_xy = f_xy(x-x_offset,y-y_offset)
-                    proportion_x = f_y(x-x_offset,y-y_offset) 
-                    proportion_y = f_x(x-x_offset,y-y_offset)
-                    proportion_norm = f(x-x_offset,y-y_offset) 
-                   
-                    output[row,col,0:3] =   input_img[row,col,0:3] * proportion_norm + img_x[row,col-x_offset,0:3] * proportion_x + img_y[row-y_offset,col,0:3] * proportion_y + img_xy[row-y_offset,col-x_offset,0:3] * proportion_xy
-                elif (row > input_img.shape[0]-y_offset or row < y_offset) and col >= x_offset and col < input_img.shape[1]-x_offset: # Upper and down borders
-                    proportion = (-math.cos((2*math.pi)/tile_dim_x * (x- x_offset))+1) / 2
-                    output[row,col,0:3] = input_img[row,col,0:3] * (1-proportion) + img_x[row,col-x_offset,0:3] * proportion
-                elif (col < x_offset or col >= input_img.shape[1]-x_offset) and row >= y_offset and row < input_img.shape[0]-y_offset:
-                    proportion = (-math.cos((2*math.pi)/tile_dim_y * (y- y_offset) )+1) / 2
-                    output[row,col,0:3] = input_img[row,col,0:3] * (1-proportion) + img_y[row-y_offset,col,0:3] * proportion
+        output[y_offset:input_img.shape[0]-y_offset, x_offset:input_img.shape[1]-x_offset, 0:3] = \
+                                    np.multiply(input_img[y_offset:input_img.shape[0]-y_offset,x_offset:input_img.shape[1]-x_offset,0:3], norm_weights[y_offset:input_img.shape[0]-y_offset,x_offset:input_img.shape[1]-x_offset,0:3]) + \
+                                    np.multiply(img_x[y_offset:input_img.shape[0]-y_offset,:,0:3],x_weights[y_offset:input_img.shape[0]-y_offset,:,0:3]) + \
+                                    np.multiply(img_y[:,x_offset:input_img.shape[1]-x_offset,0:3],y_weights[:,x_offset:input_img.shape[1]-x_offset,0:3]) + \
+                                    np.multiply(img_xy[:,:,0:3],xy_weights[:,:,0:3])
+        output[y_offset:input_img.shape[0]-y_offset,0:x_offset, 0:3] = \
+                                    np.multiply(img_y[:,0:x_offset,0:3],x_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[y_offset:input_img.shape[0]-y_offset,0:x_offset, 0:3],np.subtract(np.ones(x_border_weights.shape),x_border_weights[:,:,0:3]))
+        output[y_offset:input_img.shape[0]-y_offset,input_img.shape[1]-x_offset:, 0:3] = \
+                                    np.multiply(img_y[:,input_img.shape[1]-x_offset:,0:3],x_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[y_offset:input_img.shape[0]-y_offset,input_img.shape[1]-x_offset:, 0:3],np.subtract(np.ones(x_border_weights.shape),x_border_weights[:,:,0:3]))
+        output[0:y_offset,x_offset:input_img.shape[1]-x_offset, 0:3] = \
+                                    np.multiply(img_x[0:y_offset,:,0:3],y_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[0:y_offset,x_offset:input_img.shape[1]-x_offset, 0:3],np.subtract(np.ones(y_border_weights.shape),y_border_weights[:,:,0:3]))
+        output[input_img.shape[0]-y_offset:,x_offset:input_img.shape[1]-x_offset, 0:3] = \
+                                    np.multiply(img_x[input_img.shape[0]-y_offset:,:,0:3],y_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[input_img.shape[0]-y_offset:,x_offset:input_img.shape[1]-x_offset, 0:3],np.subtract(np.ones(y_border_weights.shape),y_border_weights[:,:,0:3]))
         return output
     
     output = overlap(output)
@@ -187,7 +206,7 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
         img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
         img_ = stitch_images(img_list,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
         img_x_shifted_ = stitch_images(img_x_shifted_list,image_size[1]-image_tiles[0].shape[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
-        img_y_shifted_ = stitch_images(img_y_shifted_list,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
+        img_y_shifted_ = stitch_images(img_y_shifted_list,image_size[1],image_size[0]-image_tiles[0].shape[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
         img_xy_shifted_ = stitch_images(img_xy_shifted_list,image_size[1]-image_tiles[0].shape[1],image_size[0]-image_tiles[0].shape[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
         return overlap_images(img_, img_x_shifted_, img_y_shifted_, img_xy_shifted_, image_tiles[0].shape[1], image_tiles[0].shape[0]) 
 
@@ -248,6 +267,7 @@ def get_shifted_images(images, total_width, total_height, width, height):
     xy_ = stitch_images(xy, total_width-k, total_height-n, k, n, k-1, n-1)
     img = stitch_images(norm, total_width, total_height, k, n, k, n)
     '''
+
     return norm, x, y, xy
 
 def get_simple_stitch(images, total_width, total_height, width, height):
@@ -281,7 +301,7 @@ def main():
         sr_tiles.append(   Utils.denormalize(np.squeeze(model.predict(np.expand_dims(Utils.rescale_imgs_to_neg1_1(tile), axis=0)), axis=0))  )
     simpleStitch = get_simple_stitch(sr_tiles, 4032, 3024, 504, 504)
     cv2.imwrite(os.path.join("ISTest","image_simple_stitched.jpg"), cv2.cvtColor(simpleStitch, cv2.COLOR_RGB2BGR))
-    final_image = stitching(sr_tiles, lr, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True)
+    final_image = stitching(sr_tiles, lr, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB=False)
     cv2.imwrite(os.path.join("ISTest","image_final.jpg"), cv2.cvtColor(final_image, cv2.COLOR_RGB2BGR))
 
 
