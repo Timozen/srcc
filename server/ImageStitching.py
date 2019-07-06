@@ -3,6 +3,11 @@ import numpy as np
 import cv2
 import fnmatch
 import Utils
+from keras.models import load_model
+import math
+import tensorflow as tf
+from tqdm import tqdm
+
 
 def load_image(file, path=None):
     if path != None:
@@ -65,8 +70,8 @@ def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):
         return float_tile.astype(np.uint8)
 
     
-    for i in range(rows + cols):
-        for k in range(i):
+    for i in tqdm(range(rows + cols)):
+        for k in tqdm(range(i)):
             if (i-k)>= 0 and (i-k) < rows and k >= 0 and k < cols :
                 this = image_tiles[(i-k)*cols + k]
                 if i == 0:
@@ -108,8 +113,41 @@ def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim)
     return stitched_image
 
 def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
+    x_offset = tile_dim_x//2
+    y_offset = tile_dim_y//2
+    output = img
 
-    pass
+    def overlap_x_dir(input_img):
+        output = input_img
+        print("Overlapping x-direction")
+        for col in tqdm(range(x_offset, input_img.shape[1]-x_offset)):
+            x = col - x_offset                                  # x ist der Wert für die Sinusinterpolation und startet bei 0
+            proportion = math.sin(math.pi/tile_dim_x * x)
+            output[:,col,0:3] = input_img[:,col,0:3] * (1-proportion) + img_x[:,col-x_offset,0:3] * proportion
+        return output
+    def overlap_y_dir(input_img):
+        output = input_img
+        print("Overlapping y-direction")
+        for row in tqdm(range(y_offset, input_img.shape[0]-y_offset)):
+            y = row - y_offset                                  # y ist der Wert für die Sinusinterpolation und startet bei 0
+            proportion = math.sin(math.pi/tile_dim_y * y)
+            output[row,:,0:3] = input_img[row,:,0:3] * (1-proportion) + img_y[row-y_offset,:,0:3] * proportion
+        return output
+    def overlap_xy_dir(input_img):
+        output = input_img
+        print("Overlapping xy-direction")
+        for row in tqdm(range(y_offset, input_img.shape[0]-y_offset)):
+            y = row - y_offset                                     # x ist der Wert für die Sinusinterpolation und startet bei 0
+            for col in range(x_offset, input_img.shape[1]-x_offset):
+                x = col - x_offset                                 # y ist der Wert für die Sinusinterpolation und startet bei 0
+                proportion = math.sin(math.pi/tile_dim_y * y) * math.sin(math.pi/tile_dim_x * x)
+                output[row,col,0:3] = input_img[row,col,0:3] * (1-proportion) + img_y[row-y_offset,col-x_offset,0:3] * proportion
+        return output
+    
+    output = overlap_x_dir(output)
+    output = overlap_y_dir(output)
+    output = overlap_xy_dir(output)
+    return output
 
 
 def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = False): 
@@ -128,18 +166,24 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
         return output
     
     if overlap is True:
-        img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size.shape[1],image_size.shape[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
+        
+        img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
+        print("Calculating x_norm image")
         img_ = stitching(img_list,LR,border_size,image_size, overlap = False)
+        print("Calculating x_shifted image")
         img_x_shifted_ = stitching(img_x_shifted_list,LR,border_size, image_size=(image_size[0] , image_size[1]-image_tiles[0].shape[1] ),                              # gets the x shifted hsv corrected advance stitch image
                                                                       LROffset= (0,image_tiles[0].shape[1]//2), overlap=False)
+        print("Calculating y_shifted image")
         img_y_shifted_ = stitching(img_y_shifted_list,LR,border_size, image_size=(image_size[0]-image_tiles[0].shape[0] , image_size[1] ),                              # gets the y shifted hsv corrected advance stitch image
                                                                       LROffset= (image_tiles[0].shape[0]//2,0), overlap=False)
+        print("Calculating xy_shifted image")
         img_xy_shifted_ = stitching(img_xy_shifted_list,LR,border_size, image_size=(image_size[0]-image_tiles[0].shape[0] , image_size[1]-image_tiles[0].shape[1] ),    # gets the xy shifted hsv corrected advance stitch image
                                                                         LROffset= (image_tiles[0].shape[0]//2,image_tiles[0].shape[1]//2), overlap=False)
         return overlap_images(img_, img_x_shifted_, img_y_shifted_, img_xy_shifted_, image_tiles[0].shape[1], image_tiles[0].shape[0]) 
 
 
     # this code runs if LR==None and overlap==False (Advanced stitching without overlapping tiles)
+    print("Calculating interpolations and hsv")
     corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
                                                 image_size[0]//image_tiles[0].shape[0],
                                                 image_size[1]//image_tiles[0].shape[1])     
@@ -180,16 +224,13 @@ def get_shifted_images(images, total_width, total_height, width, height):
     for i in range(n + (n-1)):
         for j in range(k + (k-1)):
             if i % 2 == 0 and not j % 2 == 0:
-                print("x", i, j)
+
                 x.append(images[i*(k+(k-1)) + j])
             elif not i % 2 == 0 and j % 2 == 0:
-                print("y", i, j)
                 y.append(images[i*(k+(k-1)) + j])
             elif i % 2 == 0 and j % 2 == 0:
-                print("norm", i, j)
                 norm.append(images[i*(k+(k-1)) + j])
             else:
-                print("xy", i, j)
                 xy.append(images[i*(k+(k-1)) + j])
     '''
     x_ = stitch_images(x, total_width-k, total_height, k, n, k-1, n)
@@ -200,23 +241,18 @@ def get_shifted_images(images, total_width, total_height, width, height):
     return norm, x, y, xy
 
 
-
-
 def main():
-    '''
-    overlap_images = load_images("","images")
-    images = []
-    for i in range(9+8):
-        for j in range(12+11):
-            if i%2 == 0 and j%2 == 0:
-                images.append(overlap_images[i*23+j])
-    '''
-    image = cv2.imread(os.path.join("drive-download-20190702T161457Z-001","img_sr.jpg"))
-    imageLR = cv2.imread(os.path.join("drive-download-20190702T161457Z-001","img_lr.jpg"))
-    images = Utils.tile_image(image)
+    lr = cv2.cvtColor(cv2.imread(os.path.join("ISTest","img_lr.jpg")), cv2.COLOR_BGR2RGB)
+    model = load_model(os.path.join("models","initialized_gen_model20.h5"), custom_objects={"tf":tf})
+    lr_tiles_overlap = Utils.tile_image(lr, shape=(126,126), overlap=True)
+    sr_tiles = []
+    for tile in tqdm(lr_tiles_overlap):
+        sr_tiles.append(   Utils.denormalize(np.squeeze(model.predict(np.expand_dims(Utils.rescale_imgs_to_neg1_1(tile), axis=0)), axis=0))  )
+    
+    final_image = stitching(sr_tiles, lr, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True)
+    cv2.imwrite(os.path.join("ISTest","image_final.jpg"), cv2.cvtColor(final_image, cv2.COLOR_RGB2BGR))
 
-    final_image = stitching(images,imageLR)
-    cv2.imwrite("test.jpg",final_image)
+
 
 if __name__ == "__main__":
     main()

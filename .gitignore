@@ -218,4 +218,8 @@ logs
 *.jpg
 *.h5
 models/
+
+#Testing
+ISTest/
+
 >>>>>>> origin/ImageStitchingPrototype
