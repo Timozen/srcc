@@ -332,14 +332,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         currentAnimator = set;
 
         startScaleFinal = startScale;
-//        touchImageView.setOnClickListener(view1 -> {
-//            returnFromFullImage();
-//
-//        });
     }
 
     private void returnFromFullImage(){
-//        touchImageView.resetZoom();
 
         currentPosition = viewPagerFullScreen.getCurrentItem();
 
@@ -349,7 +344,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             changeCursor(queryThumbnails());
             return;
         }
-
+        changeCursor(queryThumbnails());
         if (currentAnimator != null) {
             currentAnimator.cancel();
         }
