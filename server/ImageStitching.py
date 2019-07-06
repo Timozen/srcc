@@ -128,13 +128,11 @@ def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
 
     def overlap(input_img):
         output = input_img
-        print("Overlapping xy-direction")
+        print("Overlapping ")
         for row in tqdm(range(input_img.shape[0])):
-            y = row                                    # x ist der Wert für die Sinusinterpolation und startet bei 0
+            y = row                                    
             for col in range(input_img.shape[1]):
-                x = col                              # y ist der Wert für die Sinusinterpolation und startet bei 0
-                #proportion = (-math.cos((2*math.pi)/tile_dim_y * y)+1) / 2 * (-math.cos((2*math.pi)/tile_dim_x * x)+1) / 2
-
+                x = col                              
                 if row >= y_offset and col >= x_offset and row < input_img.shape[0]-y_offset and col < input_img.shape[1]-x_offset: # Middle of the screen
                     proportion_xy = f_xy(x-x_offset,y-y_offset)
                     proportion_x = f_y(x-x_offset,y-y_offset) 
@@ -154,10 +152,12 @@ def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
     return output
 
 
-def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = False, adjustRGB = False): 
+def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB = True): 
     
+    if adjustRGB == False:
+        LR = None
 
-    if LR is None: 
+    if (LR is None) and overlap==False: 
         corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
                                                 image_size[0]//image_tiles[0].shape[0],
                                                 image_size[1]//image_tiles[0].shape[1])     
@@ -170,7 +170,7 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
         return output
     
     if overlap is True:
-        if adjustRGB is True:
+        if adjustRGB == True :
             img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
             print("Calculating x_norm image")
             img_ = stitching(img_list,LR,border_size,image_size, overlap = False)
@@ -191,8 +191,8 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
         img_xy_shifted_ = stitch_images(img_xy_shifted_list,image_size[1]-image_tiles[0].shape[1],image_size[0]-image_tiles[0].shape[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
         return overlap_images(img_, img_x_shifted_, img_y_shifted_, img_xy_shifted_, image_tiles[0].shape[1], image_tiles[0].shape[0]) 
 
-
-    # this code runs if LR==None and overlap==False (Advanced stitching without overlapping tiles)
+ 
+    # this code runs if LR!=None and overlap==False (Advanced stitching without overlapping tiles)
     print("Calculating interpolations and hsv")
     corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
                                                 image_size[0]//image_tiles[0].shape[0],
@@ -208,7 +208,7 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
     hsv = cv2.cvtColor(HR_,cv2.COLOR_BGR2HSV)                                               # Converts the upscaled LR image into HSV
     outputHSV = cv2.cvtColor(output,cv2.COLOR_BGR2HSV)                                      # Converts the corrected SR image into HSV
     outputHSV[:,:,0:2] = hsv[LROffset[0]:outputHSV.shape[0]+LROffset[0],
-                             LROffset[1]:outputHSV.shape[1]+LROffset[1],0:2]                # Replaces HS-values of the SR image by the LR image in the valid area
+                            LROffset[1]:outputHSV.shape[1]+LROffset[1],0:2]                # Replaces HS-values of the SR image by the LR image in the valid area
     output = cv2.cvtColor(outputHSV,cv2.COLOR_HSV2BGR)                                      # Converts the color-corrected SR image into BGR (RGB-Space)
     return output
 
