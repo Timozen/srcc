@@ -534,12 +534,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
-                }
-            });
+            activity.runOnUiThread(() -> Toast.makeText(activity, text, Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -632,8 +627,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                    showToast("Saved: " + mFile);
-                    Log.d("CAMERA_APP", mFile.toString());
+                    Log.d("CAMERA_APP", "File saved to " + mFile.toString());
                     unlockFocus();
                 }
             };
