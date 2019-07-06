@@ -49,10 +49,30 @@ def calc_border_average(image_tile, border_size = 20):
 def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):
 
     factors = []
+    mask = np.zeros(image_tiles[0].shape).astype(np.float32)
+    
+
+    for y,x in np.ndindex(mask.shape[0:2]):
+        if x == 0 and y == 0:
+            factor1_ = 0.5
+        else:
+            factor1_ = x/(x+y)
+            #print("x = ",x)
+            #print("y = ",y)
+            #print(factors)
+            mask[y,x,0] = factor1_
+            mask[y,x,1] = factor1_
+            mask[y,x,2] = factor1_
+    
 
     def apply_factors(tile):
         #print(tile.shape)
         float_tile = tile.astype(np.float64)
+
+        float_tile[:,:,0] = np.multiply(float_tile[:,:,0], mask[:,:,0] * factors[-1][1][0]) + np.multiply(float_tile[:,:,0], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,0] *factors[-1][0][0])
+        float_tile[:,:,1] = np.multiply(float_tile[:,:,1], mask[:,:,1] * factors[-1][1][1]) + np.multiply(float_tile[:,:,1], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,1] *factors[-1][0][1])
+        float_tile[:,:,2] = np.multiply(float_tile[:,:,2], mask[:,:,2] * factors[-1][1][2]) + np.multiply(float_tile[:,:,2], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,2] *factors[-1][0][2])
+        '''
         for y,x in np.ndindex(this.shape[0:2]):
             if x == 0 and y == 0:
                 factor1_ = 0.5
@@ -64,6 +84,7 @@ def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):
             #print("y = ",y)
             #print(factors)
             float_tile[y,x,:] = np.multiply(float_tile[y,x,:], factor1_ * factors[-1][1]) + np.multiply(float_tile[y,x,:], factor2_ * factors[-1][0])
+        '''
         float_tile[float_tile > 255] = 255
     
 
@@ -301,7 +322,7 @@ def main():
         sr_tiles.append(   Utils.denormalize(np.squeeze(model.predict(np.expand_dims(Utils.rescale_imgs_to_neg1_1(tile), axis=0)), axis=0))  )
     simpleStitch = get_simple_stitch(sr_tiles, 4032, 3024, 504, 504)
     cv2.imwrite(os.path.join("ISTest","image_simple_stitched.jpg"), cv2.cvtColor(simpleStitch, cv2.COLOR_RGB2BGR))
-    final_image = stitching(sr_tiles, lr, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB=False)
+    final_image = stitching(sr_tiles, lr, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB=True)
     cv2.imwrite(os.path.join("ISTest","image_final.jpg"), cv2.cvtColor(final_image, cv2.COLOR_RGB2BGR))
 
 
