@@ -124,7 +124,46 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032)):
     output = cv2.cvtColor(outputHSV,cv2.COLOR_HSV2BGR)
     return output
 
-    
+
+def get_shifted_images(images, total_width, total_height, width, height):
+    '''
+    Stiches the shifted images tiles together to for single images.
+
+    images -- list of all tiles
+    total_width,total_height -- pixel size of the HR image
+    width, height -- pixel size of a single tile
+
+    returns images in the following order: img, x-shifted, y-shifted, xy-shifted
+    '''
+
+    n = total_height // height
+    k = total_width // width
+
+    x = []
+    y = []
+    xy = []
+    norm = []
+    for i in range(n + (n-1)):
+        for j in range(k + (k-1)):
+            if i % 2 == 0 and not j % 2 == 0:
+                print("x", i, j)
+                x.append(images[i*(k+(k-1)) + j])
+            elif not i % 2 == 0 and j % 2 == 0:
+                print("y", i, j)
+                y.append(images[i*(k+(k-1)) + j])
+            elif i % 2 == 0 and j % 2 == 0:
+                print("norm", i, j)
+                norm.append(images[i*(k+(k-1)) + j])
+            else:
+                print("xy", i, j)
+                xy.append(images[i*(k+(k-1)) + j])
+
+    x_ = stitch_images(x, total_width-k, total_height, k, n, k-1, n)
+    y_ = stitch_images(y, total_width, total_height-n, k, n, k, n-1)
+    xy_ = stitch_images(xy, total_width-k, total_height-n, k, n, k-1, n-1)
+    img = stitch_images(norm, total_width, total_height, k, n, k, n)
+
+    return img, x_, y_, img
 
 
 def main():
