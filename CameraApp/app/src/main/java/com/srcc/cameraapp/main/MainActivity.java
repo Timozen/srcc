@@ -1,6 +1,7 @@
 package com.srcc.cameraapp.main;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
 import android.app.Activity;
@@ -17,9 +18,11 @@ import android.view.WindowManager;
 
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.gallery.GalleryFragment;
 import com.srcc.cameraapp.other.Utils;
 
 import java.io.File;
+import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
 import okhttp3.OkHttpClient;
@@ -140,5 +143,27 @@ public class MainActivity extends AppCompatActivity {
             compositeDisposable.dispose();
         }
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        switch (viewPager.getCurrentItem()){
+            case 0:
+                viewPager.setCurrentItem(1, true);
+                break;
+            case 1:
+                super.onBackPressed();
+                break;
+            case 2:
+                List<Fragment> fragmentList = getSupportFragmentManager().getFragments();
+                for(Fragment f : fragmentList){
+                    if(f != null && f instanceof GalleryFragment){
+                        if(!((GalleryFragment)f).onBackPressed()){
+                            viewPager.setCurrentItem(1, true);
+                        }
+                    }
+                }
+                break;
+        }
     }
 }

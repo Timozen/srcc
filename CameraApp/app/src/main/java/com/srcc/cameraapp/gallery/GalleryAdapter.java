@@ -24,6 +24,8 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,6 +69,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private float startScaleFinal;
     private boolean itemWasDeleted = false;
     private ViewPager viewPagerFullScreen;
+    public boolean isFullScreen;
 
     GalleryAdapter(final Activity activity, final CompositeDisposable compositeDisposable, final ApiService apiService, int rowCount) {
         this.activity = activity;
@@ -138,6 +141,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         vh.getImageView().getLayoutParams().width = width;
         return vh;
     }
+
+
 
     /**
      * In this function we can connect the data and the elements behind it
@@ -332,9 +337,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         currentAnimator = set;
 
         startScaleFinal = startScale;
+        isFullScreen = true;
     }
 
-    private void returnFromFullImage(){
+    public void returnFromFullImage(){
 
         currentPosition = viewPagerFullScreen.getCurrentItem();
 
@@ -404,7 +410,17 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         });
         set1.start();
         currentAnimator = set1;
+        isFullScreen=false;
     }
+
+    public boolean onBackPressed(){
+        if (isFullScreen){
+            returnFromFullImage();
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * This class will hold the information of our elements in the recycler view
