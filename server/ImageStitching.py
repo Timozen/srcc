@@ -107,24 +107,55 @@ def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim)
 
     return stitched_image
 
+def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
+
+    pass
 
 
-
-def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), overlap = False): 
-    corrected_image_tiles = calc_border_factors(image_tiles,image_size[0]//image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1])
-    output = stitch_images(corrected_image_tiles,image_size[1], image_size[0],image_tiles[0].shape[0],image_tiles[0].shape[1], image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
+def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = False): 
     
+
     if LR is None: 
+        corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
+                                                image_size[0]//image_tiles[0].shape[0],
+                                                image_size[1]//image_tiles[0].shape[1])     
+        output = stitch_images(corrected_image_tiles,                                           # simply stitches the corrected tiles into one image
+                            image_size[1], image_size[0],
+                            image_tiles[0].shape[0],
+                            image_tiles[0].shape[1], 
+                            image_size[1]//image_tiles[0].shape[1], 
+                            image_size[0]//image_tiles[0].shape[0])
         return output
     
-    if overlap
-        img
+    if overlap is True:
+        img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size.shape[1],image_size.shape[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
+        img_ = stitching(img_list,LR,border_size,image_size, overlap = False)
+        img_x_shifted_ = stitching(img_x_shifted_list,LR,border_size, image_size=(image_size[0] , image_size[1]-image_tiles[0].shape[1] ),                              # gets the x shifted hsv corrected advance stitch image
+                                                                      LROffset= (0,image_tiles[0].shape[1]//2), overlap=False)
+        img_y_shifted_ = stitching(img_y_shifted_list,LR,border_size, image_size=(image_size[0]-image_tiles[0].shape[0] , image_size[1] ),                              # gets the y shifted hsv corrected advance stitch image
+                                                                      LROffset= (image_tiles[0].shape[0]//2,0), overlap=False)
+        img_xy_shifted_ = stitching(img_xy_shifted_list,LR,border_size, image_size=(image_size[0]-image_tiles[0].shape[0] , image_size[1]-image_tiles[0].shape[1] ),    # gets the xy shifted hsv corrected advance stitch image
+                                                                        LROffset= (image_tiles[0].shape[0]//2,image_tiles[0].shape[1]//2), overlap=False)
+        return overlap_images(img_, img_x_shifted_, img_y_shifted_, img_xy_shifted_, image_tiles[0].shape[1], image_tiles[0].shape[0]) 
 
-    HR_ = cv2.resize(LR, (0,0) , fx = 4, fy = 4, interpolation = cv2.INTER_CUBIC)
-    hsv = cv2.cvtColor(HR_,cv2.COLOR_BGR2HSV)
-    outputHSV = cv2.cvtColor(output,cv2.COLOR_BGR2HSV)
-    outputHSV[:,:,0:2] = hsv[0:outputHSV.shape[0],0:outputHSV.shape[1],0:2]
-    output = cv2.cvtColor(outputHSV,cv2.COLOR_HSV2BGR)
+
+    # this code runs if LR==None and overlap==False (Advanced stitching without overlapping tiles)
+    corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
+                                                image_size[0]//image_tiles[0].shape[0],
+                                                image_size[1]//image_tiles[0].shape[1])     
+    output = stitch_images(corrected_image_tiles,                                           # simply stitches the corrected tiles into one image
+                            image_size[1], image_size[0],
+                            image_tiles[0].shape[0],
+                            image_tiles[0].shape[1], 
+                            image_size[1]//image_tiles[0].shape[1], 
+                            image_size[0]//image_tiles[0].shape[0])
+
+    HR_ = cv2.resize(LR, (0,0) , fx = 4, fy = 4, interpolation = cv2.INTER_CUBIC)           # Upscales the LR image
+    hsv = cv2.cvtColor(HR_,cv2.COLOR_BGR2HSV)                                               # Converts the upscaled LR image into HSV
+    outputHSV = cv2.cvtColor(output,cv2.COLOR_BGR2HSV)                                      # Converts the corrected SR image into HSV
+    outputHSV[:,:,0:2] = hsv[LROffset[0]:outputHSV.shape[0]+LROffset[0],
+                             LROffset[1]:outputHSV.shape[1]+LROffset[1],0:2]                # Replaces HS-values of the SR image by the LR image in the valid area
+    output = cv2.cvtColor(outputHSV,cv2.COLOR_HSV2BGR)                                      # Converts the color-corrected SR image into BGR (RGB-Space)
     return output
 
 
@@ -166,7 +197,7 @@ def get_shifted_images(images, total_width, total_height, width, height):
     xy_ = stitch_images(xy, total_width-k, total_height-n, k, n, k-1, n-1)
     img = stitch_images(norm, total_width, total_height, k, n, k, n)
     '''
-    return img, x_, y_, xy_
+    return norm, x, y, xy
 
 
 
