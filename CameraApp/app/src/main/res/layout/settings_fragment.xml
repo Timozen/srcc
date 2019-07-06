@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:minWidth="200dp"
@@ -39,7 +40,6 @@
         app:selectedBackground="@color/orange"
         app:selectionAnimationDuration="300"
         app:selectionAnimationInterpolator="fastOutSlowIn">
-
 
         <com.addisonelliott.segmentedbutton.SegmentedButton
             android:id="@+id/button_srdense"
@@ -83,6 +83,34 @@
         app:layout_constraintTop_toBottomOf="@+id/segmentedButtonGroup">
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/textView_settings_server_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/settings_text_server_url"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toTopOf="@+id/editText_server_url"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/editText_server_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:inputType="text"
+        android:textSize="24sp"
+        android:theme="@style/Preference.Switch"
+        app:layout_constraintBottom_toTopOf="@+id/switch_debug"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Switch
         android:id="@+id/switch_debug"

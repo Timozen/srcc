@@ -119,8 +119,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     //api variables
     private final CompositeDisposable compositeDisposable;
-    private final Retrofit mClient;
-    private final ApiService mApiConnection;
+    private Retrofit mClient;
+    private ApiService mApiConnection;
 
     //picture state variables
     private int mState = STATE_PREVIEW;

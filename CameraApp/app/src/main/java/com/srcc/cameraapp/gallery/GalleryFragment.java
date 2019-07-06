@@ -28,7 +28,7 @@ public class GalleryFragment extends Fragment {
 
     //api variables
     private final CompositeDisposable compositeDisposable;
-    private final ApiService mApiConnection;
+    private ApiService mApiConnection;
 
     /**
      * Builder pattern (not necessary but for consistency)

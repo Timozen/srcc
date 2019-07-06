@@ -62,8 +62,6 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
             return new ViewPagerAdapter(viewPager, fragmentManager, compositeDisposable, client, apiService, context);
         }
 
-
-
         public Builder setContext(Context context) {
             this.context = context;
             return this;
@@ -73,11 +71,11 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     private ViewPager viewPager;
     private FragmentManager fragmentManager;
     private final CompositeDisposable compositeDisposable;
-    private final Retrofit client;
-    private final ApiService apiService;
+    private Retrofit client;
+    private ApiService apiService;
     private Context context;
 
-    public ViewPagerAdapter(ViewPager viewPager, FragmentManager fragmentManager, CompositeDisposable compositeDisposable, Retrofit client, ApiService apiService, Context context) {
+    private ViewPagerAdapter(ViewPager viewPager, FragmentManager fragmentManager, CompositeDisposable compositeDisposable, Retrofit client, ApiService apiService, Context context) {
         super(fragmentManager);
         this.viewPager = viewPager;
         this.fragmentManager = fragmentManager;
@@ -100,7 +98,10 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int i) {
         switch (i) {
             case 0:
-                return new SettingsFragment.Builder().createSettingsFragment();
+                return new SettingsFragment.Builder()
+                        .setApiService(apiService)
+                        .setClient(client)
+                        .createSettingsFragment();
             case 1:
                 //Build the camera fragment with connection to the api
                 return new CameraFragment.Builder()

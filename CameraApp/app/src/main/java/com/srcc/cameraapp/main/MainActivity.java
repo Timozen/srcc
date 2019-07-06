@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
@@ -36,14 +37,17 @@ public class MainActivity extends AppCompatActivity {
 
     private CompositeDisposable compositeDisposable;
     private ViewPager viewPager;
-
+    private SharedPreferences sp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
-        SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        updateUI();
+
+        sp = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (sp.getBoolean("firstStart", true)) {
             Log.i(TAG, "App first start");
             Intent intent = new Intent(MainActivity.this, IntroActivity.class);
@@ -52,7 +56,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             init();
         }
-
     }
 
     private void init(){
@@ -66,9 +69,11 @@ public class MainActivity extends AppCompatActivity {
             loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
             clientBuilder.addInterceptor(loggingInterceptor);
 
+
+            String serverUrl = sp.getString("server_url", "192.168.178.44");
             //create async client to our server (currently only local network)
             Retrofit mClient = new Retrofit.Builder()
-                    .baseUrl("http://192.168.178.44:5000/")
+                    .baseUrl("http://" + serverUrl + ":5000/")
 //                    .client(clientBuilder.build())
                     .addConverterFactory(GsonConverterFactory.create())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
@@ -95,33 +100,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    /**
-     * We use this function for removing the android navigation
-     * on bottom and top
-     *
-     * @param hasFocus check if our app has the focus
-     */
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        View decorView = getWindow().getDecorView();
-
-        if (hasFocus) {
-            //set the tags for making it fullscreen
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+    public void updateUI() {
+        final View decorView = getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener (visibility -> {
+            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }
+            }
+        });
     }
 
     private boolean firstResume = true;
     @Override
     protected void onResume() {
         super.onResume();
+        updateUI();
         Log.i(TAG, "MainActivity is resumed");
         if(!firstResume) {
             init();

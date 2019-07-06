@@ -50,7 +50,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private Activity activity;
     private Cursor galleryCursor;
     private final CompositeDisposable compositeDisposable;
-    private final ApiService mApiConnection;
+    private ApiService mApiConnection;
     private int rowCount;
     private int width;
 

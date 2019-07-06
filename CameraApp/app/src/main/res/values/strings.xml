@@ -27,4 +27,5 @@
     <string name="settings_text_use_init">Use Initialisation</string>
     <string name="settings_text_use_tiling">Use Tiling</string>
     <string name="settings_text_debug">Debug</string>
+    <string name="settings_text_server_url">Server URL</string>
 </resources>

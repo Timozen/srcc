@@ -4,9 +4,12 @@ import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -19,8 +22,13 @@ import androidx.fragment.app.Fragment;
 
 import com.addisonelliott.segmentedbutton.SegmentedButtonGroup;
 import com.srcc.cameraapp.R;
+import com.srcc.cameraapp.api.ApiService;
 
 import java.util.Objects;
+
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SettingsFragment extends Fragment {
 
@@ -30,6 +38,14 @@ public class SettingsFragment extends Fragment {
 
     private SharedPreferences sharedPreferences;
     private ConstraintLayout constraintLayoutSettingsBackend;
+
+    private Retrofit client;
+    private ApiService apiService;
+
+    SettingsFragment(Retrofit client, ApiService apiService) {
+        this.client = client;
+        this.apiService = apiService;
+    }
 
     @Nullable
     @Override
@@ -65,6 +81,32 @@ public class SettingsFragment extends Fragment {
         Switch switchDebug = view.findViewById(R.id.switch_debug);
         switchDebug.setChecked(sharedPreferences.getBoolean("debug", true));
         switchDebug.setOnClickListener(v -> sharedPreferences.edit().putBoolean("debug", switchDebug.isChecked()).apply());
+
+        EditText editTextServerUrl = view.findViewById(R.id.editText_server_url);
+        editTextServerUrl.setText(sharedPreferences.getString("server_url", "192.168.178.44"));
+        editTextServerUrl.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String text = editTextServerUrl.getText().toString();
+                sharedPreferences.edit().putString("server_url", text).apply();
+                client = new Retrofit.Builder()
+                        .baseUrl("http://" + text + ":5000/")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                        .build();
+                apiService = client.create(ApiService.class);
+            }
+        });
 
     }
 
@@ -402,9 +444,24 @@ public class SettingsFragment extends Fragment {
         segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt("srresnet_stitch_style", 0), false);
     }
 
+
+
     public static class Builder {
+        private Retrofit client;
+        private ApiService apiService;
+
         public SettingsFragment createSettingsFragment() {
-            return new SettingsFragment();
+            return new SettingsFragment(client, apiService);
+        }
+
+        public Builder setClient(Retrofit client) {
+            this.client = client;
+            return this;
+        }
+
+        public Builder setApiService(ApiService apiService) {
+            this.apiService = apiService;
+            return this;
         }
     }
 }
