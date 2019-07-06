@@ -110,13 +110,16 @@ def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim)
 
 
 
-def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032)): 
+def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), overlap = False): 
     corrected_image_tiles = calc_border_factors(image_tiles,image_size[0]//image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1])
     output = stitch_images(corrected_image_tiles,image_size[1], image_size[0],image_tiles[0].shape[0],image_tiles[0].shape[1], image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
     
     if LR is None: 
         return output
     
+    if overlap
+        img
+
     HR_ = cv2.resize(LR, (0,0) , fx = 4, fy = 4, interpolation = cv2.INTER_CUBIC)
     hsv = cv2.cvtColor(HR_,cv2.COLOR_BGR2HSV)
     outputHSV = cv2.cvtColor(output,cv2.COLOR_BGR2HSV)
@@ -127,13 +130,13 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032)):
 
 def get_shifted_images(images, total_width, total_height, width, height):
     '''
-    Stiches the shifted images tiles together to for single images.
+    Seperates shifted images into a list of tiles of each shifted images.
 
     images -- list of all tiles
     total_width,total_height -- pixel size of the HR image
     width, height -- pixel size of a single tile
 
-    returns images in the following order: img, x-shifted, y-shifted, xy-shifted
+    returns lists of tiles in the following order: img, x-shifted, y-shifted, xy-shifted
     '''
 
     n = total_height // height
@@ -157,13 +160,15 @@ def get_shifted_images(images, total_width, total_height, width, height):
             else:
                 print("xy", i, j)
                 xy.append(images[i*(k+(k-1)) + j])
-
+    '''
     x_ = stitch_images(x, total_width-k, total_height, k, n, k-1, n)
     y_ = stitch_images(y, total_width, total_height-n, k, n, k, n-1)
     xy_ = stitch_images(xy, total_width-k, total_height-n, k, n, k-1, n-1)
     img = stitch_images(norm, total_width, total_height, k, n, k, n)
-
+    '''
     return img, x_, y_, xy_
+
+
 
 
 def main():
