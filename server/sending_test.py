@@ -13,10 +13,10 @@ res = put('http://localhost:5000/api/SendImage', data={'data': 'Remember the mil
 print(res)'''
 
 # send an image to the server
-files = {'image': open('test.jpg', 'rb'), 'backend': (None,2), "tiling":(None, 0), "tile_size":(None, 60), "stitch_type":(None, 2), "initialization":(None, 1)}
+files = {'image': open('niklas_animal_0026.jpg', 'rb'), 'backend': (None,1), "tiling":(None, 1), "tile_size":(None, 126), "stitch_type":(None, 1), "overlap":(None, 1), "adjust_brightness":(None,1), "use_hsv":(None,1),  "initialization":(None, 1)}
 res = post('http://localhost:5000/api/SendImage', files=files)
 
-print(res.text)
+#print(res.text)
 
 # the image should be return and displayed
 image = Image.open(BytesIO(res.content))

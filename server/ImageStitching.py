@@ -274,7 +274,6 @@ def get_shifted_images(images, total_width, total_height, width, height):
     for i in range(n + (n-1)):
         for j in range(k + (k-1)):
             if i % 2 == 0 and not j % 2 == 0:
-
                 x.append(images[i*(k+(k-1)) + j])
             elif not i % 2 == 0 and j % 2 == 0:
                 y.append(images[i*(k+(k-1)) + j])
