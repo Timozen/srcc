@@ -29,6 +29,12 @@ public class IntroActivity extends AppIntro2 {
 
         Log.i(TAG, "Start Intro Activity");
 
+        /*
+        * "Das Android-Roboter-Logo wurde aus einer von Google erstellten und
+        * geteilten Arbeit reproduziert oder geändert und wird gemäß den Bedingungen
+        * der Creative Commons 3.0-Lizenz für die Namensnennung verwendet."
+        * */
+
         addSlide(IntroSlide.newInstance(R.layout.intro_welcome));
         addSlide(IntroSlide.newInstance(R.layout.intro_camera));
         addSlide(IntroSlide.newInstance(R.layout.intro_storage));

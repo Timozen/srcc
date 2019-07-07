@@ -12,7 +12,7 @@
     <string name="intro_storage_title">Storage</string>
     <string name="intro_usage_description">The main focus is the camera view. If you swipe to the left the settings will appear. Swiping to the right will show the taken pictures.</string>
     <string name="intro_usage_title">Usage</string>
-    <string name="intro_welcome_description">This app allows you to take camera pictures and those will quality will be improved.</string>
+    <string name="intro_welcome_description">This app allows you to take pictures with your smartphone camera and will improve the quality.</string>
     <string name="intro_welcome_title">Welcome</string>
     <string name="request_permission_text">Permission</string>
     <string name="settings_text_backend">Backend</string>
