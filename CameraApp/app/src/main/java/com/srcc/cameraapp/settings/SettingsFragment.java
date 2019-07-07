@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.addisonelliott.segmentedbutton.SegmentedButtonGroup;
+import com.google.android.material.snackbar.Snackbar;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
 
@@ -220,6 +221,10 @@ public class SettingsFragment extends Fragment {
         switchUseTiling.setOnClickListener(view1 -> {
             sharedPreferences.edit().putBoolean(backend_name + "_use_tiling", switchUseTiling.isChecked()).apply();
             boolean isChecked = switchUseTiling.isChecked();
+
+            if(backend_name == "srdense" && !isChecked){
+                Snackbar.make(view, "CAVEAT: This requires a strong backend!", Snackbar.LENGTH_SHORT).show();
+            }
 
             textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), isChecked ? R.color.black : R.color.grey_500));
             seekBarTilingSize.setEnabled(isChecked);
