@@ -76,34 +76,36 @@ public class Utils extends Application {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         int backend = preferences.getInt("backend", 0);
-        int tiling=0, tile_size=0, stitch_style = 0, initialization=0;
+
+        String name;
         switch (backend) {
             case 0:
-                tiling = preferences.getBoolean("srdense_use_tiling", false) ? 1 : 0;
-                tile_size = (preferences.getInt("srdense_tiling_size", 0) + 1) * SettingsFragment.SRDENSE_TILE_SIZE;
-                stitch_style = preferences.getInt("srdense_stitch_style", 0);
-                initialization = 0;
+                name = "srdense";
                 break;
             case 1:
-                tiling = preferences.getBoolean("srresnet_use_tiling", false) ? 1 : 0;
-                tile_size = (preferences.getInt("srresnet_tiling_size", 0) + 1) * SettingsFragment.SRRESNET_TILE_SIZE;
-                stitch_style = preferences.getInt("srresnet_stitch_style", 0);
-                initialization = 0;
+                name = "srresnet";
                 break;
             case 2:
-                tiling = preferences.getBoolean("srgan_use_tiling", false) ? 1 : 0;
-                tile_size = (preferences.getInt("srgan_tiling_size", 0) + 1) * SettingsFragment.SRGAN_TILE_SIZE;
-                stitch_style = preferences.getInt("srgan_stitch_style", 0);
-                initialization = preferences.getBoolean("srgan_use_init", true) ? 1 : 0;
+                name = "srgan";
+                break;
+            default:
+                name = "";
                 break;
         }
+        int tiling = preferences.getBoolean(name + "_use_tiling", false) ? 1 : 0;
+        int tile_size = (preferences.getInt(name + "_tiling_size", 0) + 1) * SettingsFragment.SRDENSE_TILE_SIZE;
+        int stitch_style = preferences.getInt(name + "_stitch_style", 0);
+        int overlap = preferences.getBoolean(name + "_use_overlap", true) ? 1 : 0;
+        int adjust_brightness = preferences.getBoolean(name + " _adjust_brightness", true) ? 1 : 0;
+        int use_hsv = preferences.getBoolean(name + "_use_hsv", true) ? 1 : 0;
+        int initialization = preferences.getBoolean("srgan_use_init", true) ? 1 : 0;
 
         Single<ResponseBody> single;
         boolean debug = preferences.getBoolean("debug", true);
         if(debug){
-             single =  api.sendImage(debug ? 1 : 0, backend, tiling, tile_size, stitch_style, initialization, body);
+             single =  api.sendImage(debug ? 1 : 0, backend, tiling, tile_size, stitch_style, overlap, adjust_brightness, use_hsv, initialization, body);
         } else {
-             single =  api.sendImage(backend, tiling, tile_size, stitch_style, initialization, body);
+             single =  api.sendImage(backend, tiling, tile_size, stitch_style, overlap, adjust_brightness, use_hsv, initialization, body);
         }
         single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<ResponseBody>() {
             @Override

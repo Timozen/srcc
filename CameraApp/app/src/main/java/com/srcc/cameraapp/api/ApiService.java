@@ -25,6 +25,9 @@ public interface ApiService {
             @Part("tiling") int tiling,
             @Part("tile_size") int tiling_size,
             @Part("stitch_type") int stitching_size,
+            @Part("overlap") int overlap,
+            @Part("adjust_brightness") int adjust_brightness,
+            @Part("use_hsv") int use_hsv,
             @Part("initialization") int initialization,
             @Part MultipartBody.Part file);
 
@@ -38,6 +41,9 @@ public interface ApiService {
             @Part("tiling") int tiling,
             @Part("tile_size") int tiling_size,
             @Part("stitch_type") int stitching_size,
+            @Part("overlap") int overlap,
+            @Part("adjust_brightness") int adjust_brightness,
+            @Part("use_hsv") int use_hsv,
             @Part("initialization") int initialization,
             @Part MultipartBody.Part file);
 }

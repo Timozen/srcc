@@ -42,7 +42,7 @@ public class SettingsFragment extends Fragment {
     private Retrofit client;
     private ApiService apiService;
 
-    SettingsFragment(Retrofit client, ApiService apiService) {
+    private SettingsFragment(Retrofit client, ApiService apiService) {
         this.client = client;
         this.apiService = apiService;
     }
@@ -66,13 +66,13 @@ public class SettingsFragment extends Fragment {
             sharedPreferences.edit().putInt("backend", position).apply();
             switch (position) {
                 case 0:
-                    loadSRDenseSettings();
+                    loadStitchingSettings("srdense");
                     break;
                 case 1:
-                    loadSRResNetSettings();
+                    loadStitchingSettings("srresnet");
                     break;
                 case 2:
-                    loadSRGANSettings();
+                    loadStitchingSettings("srgan");
                     break;
             }
         });
@@ -111,99 +111,168 @@ public class SettingsFragment extends Fragment {
     }
 
     @SuppressLint("DefaultLocale")
-    private void loadSRDenseSettings() {
-        //load the layout as a view
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.settings_fragment_srdense, null, false);
+    private void loadStitchingSettings(String backend_name) {
+        final LayoutInflater inflater = LayoutInflater.from(getContext());
+        final View view;
+
+        final TextView textViewTilingSize;
+        final TextView textViewSeekBarValue;
+        final TextView textViewStitchingStyle;
+
+        final Switch switchUseTiling ;
+        final Switch switchUseOverlap;
+        final Switch switchAdjustBrightness;
+        final Switch switchUseHSV;
+        final SeekBar seekBarTilingSize;
+        final SegmentedButtonGroup segmentedButtonGroupStitchingStyle;
+
+        switch (backend_name){
+            case "srdense":
+                view = inflater.inflate(R.layout.settings_fragment_srdense, null, false);
+                break;
+            case "srresnet":
+                view = inflater.inflate(R.layout.settings_fragment_srresnet, null, false);
+                break;
+            case "srgan":
+                view = inflater.inflate(R.layout.settings_fragment_srgan, null, false);
+                break;
+            default:
+                view = null;
+                break;
+        }
         view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         constraintLayoutSettingsBackend.removeAllViews();
         constraintLayoutSettingsBackend.addView(view);
 
-        TextView textViewTilingSize = view.findViewById(R.id.textView_srdense_tiling_size);
-        TextView textViewSeekBarValue = view.findViewById(R.id.textView_seekbar_value);
-        TextView textViewStitchingStyle = view.findViewById(R.id.textView_srdense_stitching_style);
+        //load all the references
+        switch (backend_name){
+            case "srdense":
+                textViewTilingSize = view.findViewById(R.id.textView_srdense_tiling_size);
+                textViewSeekBarValue = view.findViewById(R.id.textView_srdense_seekbar_value);
+                textViewStitchingStyle = view.findViewById(R.id.textView_srdense_stitching_style);
 
-        Switch switchUseTiling = view.findViewById(R.id.switch_srdense_use_tiling);
-        SeekBar seekBarTilingSize = view.findViewById(R.id.seekBar_srdense_tiling_size);
-        SegmentedButtonGroup segmentedButtonGroupStitchingStyle = view.findViewById(R.id.segmentButtonGroup_srdense_stitching_style);
+                switchUseTiling = view.findViewById(R.id.switch_srdense_use_tiling);
+                switchUseOverlap = view.findViewById(R.id.switch_srdense_use_overlap);
+                switchAdjustBrightness = view.findViewById(R.id.switch_srdense_adjust_brightness);
+                switchUseHSV = view.findViewById(R.id.switch_srdense_use_hsv);
 
+                seekBarTilingSize = view.findViewById(R.id.seekBar_srdense_tiling_size);
+                segmentedButtonGroupStitchingStyle = view.findViewById(R.id.segmentButtonGroup_srdense_stitching_style);
+                break;
+            case "srresnet":
+                textViewTilingSize = view.findViewById(R.id.textView_srresnet_tiling_size);
+                textViewSeekBarValue = view.findViewById(R.id.textView_srresnet_seekbar_value);
+                textViewStitchingStyle = view.findViewById(R.id.textView_srresnet_stitching_style);
 
-        switchUseTiling.setChecked(sharedPreferences.getBoolean("srdense_use_tiling", true));
-        switchUseTiling.setOnClickListener(view1 -> {
-            sharedPreferences.edit().putBoolean("srdense_use_tiling", switchUseTiling.isChecked()).apply();
-            textViewTilingSize.setEnabled(switchUseTiling.isChecked());
-            segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
+                switchUseTiling = view.findViewById(R.id.switch_srresnet_use_tiling);
+                switchUseOverlap = view.findViewById(R.id.switch_srresnet_use_overlap);
+                switchAdjustBrightness = view.findViewById(R.id.switch_srresnet_adjust_brightness);
+                switchUseHSV = view.findViewById(R.id.switch_srresnet_use_hsv);
 
-            if (switchUseTiling.isChecked()) {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
-                textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-                textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
+                seekBarTilingSize = view.findViewById(R.id.seekBar_srresnet_tiling_size);
+                segmentedButtonGroupStitchingStyle = view.findViewById(R.id.segmentButtonGroup_srresnet_stitching_style);
+                break;
+            case "srgan":
+                textViewTilingSize = view.findViewById(R.id.textView_srgan_tiling_size);
+                textViewSeekBarValue = view.findViewById(R.id.textView_srgan_seekbar_value);
+                textViewStitchingStyle = view.findViewById(R.id.textView_srgan_stitching_style);
 
-                segmentedButtonGroupStitchingStyle.setBorder(
-                        segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                        ContextCompat.getColor(getContext(), R.color.orange),
-                        segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                        segmentedButtonGroupStitchingStyle.getBorderDashGap()
-                );
+                switchUseTiling = view.findViewById(R.id.switch_srgan_use_tiling);
+                switchUseOverlap = view.findViewById(R.id.switch_srgan_use_overlap);
+                switchAdjustBrightness = view.findViewById(R.id.switch_srgan_adjust_brightness);
+                switchUseHSV = view.findViewById(R.id.switch_srgan_use_hsv);
 
+                seekBarTilingSize = view.findViewById(R.id.seekBar_srgan_tiling_size);
+                segmentedButtonGroupStitchingStyle = view.findViewById(R.id.segmentButtonGroup_srgan_stitching_style);
 
-                segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
-            } else {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
-                textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-                textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
+                Switch switchUseInit = view.findViewById(R.id.switch_srgan_init);
+                switchUseInit.setChecked(sharedPreferences.getBoolean("srgan_use_init", true));
+                switchUseInit.setOnClickListener(v -> sharedPreferences.edit().putBoolean("srgan_use_init", switchUseInit.isChecked()).apply());
+                break;
+            default:
+                textViewTilingSize = null;
+                textViewSeekBarValue = null;
+                textViewStitchingStyle = null;
 
-                segmentedButtonGroupStitchingStyle.setBorder(
-                        segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                        ContextCompat.getColor(getContext(), R.color.grey_500),
-                        segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                        segmentedButtonGroupStitchingStyle.getBorderDashGap()
-                );
-                segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
-            }
-
-        });
-
-        sharedPreferences.edit().putBoolean("srdense_use_tiling", switchUseTiling.isChecked()).apply();
-        textViewTilingSize.setEnabled(switchUseTiling.isChecked());
-        segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
-
-        if (switchUseTiling.isChecked()) {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
-            textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-            textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-
-            segmentedButtonGroupStitchingStyle.setBorder(
-                    segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                    ContextCompat.getColor(getContext(), R.color.orange),
-                    segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                    segmentedButtonGroupStitchingStyle.getBorderDashGap()
-            );
-            segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
-        } else {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
-            textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-            textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-
-            segmentedButtonGroupStitchingStyle.setBorder(
-                    segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                    ContextCompat.getColor(getContext(), R.color.grey_500),
-                    segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                    segmentedButtonGroupStitchingStyle.getBorderDashGap()
-            );
-            segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
+                switchUseOverlap = null;
+                switchAdjustBrightness = null;
+                switchUseHSV = null;
+                switchUseTiling = null;
+                seekBarTilingSize = null;
+                segmentedButtonGroupStitchingStyle = null;
+                break;
         }
 
-        //set the current saved tile size
-        int seekBarCurrentProgress = sharedPreferences.getInt("srdense_tiling_size", 0);
+        //load the current settings
+
+        int seekBarCurrentProgress = sharedPreferences.getInt(backend_name + "_tiling_size", 0);
         textViewSeekBarValue.setText(String.format("%d", (seekBarCurrentProgress + 1) * SRDENSE_TILE_SIZE));
         seekBarTilingSize.setProgress(seekBarCurrentProgress);
+
+        Objects.requireNonNull(switchUseTiling).setChecked(sharedPreferences.getBoolean(backend_name + "_use_tiling", true));
+        switchUseOverlap.setChecked(sharedPreferences.getBoolean(backend_name + "_use_overlap", true));
+        segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt(backend_name + "_stitch_style", 0), false);
+        switchAdjustBrightness.setChecked(sharedPreferences.getBoolean(backend_name + "_adjust_brightness", true));
+        switchUseHSV.setChecked(sharedPreferences.getBoolean(backend_name + "_use_hsv", true));
+
+
+        //set the action listeners
+        switchUseTiling.setOnClickListener(view1 -> {
+            sharedPreferences.edit().putBoolean(backend_name + "_use_tiling", switchUseTiling.isChecked()).apply();
+            boolean isChecked = switchUseTiling.isChecked();
+
+            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), isChecked ? R.color.black : R.color.grey_500));
+            seekBarTilingSize.setEnabled(isChecked);
+            textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+
+            textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+            switchUseOverlap.setEnabled(isChecked);
+            switchUseOverlap.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+
+            segmentedButtonGroupStitchingStyle.setEnabled(isChecked);
+            segmentedButtonGroupStitchingStyle.setBorder(
+                    segmentedButtonGroupStitchingStyle.getBorderWidth(),
+                    ContextCompat.getColor(getContext(), isChecked ? R.color.orange : R.color.grey_500),
+                    segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
+                    segmentedButtonGroupStitchingStyle.getBorderDashGap()
+            );
+            segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), isChecked ? R.color.orange : R.color.grey_500));
+
+            switchAdjustBrightness.setEnabled(isChecked);
+            switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+            switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked());
+            switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+        });
+
+        //have to check the same rules on loading
+        boolean isChecked = switchUseTiling.isChecked();
+        textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), isChecked ? R.color.black : R.color.grey_500));
+        seekBarTilingSize.setEnabled(isChecked);
+        textViewSeekBarValue.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+
+        textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+        switchUseOverlap.setEnabled(isChecked);
+        switchUseOverlap.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+
+        segmentedButtonGroupStitchingStyle.setEnabled(isChecked);
+        segmentedButtonGroupStitchingStyle.setBorder(
+                segmentedButtonGroupStitchingStyle.getBorderWidth(),
+                ContextCompat.getColor(getContext(), isChecked ? R.color.orange : R.color.grey_500),
+                segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
+                segmentedButtonGroupStitchingStyle.getBorderDashGap()
+        );
+        segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), isChecked ? R.color.orange : R.color.grey_500));
+
+        switchAdjustBrightness.setEnabled(isChecked);
+        switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+        switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked());
+        switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
 
         seekBarTilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @SuppressLint("DefaultLocale")
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                sharedPreferences.edit().putInt("srdense_tiling_size", progress).apply();
+                sharedPreferences.edit().putInt(backend_name + "_tiling_size", progress).apply();
                 textViewSeekBarValue.setText(String.format("%d", (progress + 1) * SRDENSE_TILE_SIZE));
             }
 
@@ -218,233 +287,27 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> sharedPreferences.edit().putInt("srdense_stitch_style", position).apply());
+        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> {
+            sharedPreferences.edit().putInt(backend_name + "_stitch_style", position).apply();
+            boolean simple = position == 0;
+            switchAdjustBrightness.setEnabled(!simple);
+            switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), !simple ? R.color.black : R.color.grey_500));
+            switchUseHSV.setEnabled(!simple && switchAdjustBrightness.isChecked() );
+            switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), !simple && switchAdjustBrightness.isChecked() ? R.color.black : R.color.grey_500));
+        });
 
-        segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt("srdense_stitch_style", 0), false);
+
+        switchUseOverlap.setOnClickListener(v -> sharedPreferences.edit().putBoolean(backend_name + "_use_overlap", switchUseOverlap.isChecked()).apply());
+        switchAdjustBrightness.setOnClickListener(v -> {
+            sharedPreferences.edit().putBoolean(backend_name + "_adjust_brightness", switchAdjustBrightness.isChecked()).apply();
+            switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked());
+            switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), switchAdjustBrightness.isChecked() && switchUseTiling.isChecked()  ? R.color.black : R.color.grey_500));
+        });
+
+        switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked());
+        switchUseHSV.setOnClickListener(v-> sharedPreferences.edit().putBoolean(backend_name + "_use_hsv", switchUseHSV.isChecked()).apply());
+        switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), switchAdjustBrightness.isChecked() && switchUseTiling.isChecked()  ? R.color.black : R.color.grey_500));
     }
-
-    @SuppressLint("DefaultLocale")
-    private void loadSRGANSettings() {
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.settings_fragment_srgan, null);
-        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        constraintLayoutSettingsBackend.removeAllViews();
-        constraintLayoutSettingsBackend.addView(view);
-
-        TextView textViewSeekBarProgress = view.findViewById(R.id.textView_srgan_seekbar_progress);
-        TextView textViewTilingSize = view.findViewById(R.id.textView_srgan_tiling_size);
-        TextView textViewSwitchingStyle = view.findViewById(R.id.textView_srgan_switching_style);
-
-        Switch switchInit = view.findViewById(R.id.switch_srgan_init);
-        Switch switchUseTiling = view.findViewById(R.id.switch_srgan_use_tiling);
-
-        SeekBar seekBarTilingSize = view.findViewById(R.id.seekBar_srgan);
-        SegmentedButtonGroup segmentedButtonGroupStitchingStyle = view.findViewById(R.id.segmentedButtonGroup_srgan_stitching_style);
-
-        switchInit.setChecked(sharedPreferences.getBoolean("srgan_use_init", true));
-        switchInit.setOnClickListener(v -> sharedPreferences.edit().putBoolean("srgan_use_init", switchInit.isChecked()).apply());
-
-
-        switchUseTiling.setChecked(sharedPreferences.getBoolean("srgan_use_tiling", true));
-        switchUseTiling.setOnClickListener(view1 -> {
-            sharedPreferences.edit().putBoolean("srgan_use_tiling", switchUseTiling.isChecked()).apply();
-            seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
-            segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
-
-            if (switchUseTiling.isChecked()) {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
-                textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-                textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-
-                segmentedButtonGroupStitchingStyle.setBorder(segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                        ContextCompat.getColor(getContext(), R.color.orange),
-                        segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                        segmentedButtonGroupStitchingStyle.getBorderDashGap());
-
-
-                segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
-            } else {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
-                textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-                textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-
-                segmentedButtonGroupStitchingStyle.setBorder(
-                        segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                        ContextCompat.getColor(getContext(), R.color.grey_500),
-                        segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                        segmentedButtonGroupStitchingStyle.getBorderDashGap()
-                );
-                segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
-            }
-
-        });
-
-        sharedPreferences.edit().putBoolean("srgan_use_tiling", switchUseTiling.isChecked()).apply();
-        seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
-        segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
-
-        if (switchUseTiling.isChecked()) {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
-            textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-            textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-
-            segmentedButtonGroupStitchingStyle.setBorder(
-                    segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                    ContextCompat.getColor(getContext(), R.color.orange),
-                    segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                    segmentedButtonGroupStitchingStyle.getBorderDashGap()
-            );
-            segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
-        } else {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
-            textViewSwitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-            textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-
-            segmentedButtonGroupStitchingStyle.setBorder(
-                    segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                    ContextCompat.getColor(getContext(), R.color.grey_500),
-                    segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                    segmentedButtonGroupStitchingStyle.getBorderDashGap()
-            );
-            segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
-        }
-        int seekBarCurrentProgress = sharedPreferences.getInt("srgan_tiling_size", 0);
-        textViewSeekBarProgress.setText(String.format("%d", (seekBarCurrentProgress + 1) * SRGAN_TILE_SIZE));
-        seekBarTilingSize.setProgress(seekBarCurrentProgress);
-
-        seekBarTilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @SuppressLint("DefaultLocale")
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                sharedPreferences.edit().putInt("srgan_tiling_size", progress).apply();
-                textViewSeekBarProgress.setText(String.format("%d", (progress + 1) * SRGAN_TILE_SIZE));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-
-        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> sharedPreferences.edit().putInt("srgan_stitch_style", position).apply());
-
-        segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt("srgan_stitch_style", 0), false);
-    }
-
-    @SuppressLint("DefaultLocale")
-    private void loadSRResNetSettings() {
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.settings_fragment_srresnet, null);
-        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        constraintLayoutSettingsBackend.removeAllViews();
-        constraintLayoutSettingsBackend.addView(view);
-
-        TextView textViewSeekBarProgress = view.findViewById(R.id.textView_srresnet_seekbar_progress);
-        TextView textViewTilingSize = view.findViewById(R.id.textView_srresnet_tiling_size);
-        TextView textViewStitchingStyle = view.findViewById(R.id.textView_srresnet_stitching_style);
-
-        Switch switchUseTiling = view.findViewById(R.id.srresnet_tiling_switch);
-        SeekBar seekBarTilingSize = view.findViewById(R.id.srresnet_seekBar);
-        SegmentedButtonGroup segmentedButtonGroupStitchingStyle = view.findViewById(R.id.srresnet_button_group_stitching);
-
-        switchUseTiling.setChecked(sharedPreferences.getBoolean("srresnet_use_tiling", true));
-        switchUseTiling.setOnClickListener(view1 -> {
-            sharedPreferences.edit().putBoolean("srresnet_use_tiling", switchUseTiling.isChecked()).apply();
-            seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
-            segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
-
-            if (switchUseTiling.isChecked()) {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
-                textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-                textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-
-                segmentedButtonGroupStitchingStyle.setBorder(
-                        segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                        ContextCompat.getColor(getContext(), R.color.orange),
-                        segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                        segmentedButtonGroupStitchingStyle.getBorderDashGap()
-                );
-                segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
-            } else {
-                textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
-                textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-                textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-
-                segmentedButtonGroupStitchingStyle.setBorder(
-                        segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                        ContextCompat.getColor(getContext(), R.color.grey_500),
-                        segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                        segmentedButtonGroupStitchingStyle.getBorderDashGap()
-                );
-                segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
-            }
-        });
-
-        sharedPreferences.edit().putBoolean("srresnet_use_tiling", switchUseTiling.isChecked()).apply();
-        seekBarTilingSize.setEnabled(switchUseTiling.isChecked());
-        segmentedButtonGroupStitchingStyle.setEnabled(switchUseTiling.isChecked());
-
-        if (switchUseTiling.isChecked()) {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.black));
-            textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-            textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
-
-            segmentedButtonGroupStitchingStyle.setBorder(
-                    segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                    ContextCompat.getColor(getContext(), R.color.orange),
-                    segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                    segmentedButtonGroupStitchingStyle.getBorderDashGap()
-            );
-            segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.orange));
-        } else {
-            textViewTilingSize.setTextColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color.grey_500));
-            textViewStitchingStyle.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-            textViewSeekBarProgress.setTextColor(ContextCompat.getColor(getContext(), R.color.grey_500));
-
-            segmentedButtonGroupStitchingStyle.setBorder(
-                    segmentedButtonGroupStitchingStyle.getBorderWidth(),
-                    ContextCompat.getColor(getContext(), R.color.grey_500),
-                    segmentedButtonGroupStitchingStyle.getBorderDashWidth(),
-                    segmentedButtonGroupStitchingStyle.getBorderDashGap());
-            segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), R.color.grey_500));
-        }
-        int seekBarCurrentProgress = sharedPreferences.getInt("srresnet_tiling_size", 0);
-        textViewSeekBarProgress.setText(String.format("%d", (seekBarCurrentProgress + 1) * SRRESNET_TILE_SIZE));
-        seekBarTilingSize.setProgress(seekBarCurrentProgress);
-
-
-        seekBarTilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @SuppressLint("DefaultLocale")
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                sharedPreferences.edit().putInt("srresnet_tiling_size", progress).apply();
-                textViewSeekBarProgress.setText(String.format("%d", (progress + 1) * SRRESNET_TILE_SIZE));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-
-        segmentedButtonGroupStitchingStyle.setOnPositionChangedListener(position -> sharedPreferences.edit().putInt("srresnet_stitch_style", position).apply());
-
-        segmentedButtonGroupStitchingStyle.setPosition(sharedPreferences.getInt("srresnet_stitch_style", 0), false);
-    }
-
-
 
     public static class Builder {
         private Retrofit client;

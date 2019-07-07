@@ -28,4 +28,7 @@
     <string name="settings_text_use_tiling">Use Tiling</string>
     <string name="settings_text_debug">Debug</string>
     <string name="settings_text_server_url">Server URL</string>
+    <string name="settings_text_use_overlap">Use Overlap</string>
+    <string name="settings_text_adjust_brightness">Adjust Brightness</string>
+    <string name="settings_text_use_hsv">Use HSV</string>
 </resources>
