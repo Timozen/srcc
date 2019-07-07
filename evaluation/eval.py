@@ -12,7 +12,7 @@ from keras.models import Model
 from keras.layers import Input
 import ImageStitching
 
-TILES = False
+TILES = True
 WHOLE_LR = True
 STITCHED = True
 
