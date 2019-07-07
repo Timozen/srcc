@@ -309,9 +309,14 @@ public class SettingsFragment extends Fragment {
             switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), switchAdjustBrightness.isChecked() && switchUseTiling.isChecked()  ? R.color.black : R.color.grey_500));
         });
 
-        switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked());
+        isChecked = segmentedButtonGroupStitchingStyle.getPosition() != 0;
+        switchAdjustBrightness.setEnabled(isChecked);
+        switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+
+
+        switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked() && segmentedButtonGroupStitchingStyle.getPosition() != 0);
         switchUseHSV.setOnClickListener(v-> sharedPreferences.edit().putBoolean(backend_name + "_use_hsv", switchUseHSV.isChecked()).apply());
-        switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), switchAdjustBrightness.isChecked() && switchUseTiling.isChecked()  ? R.color.black : R.color.grey_500));
+        switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), switchAdjustBrightness.isChecked() && switchUseTiling.isChecked() && isChecked ? R.color.black : R.color.grey_500));
     }
 
     public static class Builder {
