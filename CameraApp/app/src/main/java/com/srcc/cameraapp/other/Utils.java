@@ -38,7 +38,17 @@ import okio.BufferedSink;
  * This class collects all the useful functions we might need to use.
  */
 public class Utils extends Application {
-        public static final String IMAGE_FOLDER_NAME = "srcc";
+    public static final String IMAGE_FOLDER_NAME = "srcc";
+
+    public static boolean isSendingImage() {
+        return SendingImage;
+    }
+
+    public static void setSendingImage(boolean sendingImage) {
+        SendingImage = sendingImage;
+    }
+
+    private static boolean SendingImage = false;
 
     /**
      * Check if we can write in the external storage
@@ -111,6 +121,7 @@ public class Utils extends Application {
             @Override
             public void onSubscribe(Disposable d) {
                 Log.i(TAG, "OnSubscribe triggered");
+                setSendingImage(true);
                 compositeDisposable.add(d);
             }
 
@@ -166,6 +177,7 @@ public class Utils extends Application {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                setSendingImage(false);
             }
 
             @Override
@@ -175,6 +187,7 @@ public class Utils extends Application {
                 e.printStackTrace();
 
                 Toast.makeText(context, "Server couldn't be reached! Try later again.", Toast.LENGTH_SHORT).show();
+                setSendingImage(false);
             }
         });
 

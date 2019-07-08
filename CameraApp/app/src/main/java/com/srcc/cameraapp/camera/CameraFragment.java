@@ -1090,11 +1090,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 }
             }
 
-            Snackbar snackbar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), "Create SR Version of image?", Snackbar.LENGTH_LONG);
-            snackbar.setAction("CREATE", v1 -> {
-                Utils.sendImage(mApiConnection, mFile, compositeDisposable, timeValue, mContext);
-            });
-            snackbar.show();
+            if(Utils.isSendingImage()){
+                Snackbar.make(activity.getWindow().getDecorView().getRootView(), mContext.getString(R.string.camera_text_image_in_progress), Snackbar.LENGTH_LONG).show();
+            } else {
+                Snackbar snackbar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), mContext.getString(R.string.camera_text_create_sr_image), Snackbar.LENGTH_LONG);
+                snackbar.setAction("CREATE", v1 -> {
+                    Utils.sendImage(mApiConnection, mFile, compositeDisposable, timeValue, mContext);
+                });
+                snackbar.show();
+            }
         }
     }
 }

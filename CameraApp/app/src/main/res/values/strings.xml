@@ -31,4 +31,7 @@
     <string name="settings_text_use_overlap">Use Overlap</string>
     <string name="settings_text_adjust_brightness">Adjust Brightness</string>
     <string name="settings_text_use_hsv">Use HSV</string>
+    <string name="settings_text_notify_one_image">Only one image can be in progress. Please Wait.</string>
+    <string name="camera_text_image_in_progress">There is already one image in progress. Please upload over gallery.</string>
+    <string name="camera_text_create_sr_image">Create SR Version of image?</string>
 </resources>

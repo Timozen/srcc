@@ -36,6 +36,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.google.android.material.snackbar.Snackbar;
 import com.ortiz.touchview.TouchImageView;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
@@ -88,9 +89,13 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         display = activity.findViewById(R.id.display);
 
         activity.findViewById(R.id.button_gallery_image_edit).setOnClickListener(v -> {
-            ViewHolder vh = viewHolderList.get(currentPosition);
-            File f = new File(vh.getUri().getPath());
-            Utils.sendImage(mApiConnection, f, compositeDisposable, vh.getTitle().split("_")[0], activity.getApplicationContext());
+            if(!Utils.isSendingImage()) {
+                ViewHolder vh = viewHolderList.get(currentPosition);
+                File f = new File(vh.getUri().getPath());
+                Utils.sendImage(mApiConnection, f, compositeDisposable, vh.getTitle().split("_")[0], activity.getApplicationContext());
+            } else {
+                Snackbar.make(display, activity.getApplicationContext().getString(R.string.settings_text_notify_one_image), Snackbar.LENGTH_SHORT).show();
+            }
         });
 
         activity.findViewById(R.id.button_gallery_item_delete).setOnClickListener(v -> {
