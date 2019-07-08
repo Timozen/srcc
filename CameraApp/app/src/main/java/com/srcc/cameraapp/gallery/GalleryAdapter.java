@@ -278,7 +278,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 mProjection,
                 MediaStore.Images.Media.DATA + " like ? ",
-                new String[]{"%srcc%"},
+                new String[]{"%/srcc/%"},
                 MediaStore.Images.Media.DATE_ADDED + " DESC"
         );
     }
