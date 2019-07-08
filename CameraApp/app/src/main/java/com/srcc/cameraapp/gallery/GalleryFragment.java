@@ -103,7 +103,12 @@ public class GalleryFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
 
         //load the grid layout manager with 2 columns TODO maybe more?
-        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(Objects.requireNonNull(getContext()).getApplicationContext(), 3);
+        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(Objects.requireNonNull(getContext()).getApplicationContext(), 3){
+            @Override
+            public boolean canScrollHorizontally() {
+                return false;
+            }
+        };
         recyclerView.setLayoutManager(layoutManager);
 
         //Load our gallery adapter to display the data after our rules
