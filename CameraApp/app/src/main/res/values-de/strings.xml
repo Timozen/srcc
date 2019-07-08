@@ -2,22 +2,30 @@
 <resources>
     <string name="error_text_camera">Kamera Fehler</string>
     <string name="intro_camera_title">Kamera</string>
-    <string name="intro_camera_description">Weil gerne Bilder machen wollen, brauchen wir die Erlaubnis auf die Kamera zugreifen zu dürfen.</string>
-    <string name="intro_internet_description">Um eine bessere Bildqualität zuerreichen muss die App mit unserem Server kommunizeren. Dazu wird eine Internetverbindung benötigt.</string>
+    <string name="intro_camera_description">Damit wir Bilder aufnehmen können, brauchen wir die Berechtigung auf die Kamera zugreifen zu können.</string>
+    <string name="intro_internet_description">Die App muss mit dem Server kommunizieren, um die Bilder zu verbessern. Daher werden wir auf das Internet zugreifen.</string>
     <string name="intro_internet_title">Internet</string>
-    <string name="intro_storage_description">Damit die Bilder gespeichert werden können, brauche wie die Erlaubnis auf den Speicher zugreifen zu dürfen.</string>
+    <string name="intro_storage_description">Damit wir die Bilder auch speichern können, benötigen wir die Berechtigung auf den Speicher schreiben zu dürfen.</string>
     <string name="intro_storage_title">Speicher</string>
     <string name="intro_usage_title">Nutzungsweise</string>
-    <string name="intro_usage_description">Der Hauptaugenmerk liegt auf der Kamera. Wenn man nach links wischt, kommt man zu den Einstellung. Wenn man rechts wischt, kommt man zu den bereits aufgenommen Bildern.</string>
-    <string name="intro_welcome_description">Diese App erlaubt die Verbesserung der Qualität von Bildern.</string>
+    <string name="intro_usage_description">Im Mittelpunkt die steht die Kamera. Nach links gewischt befinden sich die Einstellungen. Nach rechts gewischt die Gallery mit allen Bildern.</string>
     <string name="intro_welcome_title">Willkommen</string>
     <string name="request_permission_text">Berechtigung</string>
-    <string name="settings_text_backend">Technologie</string>
     <string name="settings_text_stitching_advanced">Erweitert</string>
     <string name="settings_text_stitching_advanced_hsv">Erweitert HSV</string>
     <string name="settings_text_stitching_simple">Einfach</string>
     <string name="settings_text_stitching_style">Kachel Stil</string>
     <string name="settings_text_tiling_size">Kachelgröße</string>
     <string name="settings_text_use_init">Benutze Initialisierung</string>
-    <string name="settings_text_use_tiling">Benutze Kachelung</string>
+    <string name="settings_text_use_tiling">Kachelung benutzen</string>
+    <string name="intro_welcome_description">Mit dieser App kannst du Bilder aufnehmen und deren Qualität verbessern lassen.</string>
+    <string name="settings_interpolation">Bilder in Gallery interpolieren</string>
+    <string name="settings_text_adjust_brightness">Helligkeit anpassen</string>
+    <string name="settings_text_notify_is_hr_image">Diese Bild wurde bereits verbessert.</string>
+    <string name="settings_text_notify_one_image">Nur ein Bild kann verbessert werden. Warte bitte.</string>
+    <string name="settings_text_use_hsv">HSV benutzen</string>
+    <string name="settings_text_use_overlap">Überlappung benutzen</string>
+    <string name="camera_text_create_sr_image">Verbessertes Bild erstellen?</string>
+    <string name="camera_text_image_in_progress">Es wird bereits in Bild verbessert. Diese Bild kann dann in der Gallerie verbessert werden.</string>
+    <string name="camera_text_snackbar_create">ERSTELLEN</string>
 </resources>

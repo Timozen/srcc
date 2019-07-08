@@ -10,12 +10,12 @@
     <string name="intro_internet_title">Internet</string>
     <string name="intro_storage_description">The taken pictures and the improved pictures will be store on your phone. Therefore we need the storage permission.</string>
     <string name="intro_storage_title">Storage</string>
-    <string name="intro_usage_description">The main focus is the camera view. If you swipe to the left the settings will appear. Swiping to the right will show the taken pictures.</string>
+    <string name="intro_usage_description">The main focus is the camera view. If you swipe to the left the settings will appear. Swiping to the right will the gallery with the taken pictures.</string>
     <string name="intro_usage_title">Usage</string>
     <string name="intro_welcome_description">This app allows you to take pictures with your smartphone camera and will improve the quality.</string>
     <string name="intro_welcome_title">Welcome</string>
     <string name="request_permission_text">Permission</string>
-    <string name="settings_text_backend">Backend</string>
+    <string name="settings_text_backend" translatable="false">Backend</string>
     <string name="settings_text_option_srdense" translatable="false">SRDense</string>
     <string name="settings_text_option_srgan" translatable="false">SRGAN</string>
     <string name="settings_text_option_srresnet" translatable="false">SRResNET</string>
@@ -27,8 +27,8 @@
     <string name="settings_text_use_init">Use Initialisation</string>
     <string name="settings_text_use_tiling">Use Tiling</string>
     <string name="settings_text_notify_is_hr_image">This was already improved.</string>
-    <string name="settings_text_debug">Debug</string>
-    <string name="settings_text_server_url">Server URL</string>
+    <string name="settings_text_debug" translatable="false">Debug</string>
+    <string name="settings_text_server_url" translatable="false">Server URL</string>
     <string name="settings_text_use_overlap">Use Overlap</string>
     <string name="settings_text_adjust_brightness">Adjust Brightness</string>
     <string name="settings_text_use_hsv">Use HSV</string>
@@ -36,4 +36,5 @@
     <string name="camera_text_image_in_progress">There is already one image in progress. Please upload over gallery.</string>
     <string name="camera_text_create_sr_image">Create SR Version of image?</string>
     <string name="settings_interpolation">Use interpolation in gallery</string>
+    <string name="camera_text_snackbar_create">CREATE</string>
 </resources>
