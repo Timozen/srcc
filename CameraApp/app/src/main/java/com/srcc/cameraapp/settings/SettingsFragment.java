@@ -80,7 +80,7 @@ public class SettingsFragment extends Fragment {
         segmentedButtonGroup.setPosition(sharedPreferences.getInt("backend", 0), false);
 
         Switch switchDebug = view.findViewById(R.id.switch_debug);
-        switchDebug.setChecked(sharedPreferences.getBoolean("debug", true));
+        switchDebug.setChecked(sharedPreferences.getBoolean("debug", false));
         switchDebug.setOnClickListener(v -> sharedPreferences.edit().putBoolean("debug", switchDebug.isChecked()).apply());
 
         EditText editTextServerUrl = view.findViewById(R.id.editText_server_url);
