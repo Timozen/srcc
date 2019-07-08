@@ -403,7 +403,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
             CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(mCameraId);
 
-            float maxZoom = 4; //(characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
+            float supportedZoom = (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
+            float maxZoom = 8;
+            if(supportedZoom < maxZoom){
+                maxZoom = supportedZoom;
+            }
 
             Rect rect = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             int action = event.getAction();
