@@ -186,16 +186,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             viewPagerFullScreen.setCurrentItem(position);
             goToFullImage();
         });
-
-        viewHolder.getImageView().setOnLongClickListener(v -> {
-            if(viewHolder.isSelected) {
-                viewHolder.getImageView().setColorFilter(Color.argb(0, 0, 0, 0));
-            } else {
-                viewHolder.getImageView().setColorFilter(Color.argb(50, 0, 0, 255));
-            }
-            viewHolder.isSelected = !viewHolder.isSelected;
-            return viewHolder.isSelected;
-        });
     }
 
     /**
