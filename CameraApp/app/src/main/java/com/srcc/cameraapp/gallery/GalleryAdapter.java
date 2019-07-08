@@ -35,6 +35,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.annotation.GlideModule;
@@ -186,6 +187,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             viewPagerFullScreen.setCurrentItem(position);
             goToFullImage();
         });
+
+        viewHolder.getView().findViewById(R.id.textView_gallery_sr_indicator).setVisibility(viewHolder.isLR ? TextView.INVISIBLE : TextView.VISIBLE);
     }
 
     /**
@@ -434,11 +437,13 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         private String title;
         private boolean isLR;
         private boolean isSelected;
+        private View view;
 
         ViewHolder(View view) {
             super(view);
             imageViewThumbnail =  view.findViewById(R.id.imageView_gallery_item_image);
             isSelected = false;
+            this.view = view;
         }
 
         ImageView getImageView() {
@@ -467,6 +472,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         String getTitle() {
             return title;
+        }
+
+        public View getView() {
+            return view;
         }
     }
 
