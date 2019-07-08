@@ -131,7 +131,7 @@ public class Utils extends Application {
 
                 try {
                     File root = Utils.getPublicAlbumStorageDir(Utils.IMAGE_FOLDER_NAME);
-                    File hrImage = new File(root.getAbsolutePath(), timeValue + "_hr.jpg");
+                    File hrImage = new File(root.getAbsolutePath(), timeValue + "_" + backend + "_sr.jpg");
 
                     InputStream inputStream = null;
                     OutputStream outputStream = null;
