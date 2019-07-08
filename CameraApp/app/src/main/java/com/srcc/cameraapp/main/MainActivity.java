@@ -23,11 +23,12 @@ import com.srcc.cameraapp.other.Utils;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.disposables.CompositeDisposable;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
-import okhttp3.logging.HttpLoggingInterceptor;
+//import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -67,20 +68,26 @@ public class MainActivity extends AppCompatActivity {
             compositeDisposable = new CompositeDisposable();
 
             //http logging
-            OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+            /*OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
             HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
             loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-            clientBuilder.addInterceptor(loggingInterceptor);
+            clientBuilder.addInterceptor(loggingInterceptor);*/
 
 
-            String serverUrl = sp.getString("server_url", "192.168.178.44");
+            final OkHttpClient client = new OkHttpClient.Builder()
+                    .readTimeout(300, TimeUnit.SECONDS)
+                    .build();
+
+            String serverUrl = sp.getString("server_url", "10.42.0.1");
             //create async client to our server (currently only local network)
             Retrofit mClient = new Retrofit.Builder()
                     .baseUrl("http://" + serverUrl + ":5000/")
 //                    .client(clientBuilder.build())
                     .addConverterFactory(GsonConverterFactory.create())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .client(client)
                     .build();
+            sp.edit().putString("server_url", "10.42.0.1").apply();
 
             Log.i(TAG, "Connect to server...");
             //attach the api requests to it

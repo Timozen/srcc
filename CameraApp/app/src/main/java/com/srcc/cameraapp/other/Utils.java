@@ -92,7 +92,7 @@ public class Utils extends Application {
                 name = "";
                 break;
         }
-        int tiling = preferences.getBoolean(name + "_use_tiling", false) ? 1 : 0;
+        int tiling = preferences.getBoolean(name + "_use_tiling", true) ? 1 : 0;
         int tile_size = (preferences.getInt(name + "_tiling_size", 0) + 1) * SettingsFragment.SRDENSE_TILE_SIZE;
         int stitch_style = preferences.getInt(name + "_stitch_style", 0);
         int overlap = preferences.getBoolean(name + "_use_overlap", true) ? 1 : 0;
