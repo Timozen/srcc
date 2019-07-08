@@ -163,7 +163,13 @@ def sr_image(file_path, backend, tiling, tile_size, overlap, stitch_type, adjust
             sr = Utils.denormalize(np.squeeze(model.predict(np.expand_dims(Utils.rescale_imgs_to_neg1_1(img), axis=0)), axis=0))
 
     # save the sr image
-    file_name = os.path.split(file_path)[1].split(".")[0] + "-sr.jpg"
+    if backend == 0:
+        file_name = os.path.split(file_path)[1].split(".")[0] + "-srdense.jpg"
+    elif backend == 1:
+        file_name = os.path.split(file_path)[1].split(".")[0] + "-srresnet.jpg"
+    elif backend == 2:
+        file_name = os.path.split(file_path)[1].split(".")[0] + "-srgan.jpg"
+        
     cv2.imwrite(os.path.join(os.path.split(file_path)[0], file_name), cv2.cvtColor(sr, cv2.COLOR_RGB2BGR))
 
     # clear the model
@@ -228,6 +234,7 @@ class SendImage(Resource):
         parser.add_argument('debug', required=False, type=int)
 
         args = parser.parse_args()
+        print(args)
 
         if args['debug'] is not None and args['debug'] == 1:
             print(args)

@@ -3,6 +3,11 @@ import numpy as np
 import cv2
 import fnmatch
 import Utils
+from keras.models import load_model
+import math
+import tensorflow as tf
+from tqdm import tqdm
+
 
 def load_image(file, path=None):
     if path != None:
@@ -44,10 +49,30 @@ def calc_border_average(image_tile, border_size = 20):
 def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):
 
     factors = []
+    mask = np.zeros(image_tiles[0].shape).astype(np.float32)
+    
+
+    for y,x in np.ndindex(mask.shape[0:2]):
+        if x == 0 and y == 0:
+            factor1_ = 0.5
+        else:
+            factor1_ = x/(x+y)
+            #print("x = ",x)
+            #print("y = ",y)
+            #print(factors)
+            mask[y,x,0] = factor1_
+            mask[y,x,1] = factor1_
+            mask[y,x,2] = factor1_
+    
 
     def apply_factors(tile):
         #print(tile.shape)
         float_tile = tile.astype(np.float64)
+
+        float_tile[:,:,0] = np.multiply(float_tile[:,:,0], mask[:,:,0] * factors[-1][1][0]) + np.multiply(float_tile[:,:,0], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,0] *factors[-1][0][0])
+        float_tile[:,:,1] = np.multiply(float_tile[:,:,1], mask[:,:,1] * factors[-1][1][1]) + np.multiply(float_tile[:,:,1], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,1] *factors[-1][0][1])
+        float_tile[:,:,2] = np.multiply(float_tile[:,:,2], mask[:,:,2] * factors[-1][1][2]) + np.multiply(float_tile[:,:,2], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,2] *factors[-1][0][2])
+        '''
         for y,x in np.ndindex(this.shape[0:2]):
             if x == 0 and y == 0:
                 factor1_ = 0.5
@@ -59,14 +84,15 @@ def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):
             #print("y = ",y)
             #print(factors)
             float_tile[y,x,:] = np.multiply(float_tile[y,x,:], factor1_ * factors[-1][1]) + np.multiply(float_tile[y,x,:], factor2_ * factors[-1][0])
+        '''
         float_tile[float_tile > 255] = 255
     
 
         return float_tile.astype(np.uint8)
 
     
-    for i in range(rows + cols):
-        for k in range(i):
+    for i in tqdm(range(rows + cols)):
+        for k in tqdm(range(i)):
             if (i-k)>= 0 and (i-k) < rows and k >= 0 and k < cols :
                 this = image_tiles[(i-k)*cols + k]
                 if i == 0:
@@ -107,41 +133,198 @@ def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim)
 
     return stitched_image
 
+def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
+    x_offset = tile_dim_x//2
+    y_offset = tile_dim_y//2
+    output = img
 
+    def f(x,y):
+        return ((-np.cos((2*math.pi)/tile_dim_x * x )+1)*(-np.cos((2*math.pi)/tile_dim_y * y)+1))/4
+    def f_y(x,y):
+        return ((-np.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-np.cos((2*math.pi)/tile_dim_y * y)+1))/4
+    def f_x(x,y):
+        return ((-np.cos((2*math.pi)/tile_dim_x * x )+1)*(-np.cos((2*math.pi)/tile_dim_y * y+math.pi)+1))/4
+    def f_xy(x,y):
+        return ((-np.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-np.cos((2*math.pi)/tile_dim_y * y+math.pi)+1))/4
 
+    norm_weights = np.fromfunction(lambda i, j:  f(i,j), (img.shape[0], img.shape[1]), dtype=np.float32)
+    norm_weights = np.stack((norm_weights,norm_weights,norm_weights),axis=2)
+    #cv2.imwrite(os.path.join("ISTest","norm_weights.jpg"), np.interp(norm_weights, (0,1), (0,255))) This is for documentary
 
-def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032)): 
-    corrected_image_tiles = calc_border_factors(image_tiles,image_size[0]//image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1])
-    output = stitch_images(corrected_image_tiles,image_size[1], image_size[0],image_tiles[0].shape[0],image_tiles[0].shape[1], image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
-    
-    if LR is None: 
+    x_weights = np.fromfunction(lambda i, j:  f_x(i,j-y_offset), (img.shape[0], img.shape[1]-tile_dim_x), dtype=np.float32)
+    x_weights = np.stack((x_weights,x_weights,x_weights),axis=2)
+
+    y_weights = np.fromfunction(lambda i, j:  f_y(i-x_offset,j), (img.shape[0]-tile_dim_y, img.shape[1]), dtype=np.float32)
+    y_weights = np.stack((y_weights,y_weights,y_weights),axis=2)
+
+    xy_weights = np.fromfunction(lambda i, j:  f_xy(i-x_offset,j-y_offset), (img.shape[0]-tile_dim_y, img.shape[1]-tile_dim_x), dtype=np.float32)
+    xy_weights = np.stack((xy_weights,xy_weights,xy_weights),axis=2)
+
+    x_border_weights = np.fromfunction(lambda i, j:  (-np.cos((2*math.pi)/tile_dim_y * (i- y_offset)+math.pi)+1) / 2, (img.shape[0]-tile_dim_y, x_offset), dtype=np.float32)
+    x_border_weights = np.stack((x_border_weights,x_border_weights,x_border_weights),axis=2)
+
+    y_border_weights = np.fromfunction(lambda i, j:  (-np.cos((2*math.pi)/tile_dim_x * (j- x_offset)+math.pi)+1) / 2, (y_offset, img.shape[1]-tile_dim_x), dtype=np.float32)
+    y_border_weights = np.stack((y_border_weights,y_border_weights,y_border_weights),axis=2)
+
+    def overlap(input_img):
+        output = input_img
+        print("Overlapping ")
+        output[y_offset:input_img.shape[0]-y_offset, x_offset:input_img.shape[1]-x_offset, 0:3] = \
+                                    np.multiply(input_img[y_offset:input_img.shape[0]-y_offset,x_offset:input_img.shape[1]-x_offset,0:3], norm_weights[y_offset:input_img.shape[0]-y_offset,x_offset:input_img.shape[1]-x_offset,0:3]) + \
+                                    np.multiply(img_x[y_offset:input_img.shape[0]-y_offset,:,0:3],x_weights[y_offset:input_img.shape[0]-y_offset,:,0:3]) + \
+                                    np.multiply(img_y[:,x_offset:input_img.shape[1]-x_offset,0:3],y_weights[:,x_offset:input_img.shape[1]-x_offset,0:3]) + \
+                                    np.multiply(img_xy[:,:,0:3],xy_weights[:,:,0:3])
+        output[y_offset:input_img.shape[0]-y_offset,0:x_offset, 0:3] = \
+                                    np.multiply(img_y[:,0:x_offset,0:3],x_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[y_offset:input_img.shape[0]-y_offset,0:x_offset, 0:3],np.subtract(np.ones(x_border_weights.shape),x_border_weights[:,:,0:3]))
+        output[y_offset:input_img.shape[0]-y_offset,input_img.shape[1]-x_offset:, 0:3] = \
+                                    np.multiply(img_y[:,input_img.shape[1]-x_offset:,0:3],x_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[y_offset:input_img.shape[0]-y_offset,input_img.shape[1]-x_offset:, 0:3],np.subtract(np.ones(x_border_weights.shape),x_border_weights[:,:,0:3]))
+        output[0:y_offset,x_offset:input_img.shape[1]-x_offset, 0:3] = \
+                                    np.multiply(img_x[0:y_offset,:,0:3],y_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[0:y_offset,x_offset:input_img.shape[1]-x_offset, 0:3],np.subtract(np.ones(y_border_weights.shape),y_border_weights[:,:,0:3]))
+        output[input_img.shape[0]-y_offset:,x_offset:input_img.shape[1]-x_offset, 0:3] = \
+                                    np.multiply(img_x[input_img.shape[0]-y_offset:,:,0:3],y_border_weights[:,:,0:3]) + \
+                                    np.multiply(input_img[input_img.shape[0]-y_offset:,x_offset:input_img.shape[1]-x_offset, 0:3],np.subtract(np.ones(y_border_weights.shape),y_border_weights[:,:,0:3]))
         return output
     
-    HR_ = cv2.resize(LR, (0,0) , fx = 4, fy = 4, interpolation = cv2.INTER_CUBIC)
-    hsv = cv2.cvtColor(HR_,cv2.COLOR_BGR2HSV)
-    outputHSV = cv2.cvtColor(output,cv2.COLOR_BGR2HSV)
-    outputHSV[:,:,0:2] = hsv[0:outputHSV.shape[0],0:outputHSV.shape[1],0:2]
-    output = cv2.cvtColor(outputHSV,cv2.COLOR_HSV2BGR)
+    output = overlap(output)
     return output
 
-    
 
+def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB = True): 
+    
+    if adjustRGB == False:
+        LR = None
+
+    if (LR is None) and overlap==False: 
+        corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
+                                                image_size[0]//image_tiles[0].shape[0],
+                                                image_size[1]//image_tiles[0].shape[1])     
+        output = stitch_images(corrected_image_tiles,                                           # simply stitches the corrected tiles into one image
+                            image_size[1], image_size[0],
+                            image_tiles[0].shape[0],
+                            image_tiles[0].shape[1], 
+                            image_size[1]//image_tiles[0].shape[1], 
+                            image_size[0]//image_tiles[0].shape[0])
+        return output
+    
+    if overlap is True:
+        if adjustRGB == True :
+            img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
+            print("Calculating x_norm image")
+            img_ = stitching(img_list,LR,border_size,image_size, overlap = False)
+            print("Calculating x_shifted image")
+            img_x_shifted_ = stitching(img_x_shifted_list,LR,border_size, image_size=(image_size[0] , image_size[1]-image_tiles[0].shape[1] ),                              # gets the x shifted hsv corrected advance stitch image
+                                                                        LROffset= (0,image_tiles[0].shape[1]//2), overlap=False)
+            print("Calculating y_shifted image")
+            img_y_shifted_ = stitching(img_y_shifted_list,LR,border_size, image_size=(image_size[0]-image_tiles[0].shape[0] , image_size[1] ),                              # gets the y shifted hsv corrected advance stitch image
+                                                                        LROffset= (image_tiles[0].shape[0]//2,0), overlap=False)
+            print("Calculating xy_shifted image")
+            img_xy_shifted_ = stitching(img_xy_shifted_list,LR,border_size, image_size=(image_size[0]-image_tiles[0].shape[0] , image_size[1]-image_tiles[0].shape[1] ),    # gets the xy shifted hsv corrected advance stitch image
+                                                                            LROffset= (image_tiles[0].shape[0]//2,image_tiles[0].shape[1]//2), overlap=False)
+            return overlap_images(img_, img_x_shifted_, img_y_shifted_, img_xy_shifted_, image_tiles[0].shape[1], image_tiles[0].shape[0]) 
+        img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
+        img_ = stitch_images(img_list,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
+        img_x_shifted_ = stitch_images(img_x_shifted_list,image_size[1]-image_tiles[0].shape[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
+        img_y_shifted_ = stitch_images(img_y_shifted_list,image_size[1],image_size[0]-image_tiles[0].shape[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
+        img_xy_shifted_ = stitch_images(img_xy_shifted_list,image_size[1]-image_tiles[0].shape[1],image_size[0]-image_tiles[0].shape[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
+        return overlap_images(img_, img_x_shifted_, img_y_shifted_, img_xy_shifted_, image_tiles[0].shape[1], image_tiles[0].shape[0]) 
+
+ 
+    # this code runs if LR!=None and overlap==False (Advanced stitching without overlapping tiles)
+    print("Calculating interpolations and hsv")
+    corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
+                                                image_size[0]//image_tiles[0].shape[0],
+                                                image_size[1]//image_tiles[0].shape[1])     
+    output = stitch_images(corrected_image_tiles,                                           # simply stitches the corrected tiles into one image
+                            image_size[1], image_size[0],
+                            image_tiles[0].shape[0],
+                            image_tiles[0].shape[1], 
+                            image_size[1]//image_tiles[0].shape[1], 
+                            image_size[0]//image_tiles[0].shape[0])
+
+    HR_ = cv2.resize(LR, (0,0) , fx = 4, fy = 4, interpolation = cv2.INTER_CUBIC)           # Upscales the LR image
+    hsv = cv2.cvtColor(HR_,cv2.COLOR_BGR2HSV)                                               # Converts the upscaled LR image into HSV
+    outputHSV = cv2.cvtColor(output,cv2.COLOR_BGR2HSV)                                      # Converts the corrected SR image into HSV
+    outputHSV[:,:,0:2] = hsv[LROffset[0]:outputHSV.shape[0]+LROffset[0],
+                            LROffset[1]:outputHSV.shape[1]+LROffset[1],0:2]                # Replaces HS-values of the SR image by the LR image in the valid area
+    output = cv2.cvtColor(outputHSV,cv2.COLOR_HSV2BGR)                                      # Converts the color-corrected SR image into BGR (RGB-Space)
+    return output
+
+
+def get_shifted_images(images, total_width, total_height, width, height):
+    '''
+    Seperates shifted images into a list of tiles of each shifted images.
+
+    images -- list of all tiles
+    total_width,total_height -- pixel size of the HR image
+    width, height -- pixel size of a single tile
+
+    returns lists of tiles in the following order: img, x-shifted, y-shifted, xy-shifted
+    '''
+
+    n = total_height // height
+    k = total_width // width
+
+    x = []
+    y = []
+    xy = []
+    norm = []
+    for i in range(n + (n-1)):
+        for j in range(k + (k-1)):
+            if i % 2 == 0 and not j % 2 == 0:
+                x.append(images[i*(k+(k-1)) + j])
+            elif not i % 2 == 0 and j % 2 == 0:
+                y.append(images[i*(k+(k-1)) + j])
+            elif i % 2 == 0 and j % 2 == 0:
+                norm.append(images[i*(k+(k-1)) + j])
+            else:
+                xy.append(images[i*(k+(k-1)) + j])
+    '''
+    x_ = stitch_images(x, total_width-k, total_height, k, n, k-1, n)
+    y_ = stitch_images(y, total_width, total_height-n, k, n, k, n-1)
+    xy_ = stitch_images(xy, total_width-k, total_height-n, k, n, k-1, n-1)
+    img = stitch_images(norm, total_width, total_height, k, n, k, n)
+    '''
+
+    return norm, x, y, xy
+
+def get_simple_stitch(images, total_width, total_height, width, height):
+    n = total_height // height
+    k = total_width // width
+
+    x = []
+    y = []
+    xy = []
+    norm = []
+    for i in range(n + (n-1)):
+        for j in range(k + (k-1)):
+            if i % 2 == 0 and not j % 2 == 0:
+
+                x.append(images[i*(k+(k-1)) + j])
+            elif not i % 2 == 0 and j % 2 == 0:
+                y.append(images[i*(k+(k-1)) + j])
+            elif i % 2 == 0 and j % 2 == 0:
+                norm.append(images[i*(k+(k-1)) + j])
+            else:
+                xy.append(images[i*(k+(k-1)) + j])
+    img = stitch_images(norm, total_width, total_height, width, height, k, n)
+    return img
 
 def main():
-    '''
-    overlap_images = load_images("","images")
-    images = []
-    for i in range(9+8):
-        for j in range(12+11):
-            if i%2 == 0 and j%2 == 0:
-                images.append(overlap_images[i*23+j])
-    '''
-    image = cv2.imread(os.path.join("drive-download-20190702T161457Z-001","img_sr.jpg"))
-    imageLR = cv2.imread(os.path.join("drive-download-20190702T161457Z-001","img_lr.jpg"))
-    images = Utils.tile_image(image)
+    lr = cv2.cvtColor(cv2.imread(os.path.join("ISTest","img_lr.jpg")), cv2.COLOR_BGR2RGB)
+    model = load_model(os.path.join("models","initialized_gen_model20.h5"), custom_objects={"tf":tf})
+    lr_tiles_overlap = Utils.tile_image(lr, shape=(126,126), overlap=True)
+    sr_tiles = []
+    for tile in tqdm(lr_tiles_overlap):
+        sr_tiles.append(   Utils.denormalize(np.squeeze(model.predict(np.expand_dims(Utils.rescale_imgs_to_neg1_1(tile), axis=0)), axis=0))  )
+    simpleStitch = get_simple_stitch(sr_tiles, 4032, 3024, 504, 504)
+    cv2.imwrite(os.path.join("ISTest","image_simple_stitched.jpg"), cv2.cvtColor(simpleStitch, cv2.COLOR_RGB2BGR))
+    final_image = stitching(sr_tiles, lr, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB=True)
+    cv2.imwrite(os.path.join("ISTest","image_final.jpg"), cv2.cvtColor(final_image, cv2.COLOR_RGB2BGR))
 
-    final_image = stitching(images,imageLR)
-    cv2.imwrite("test.jpg",final_image)
+
 
 if __name__ == "__main__":
     main()

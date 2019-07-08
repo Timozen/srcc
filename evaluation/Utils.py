@@ -3,6 +3,18 @@ import cv2
 from tqdm import tqdm
 
 
+def rescale_imgs(img, mi, ma):
+    '''this function rescales a np.ndarray img to an interval [mi, ma]
+
+    img -- np.ndarray with values in [0, 255]
+    mi -- minimum of interval
+    ma -- maximum of interval
+    '''
+    return np.interp(img, (0,255), (mi, ma))
+
+def rescale_imgs_to_neg1_1(img):
+    return rescale_imgs(img, -1, 1)
+
 def denormalize(input_data):
     input_data = (input_data + 1) * 127.5
     return input_data.astype(np.uint8)
