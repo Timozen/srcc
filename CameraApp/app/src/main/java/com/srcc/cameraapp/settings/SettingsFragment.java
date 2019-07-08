@@ -99,6 +99,11 @@ public class SettingsFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {
                 String text = editTextServerUrl.getText().toString();
+
+                if(text.equals("")){
+                   return;
+                }
+
                 sharedPreferences.edit().putString("server_url", text).apply();
                 client = new Retrofit.Builder()
                         .baseUrl("http://" + text + ":5000/")
