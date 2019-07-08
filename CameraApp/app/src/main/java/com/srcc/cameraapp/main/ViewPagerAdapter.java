@@ -26,14 +26,14 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
      */
     static class Builder {
 
-        private ViewPager viewPager;
+        private LockableViewPager viewPager;
         private FragmentManager fragmentManager;
         private CompositeDisposable compositeDisposable;
         private Retrofit client;
         private ApiService apiService;
         private Context context;
 
-        Builder setViewPager(ViewPager viewPager) {
+        Builder setViewPager(LockableViewPager viewPager) {
             this.viewPager = viewPager;
             return this;
         }
@@ -68,14 +68,14 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         }
     }
 
-    private ViewPager viewPager;
+    private LockableViewPager viewPager;
     private FragmentManager fragmentManager;
     private final CompositeDisposable compositeDisposable;
     private Retrofit client;
     private ApiService apiService;
     private Context context;
 
-    private ViewPagerAdapter(ViewPager viewPager, FragmentManager fragmentManager, CompositeDisposable compositeDisposable, Retrofit client, ApiService apiService, Context context) {
+    private ViewPagerAdapter(LockableViewPager viewPager, FragmentManager fragmentManager, CompositeDisposable compositeDisposable, Retrofit client, ApiService apiService, Context context) {
         super(fragmentManager);
         this.viewPager = viewPager;
         this.fragmentManager = fragmentManager;
@@ -113,6 +113,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
                 return new GalleryFragment.Builder()
                         .setCompositeDisposable(compositeDisposable)
                         .setmApiConnection(apiService)
+                        .setViewPager(viewPager)
                         .createGalleryFragment();
         }
         return null;

@@ -45,6 +45,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.ortiz.touchview.TouchImageView;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.main.LockableViewPager;
 import com.srcc.cameraapp.other.Utils;
 
 import java.io.File;
@@ -77,12 +78,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private boolean itemWasDeleted = false;
     private ViewPager viewPagerFullScreen;
     public boolean isFullScreen;
+    private LockableViewPager parentViewPager;
 
-    GalleryAdapter(final Activity activity, final CompositeDisposable compositeDisposable, final ApiService apiService, int rowCount) {
+    GalleryAdapter(final Activity activity, final CompositeDisposable compositeDisposable, final ApiService apiService, int rowCount, LockableViewPager viewPager) {
         this.activity = activity;
         this.mApiConnection = apiService;
         this.compositeDisposable = compositeDisposable;
         this.rowCount = rowCount;
+        this.parentViewPager = viewPager;
 
         DisplayMetrics dp = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getMetrics(dp);
@@ -181,7 +184,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             currentPosition = position;
             viewPagerFullScreen = activity.findViewById(R.id.viewPager_fullscreen);
             viewPagerFullScreen.setPageTransformer(true, new DepthPageTransformer());
-
+            parentViewPager.setSwipeLocked(true);
             FullScreenPager pg = new FullScreenPager(activity.getApplicationContext());
             viewPagerFullScreen.setAdapter(pg);
             viewPagerFullScreen.addOnPageChangeListener(pg);
@@ -348,7 +351,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     public void returnFromFullImage(){
-
+        parentViewPager.setSwipeLocked(false);
         currentPosition = viewPagerFullScreen.getCurrentItem();
 
         if(itemWasDeleted){

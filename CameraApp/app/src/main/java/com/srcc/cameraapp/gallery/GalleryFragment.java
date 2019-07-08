@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.main.LockableViewPager;
 
 import java.util.Objects;
 
@@ -37,6 +38,7 @@ public class GalleryFragment extends Fragment {
     public static class Builder {
         private CompositeDisposable compositeDisposable;
         private ApiService mApiConnection;
+        private LockableViewPager viewPager;
 
         public Builder setCompositeDisposable(CompositeDisposable compositeDisposable) {
             this.compositeDisposable = compositeDisposable;
@@ -48,18 +50,25 @@ public class GalleryFragment extends Fragment {
             return this;
         }
 
-        public GalleryFragment createGalleryFragment() {
-            return new GalleryFragment(compositeDisposable, mApiConnection);
+        public Builder setViewPager(LockableViewPager viewPager){
+            this.viewPager = viewPager;
+            return this;
         }
+
+        public GalleryFragment createGalleryFragment() {
+            return new GalleryFragment(compositeDisposable, mApiConnection, viewPager);
+        }
+
     }
 
 
     private static final String TAG = "SRCC_SHOW_IMAGES";
     private GalleryAdapter myAdapter;
-
-    private GalleryFragment(CompositeDisposable compositeDisposable, ApiService mApiConnection) {
+    private LockableViewPager viewPager;
+    private GalleryFragment(CompositeDisposable compositeDisposable, ApiService mApiConnection, LockableViewPager viewPager) {
         this.compositeDisposable = compositeDisposable;
         this.mApiConnection = mApiConnection;
+        this.viewPager = viewPager;
     }
 
     /**
@@ -98,7 +107,7 @@ public class GalleryFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         //Load our gallery adapter to display the data after our rules
-        myAdapter = new GalleryAdapter(getActivity(), compositeDisposable, mApiConnection, 3);
+        myAdapter = new GalleryAdapter(getActivity(), compositeDisposable, mApiConnection, 3, viewPager);
         recyclerView.setAdapter(myAdapter);
 
         //load the data into the cursor

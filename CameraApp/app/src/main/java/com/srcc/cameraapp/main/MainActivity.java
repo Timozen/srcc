@@ -4,31 +4,27 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
 import com.srcc.cameraapp.gallery.GalleryFragment;
-import com.srcc.cameraapp.other.Utils;
 
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.disposables.CompositeDisposable;
 import okhttp3.OkHttpClient;
-import okhttp3.internal.Util;
-//import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -40,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String TAG = "SRCC_CAMERA_MAIN";
 
     private CompositeDisposable compositeDisposable;
-    private ViewPager viewPager;
+    private LockableViewPager viewPager;
     private SharedPreferences sp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             //attach the api requests to it
             ApiService mApiConnection = mClient.create(ApiService.class);
 
-            viewPager = findViewById(R.id.view_pager);
+            viewPager = (LockableViewPager) findViewById(R.id.view_pager);
 
             //create the fragment view for nice swiping
             ViewPagerAdapter vpa = new ViewPagerAdapter.Builder()
