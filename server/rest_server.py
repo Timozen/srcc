@@ -150,8 +150,6 @@ def sr_image(file_path, backend, tiling, tile_size, overlap, stitch_type, adjust
                 sr = ImageStitching.stitching(sr_tiles, LR = img, image_size=(y_dim*sr_tiles[0].shape[0], x_dim*sr_tiles[0].shape[1]), overlap = bool(overlap), adjustRGB = True)
             elif adjust_brightness:
                 sr = ImageStitching.stitching(sr_tiles, LR = None, image_size=(y_dim*sr_tiles[0].shape[0], x_dim*sr_tiles[0].shape[1]), overlap = bool(overlap), adjustRGB = True)
-            elif use_hsv:
-                sr = ImageStitching.stitching(sr_tiles, LR = img, image_size=(y_dim*sr_tiles[0].shape[0], x_dim*sr_tiles[0].shape[1]), overlap = bool(overlap), adjustRGB = False)
             else:
                 if overlap:
                     sr = ImageStitching.stitching(sr_tiles, LR=None, image_size=(y_dim*sr_tiles[0].shape[0], x_dim*sr_tiles[0].shape[1]), overlap = True, adjustRGB = False)
