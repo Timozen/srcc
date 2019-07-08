@@ -35,4 +35,5 @@
     <string name="settings_text_notify_one_image">Only one image can be in progress. Please Wait.</string>
     <string name="camera_text_image_in_progress">There is already one image in progress. Please upload over gallery.</string>
     <string name="camera_text_create_sr_image">Create SR Version of image?</string>
+    <string name="settings_interpolation">Use interpolation in gallery</string>
 </resources>

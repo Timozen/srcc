@@ -79,6 +79,11 @@ public class SettingsFragment extends Fragment {
         });
         segmentedButtonGroup.setPosition(sharedPreferences.getInt("backend", 0), false);
 
+
+        Switch switchInterpolation = view.findViewById(R.id.switch_interpolation);
+        switchInterpolation.setChecked(sharedPreferences.getBoolean("interpolation", false));
+        switchInterpolation.setOnClickListener(v -> sharedPreferences.edit().putBoolean("interpolation", switchInterpolation.isChecked()).apply());
+
         Switch switchDebug = view.findViewById(R.id.switch_debug);
         switchDebug.setChecked(sharedPreferences.getBoolean("debug", false));
         switchDebug.setOnClickListener(v -> sharedPreferences.edit().putBoolean("debug", switchDebug.isChecked()).apply());

@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -17,6 +18,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
@@ -492,35 +494,47 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             TouchImageView touchImageView = view.findViewById(R.id.expanded_image);
 
             ViewHolder vh = viewHolderList.get(position);
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
-            try {
-                Matrix matrix = new Matrix();
-                matrix.postRotate(90);
+            if(!sp.getBoolean("interpolation", false)){
+                try {
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(90);
 
 
-                Bitmap bitmap = null;
-                BitmapDrawable drawable = null;
-                bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), vh.getUri());
+                    Bitmap bitmap = null;
+                    BitmapDrawable drawable = null;
+                    bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), vh.getUri());
 
-                if(vh.isLR) {
-                    Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                    drawable = new BitmapDrawable(context.getResources(), rotatedBitmap);
-                } else {
-                    drawable = new BitmapDrawable(context.getResources(), bitmap);
+                    if(vh.isLR) {
+                        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                        drawable = new BitmapDrawable(context.getResources(), rotatedBitmap);
+                    } else {
+                        drawable = new BitmapDrawable(context.getResources(), bitmap);
+                    }
+
+                    drawable.setFilterBitmap(false);
+
+                    touchImageView.setImageDrawable(drawable);
+
+                } catch (IOException e) {
+                    touchImageView.setImageResource(R.drawable.ic_mood_black_128dp);
+                    Glide.with(activity).load(viewHolderList.get(position).getUri())
+                            .thumbnail(0.5f)
+                            .placeholder(R.drawable.ic_mood_black_128dp)
+                            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                            .into(touchImageView);
                 }
-
-                drawable.setFilterBitmap(false);
-
-                touchImageView.setImageDrawable(drawable);
-
-            } catch (IOException e) {
+            } else {
                 touchImageView.setImageResource(R.drawable.ic_mood_black_128dp);
                 Glide.with(activity).load(viewHolderList.get(position).getUri())
-                    .thumbnail(0.5f)
-                    .placeholder(R.drawable.ic_mood_black_128dp)
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .into(touchImageView);
+                        .thumbnail(0.5f)
+                        .placeholder(R.drawable.ic_mood_black_128dp)
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                        .into(touchImageView);
             }
+
+
 
 
 
