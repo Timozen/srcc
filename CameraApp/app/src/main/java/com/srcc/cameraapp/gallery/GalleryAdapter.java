@@ -12,8 +12,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.provider.MediaStore;
 
@@ -43,6 +45,7 @@ import com.srcc.cameraapp.api.ApiService;
 import com.srcc.cameraapp.other.Utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -89,11 +92,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         display = activity.findViewById(R.id.display);
 
         activity.findViewById(R.id.button_gallery_image_edit).setOnClickListener(v -> {
-            if(!Utils.isSendingImage()) {
-                ViewHolder vh = viewHolderList.get(currentPosition);
+            ViewHolder vh = viewHolderList.get(currentPosition);
+
+            if(!Utils.isSendingImage() && vh.isLR) {
                 File f = new File(vh.getUri().getPath());
                 Utils.sendImage(mApiConnection, f, compositeDisposable, vh.getTitle().split("_")[0], activity.getApplicationContext());
-            } else {
+            } else if(!vh.isLR) {
+                Snackbar.make(display, activity.getApplicationContext().getString(R.string.settings_text_notify_is_hr_image), Snackbar.LENGTH_SHORT).show();
+            } else{
                 Snackbar.make(display, activity.getApplicationContext().getString(R.string.settings_text_notify_one_image), Snackbar.LENGTH_SHORT).show();
             }
         });
@@ -434,6 +440,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         private ImageView imageViewThumbnail;
         private Uri mUri;
         private String title;
+        private boolean isLR;
         private boolean isSelected;
 
         ViewHolder(View view) {
@@ -452,8 +459,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         void setTitle(String title) {
             String temp = title.split("\\.")[0];
-            String[] temp2 = temp.split("\\/");
+            String[] temp2 = temp.split("/");
             this.title = temp2[temp2.length - 1];
+            temp2 = this.title.split("_");
+            this.isLR = temp2[temp2.length - 1].equals("lr");
+        }
+
+        boolean getIsLR(){
+            return isLR;
         }
 
         Uri getUri() {
@@ -478,12 +491,39 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             View view = LayoutInflater.from(context).inflate(R.layout.gallery_item_view_full, null);
             TouchImageView touchImageView = view.findViewById(R.id.expanded_image);
 
-            touchImageView.setImageResource(R.drawable.ic_mood_black_128dp);
-            Glide.with(activity).load(viewHolderList.get(position).getUri())
+            ViewHolder vh = viewHolderList.get(position);
+
+            try {
+                Matrix matrix = new Matrix();
+                matrix.postRotate(90);
+
+
+                Bitmap bitmap = null;
+                BitmapDrawable drawable = null;
+                bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), vh.getUri());
+
+                if(vh.isLR) {
+                    Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                    drawable = new BitmapDrawable(context.getResources(), rotatedBitmap);
+                } else {
+                    drawable = new BitmapDrawable(context.getResources(), bitmap);
+                }
+
+                drawable.setFilterBitmap(false);
+
+                touchImageView.setImageDrawable(drawable);
+
+            } catch (IOException e) {
+                touchImageView.setImageResource(R.drawable.ic_mood_black_128dp);
+                Glide.with(activity).load(viewHolderList.get(position).getUri())
                     .thumbnail(0.5f)
                     .placeholder(R.drawable.ic_mood_black_128dp)
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(touchImageView);
+            }
+
+
+
 
             touchImageView.setZoom(1f);
 
