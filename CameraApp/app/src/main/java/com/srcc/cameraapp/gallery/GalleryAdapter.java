@@ -172,7 +172,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         //load the imageView_gallery_item_image Uri from our MediaStore (should be descending order)
         Uri imageUri = getUriFromMediaStore(position);
         //Use Glide to load the imageView_gallery_item_image and cache them in to the according imageView_gallery_item_image view
-        Glide.with(activity).load(imageUri).centerCrop().into(viewHolder.getImageView());
+        Glide.with(activity).load(imageUri).centerCrop().diskCacheStrategy(DiskCacheStrategy.NONE).into(viewHolder.getImageView());
 
         //attach the data
         viewHolder.setUri(imageUri);
