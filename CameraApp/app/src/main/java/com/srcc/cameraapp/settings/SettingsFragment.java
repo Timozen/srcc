@@ -253,10 +253,10 @@ public class SettingsFragment extends Fragment {
             );
             segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), isChecked ? R.color.orange : R.color.grey_500));
 
-            switchAdjustBrightness.setEnabled(isChecked);
-            switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
-            switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked());
-            switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+            switchAdjustBrightness.setEnabled(isChecked && segmentedButtonGroupStitchingStyle.getPosition() != 0);
+            switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), isChecked && segmentedButtonGroupStitchingStyle.getPosition() != 0? R.color.black : R.color.grey_500));
+            switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked() && segmentedButtonGroupStitchingStyle.getPosition() != 0);
+            switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), isChecked && segmentedButtonGroupStitchingStyle.getPosition() != 0? R.color.black : R.color.grey_500));
         });
 
         //have to check the same rules on loading
@@ -278,10 +278,10 @@ public class SettingsFragment extends Fragment {
         );
         segmentedButtonGroupStitchingStyle.setSelectedBackground(ContextCompat.getColor(getContext(), isChecked ? R.color.orange : R.color.grey_500));
 
-        switchAdjustBrightness.setEnabled(isChecked);
-        switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
-        switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked());
-        switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), isChecked ? R.color.black : R.color.grey_500));
+        switchAdjustBrightness.setEnabled(isChecked && segmentedButtonGroupStitchingStyle.getPosition() != 0);
+        switchAdjustBrightness.setTextColor(ContextCompat.getColor(getContext(), isChecked && segmentedButtonGroupStitchingStyle.getPosition() != 0? R.color.black : R.color.grey_500));
+        switchUseHSV.setEnabled(switchAdjustBrightness.isChecked() && switchUseTiling.isChecked() && segmentedButtonGroupStitchingStyle.getPosition() != 0);
+        switchUseHSV.setTextColor(ContextCompat.getColor(getContext(), isChecked && segmentedButtonGroupStitchingStyle.getPosition() != 0? R.color.black : R.color.grey_500));
 
         seekBarTilingSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @SuppressLint("DefaultLocale")
