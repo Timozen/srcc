@@ -9,7 +9,7 @@ def rescale_imgs(img, mi, ma):
     mi -- minimum of interval
     ma -- maximum of interval
     '''
-    return np.interp(img, (img.min(), img.max()), (mi, ma))
+    return np.interp(img, (0, 255), (mi, ma))
 
 def rescale_imgs_to_neg1_1(img):
     return rescale_imgs(img, -1, 1)

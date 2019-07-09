@@ -11,6 +11,7 @@ from tqdm import tqdm
 from keras.models import Model
 from keras.layers import Input
 import ImageStitching
+import keras
 
 TILES = True
 WHOLE_LR = True
@@ -24,7 +25,7 @@ def main():
                    os.path.join("..", "models", "gen_model5.h5"),
                    os.path.join("..", "models", "gen_model90.h5"),
                    os.path.join("..", "models", "init_gen_model50.h5"),
-                   os.path.join("..", "models", "initialized_gen_model20.h5"),
+                   os.path.join("..", "models", "initialized_gen_init50_model10.h5"),
                    "Nearest"]
 
     # corresponding names of the models
@@ -43,7 +44,7 @@ def main():
                    ((336, 336), (84, 84)),
                    ((504, 504), (126, 126)),
                    ((504, 504), (126, 126)),
-                   ((336, 336), (336, 336))]
+                   ((336, 336), (84, 84))]
 
     # used to load the models with custom loss functions
     loss = VGG_LOSS((504,504,3))
@@ -81,6 +82,7 @@ def main():
 
         tile_performance = {}
         for i,mp in tqdm(enumerate(model_paths)):
+            keras.backend.clear_session()
             # first step: load the model
             if i < 6:
                 model = load_model(mp, custom_objects=custom_objects[i])
@@ -112,6 +114,7 @@ def main():
                                         fx=4,
                                         fy=4,
                                         interpolation=cv2.INTER_NEAREST)
+                        
 
                     # sixth step: append the calculated metric
                     m.append( metrics.MSE(hr, sr) )
@@ -144,6 +147,7 @@ def main():
 
         img_performance = {}
         for i,mp in tqdm(enumerate(model_paths)):
+            keras.backend.clear_session()
             # first step: load the model
             if i < 6:
                 model = load_model(mp, custom_objects=custom_objects[i])
@@ -158,7 +162,7 @@ def main():
             ssim = []
             mssim = []
             # third step: iterate over the test images
-            for test_pair in test_images:
+            for test_pair in tqdm(test_images):
                 # fourth step: calculate the sr image
                 try:
                     if i < 2:
@@ -192,8 +196,8 @@ def main():
         print("Performance on whole lr:")
         f = open("whole_lr_performance.txt", "w")
         for key in img_performance:
-            print(key+ ":   MSE = " + str(tile_performance[key][0]) + ", PSNR = " + str(tile_performance[key][1]) + ", SSIM = " + str(tile_performance[key][2]), ", MSSIM = " + str(tile_performance[key][3]))
-            f.write(key+ " " + str(tile_performance[key][0]) + " " + str(tile_performance[key][1]) + " " + str(tile_performance[key][2]) + " " + str(tile_performance[key][3]) + "\n")
+            print(key+ ":   MSE = " + str(img_performance[key][0]) + ", PSNR = " + str(img_performance[key][1]) + ", SSIM = " + str(img_performance[key][2]), ", MSSIM = " + str(img_performance[key][3]))
+            f.write(key+ " " + str(img_performance[key][0]) + " " + str(img_performance[key][1]) + " " + str(img_performance[key][2]) + " " + str(img_performance[key][3]) + "\n")
         f.close()
 
     
@@ -204,8 +208,10 @@ def main():
 
         stitch_performance = {}
         for i,mp in tqdm(enumerate(model_paths)):
+            keras.backend.clear_session()
             # first step: load the model
-            model = load_model(mp, custom_objects=custom_objects[i])
+            if i < 6:
+                model = load_model(mp, custom_objects=custom_objects[i])
 
             mse = []
             psnr = []
@@ -217,7 +223,7 @@ def main():
             o_ssim = []
             o_mssim = []
             # second step: iterate over the test images
-            for test_pair in test_images:
+            for test_pair in tqdm(test_images):
                 # third step: tile the test image
                 lr_tiles = Utils.tile_image(test_pair[0], shape=tile_shapes[i][1])
                 lr_tiles_overlap = Utils.tile_image(test_pair[0], shape=tile_shapes[i][1], overlap=True)
@@ -274,10 +280,10 @@ def main():
         print("Performance on stitched images:")
         f = open("stitch_performance.txt", "w")
         for key in stitch_performance:
-            print("simple stitch:  "+key+ ":   MSE = " + str(tile_performance[key][0][0]) + ", PSNR = " + str(tile_performance[key][0][1]) + ", SSIM = " + str(tile_performance[key][0][2]), ", MSSIM = " + str(tile_performance[key][0][3]))
-            print("advanced stitch:  "+key+ ":   MSE = " + str(tile_performance[key][1][0]) + ", PSNR = " + str(tile_performance[key][1][1]) + ", SSIM = " + str(tile_performance[key][1][2]), ", MSSIM = " + str(tile_performance[key][1][3]))
-            f.write(key+ " " + str(tile_performance[key][0][0]) + " " + str(tile_performance[key][0][1]) + " " + str(tile_performance[key][0][2]) + " " + str(tile_performance[key][0][3]) + "\n")
-            f.write(key+ " " + str(tile_performance[key][1][0]) + " " + str(tile_performance[key][1][1]) + " " + str(tile_performance[key][1][2]) + " " + str(tile_performance[key][1][3]) + "\n")
+            print("simple stitch:  "+key+ ":   MSE = " + str(stitch_performance[key][0][0]) + ", PSNR = " + str(stitch_performance[key][0][1]) + ", SSIM = " + str(stitch_performance[key][0][2]), ", MSSIM = " + str(stitch_performance[key][0][3]))
+            print("advanced stitch:  "+key+ ":   MSE = " + str(stitch_performance[key][1][0]) + ", PSNR = " + str(stitch_performance[key][1][1]) + ", SSIM = " + str(stitch_performance[key][1][2]), ", MSSIM = " + str(stitch_performance[key][1][3]))
+            f.write(key+ " " + str(stitch_performance[key][0][0]) + " " + str(stitch_performance[key][0][1]) + " " + str(stitch_performance[key][0][2]) + " " + str(stitch_performance[key][0][3]) + "\n")
+            f.write(key+ " " + str(stitch_performance[key][1][0]) + " " + str(stitch_performance[key][1][1]) + " " + str(stitch_performance[key][1][2]) + " " + str(stitch_performance[key][1][3]) + "\n")
         f.close()
 
                 

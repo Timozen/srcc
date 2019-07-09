@@ -94,19 +94,19 @@ def train(img_shape, epochs, batch_size, rescaling_factor, input_dirs, output_di
                 print("hr batch shape: ", image_batch_hr.shape)
                 print("lr batch shape: ", image_batch_lr.shape)
 
-        if e == 1 or e % 5 == 0:
-            Utils.generate_test_image(output_dir, e, generator, test_image)
+        #if e == 1 or e % 5 == 0:
+            #Utils.generate_test_image(output_dir, e, generator, test_image)
         if e % 5 == 0:
-            generator.save(os.path.join(model_save_dir , 'init_gen_model%d.h5' % e))
+            generator.save(os.path.join(model_save_dir , 'srresnet%d.h5' % e))
             
-    generator.save(os.path.join(model_save_dir , 'init_gen_model.h5' % e))
+    generator.save(os.path.join(model_save_dir , 'srresnet.h5' % e))
 
 
 if __name__ == "__main__":
     image_shape = (504, 504, 3)
 
     epochs = 50
-    batch_size = 4
+    batch_size = 16
     train_test_ratio = 0
     rescaling_factor = 4
 
@@ -121,5 +121,5 @@ if __name__ == "__main__":
         os.makedirs(model_save_dir)
 
     train(image_shape, epochs, batch_size, rescaling_factor, input_dirs,
-          output_dir, model_save_dir, train_test_ratio, gpu=1)
+          output_dir, model_save_dir, train_test_ratio, gpu=2)
  
