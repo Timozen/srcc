@@ -37,4 +37,5 @@
     <string name="camera_text_create_sr_image">Create SR Version of image?</string>
     <string name="settings_interpolation">Use interpolation in gallery</string>
     <string name="camera_text_snackbar_create">CREATE</string>
-</resources>
+    <string name="channel_description">\"This is the srcc apps channel\"</string>
+    <string name="channel_name">SRCC_CHANNEL</string></resources>

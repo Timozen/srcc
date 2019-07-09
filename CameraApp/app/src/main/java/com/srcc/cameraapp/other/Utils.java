@@ -1,6 +1,7 @@
 package com.srcc.cameraapp.other;
 
 import android.app.Application;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,8 +11,12 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
 import com.srcc.cameraapp.settings.SettingsFragment;
 
@@ -161,6 +166,19 @@ public class Utils extends Application {
 
                         outputStream.flush();
                         Toast.makeText(context, "Received SR Image from server!", Toast.LENGTH_SHORT).show();
+
+                        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "srcc")
+                                .setSmallIcon(R.mipmap.ic_launcher)
+                                .setContentTitle("Received Image")
+                                .setContentText("The server send an improved image!")
+                                .setPriority(NotificationCompat.PRIORITY_MAX)
+                                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                                .setAutoCancel(true)
+                                .setTimeoutAfter(100 * 1000);
+
+                        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
+                        notificationManagerCompat.notify(1, builder.build());
+
 
                     } catch (IOException e) {
                         e.printStackTrace();
