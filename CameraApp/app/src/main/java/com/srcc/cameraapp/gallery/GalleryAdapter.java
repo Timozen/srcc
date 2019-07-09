@@ -74,6 +74,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private ConstraintLayout gallery;
 
     private TouchImageView touchImageView;
+    private TextView textViewFullScreenIndicator;
     private float startScaleFinal;
     private boolean itemWasDeleted = false;
     private ViewPager viewPagerFullScreen;
@@ -97,6 +98,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         gallery = activity.findViewById(R.id.constraintLayout_gallery_main);
         display = activity.findViewById(R.id.display);
 
+        textViewFullScreenIndicator = activity.findViewById(R.id.textView_fullscreen_indicator);
+
         activity.findViewById(R.id.button_gallery_image_edit).setOnClickListener(v -> {
             ViewHolder vh = viewHolderList.get(currentPosition);
 
@@ -118,6 +121,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             //check right one
             ViewHolder next = viewHolderList.get(currentPosition + 1);
             if(next != null){
+                textViewFullScreenIndicator.setVisibility(!viewHolderList.get(currentPosition).getIsLR() ? TextView.VISIBLE : TextView.INVISIBLE);
+                textViewFullScreenIndicator.setText(viewHolderList.get(currentPosition).getType());
                 currentPosition += 1;
                 viewPagerFullScreen.setCurrentItem(currentPosition, true);
                 toDelete.delete();
@@ -126,6 +131,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             }
             next = viewHolderList.get(currentPosition - 1);
             if(next != null){
+                textViewFullScreenIndicator.setVisibility(!viewHolderList.get(currentPosition).getIsLR() ? TextView.VISIBLE : TextView.INVISIBLE);
+                textViewFullScreenIndicator.setText(getIndicatorText(viewHolderList.get(currentPosition).getType()));
                 currentPosition -= 1;
                 viewPagerFullScreen.setCurrentItem(currentPosition, true);
                 toDelete.delete();
@@ -185,14 +192,33 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             viewPagerFullScreen = activity.findViewById(R.id.viewPager_fullscreen);
             viewPagerFullScreen.setPageTransformer(true, new DepthPageTransformer());
             parentViewPager.setSwipeLocked(true);
+
             FullScreenPager pg = new FullScreenPager(activity.getApplicationContext());
             viewPagerFullScreen.setAdapter(pg);
             viewPagerFullScreen.addOnPageChangeListener(pg);
             viewPagerFullScreen.setCurrentItem(position);
+
+            textViewFullScreenIndicator.setVisibility(!viewHolderList.get(currentPosition).getIsLR() ? TextView.VISIBLE : TextView.INVISIBLE);
+            textViewFullScreenIndicator.setText(getIndicatorText(viewHolderList.get(currentPosition).getType()));
+
             goToFullImage();
         });
+        TextView indicator = viewHolder.getView().findViewById(R.id.textView_gallery_sr_indicator);
+        indicator.setVisibility(viewHolder.isLR ? TextView.INVISIBLE : TextView.VISIBLE);
+        indicator.setText(getIndicatorText(viewHolder.getType()));
+    }
 
-        viewHolder.getView().findViewById(R.id.textView_gallery_sr_indicator).setVisibility(viewHolder.isLR ? TextView.INVISIBLE : TextView.VISIBLE);
+    private String getIndicatorText(String type){
+        switch (type){
+            case "srdense":
+                return activity.getApplicationContext().getString(R.string.settings_text_image_indicator_srdense);
+            case "srgan":
+                return activity.getApplicationContext().getString(R.string.settings_text_image_indicator_srgan);
+            case "srresnet":
+                return activity.getApplicationContext().getString(R.string.settings_text_image_indicator_srresnet);
+            default:
+                return activity.getApplicationContext().getString(R.string.settings_text_image_indicator_sr);
+        }
     }
 
     /**
@@ -442,6 +468,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         private boolean isLR;
         private boolean isSelected;
         private View view;
+        private String type;
 
         ViewHolder(View view) {
             super(view);
@@ -463,6 +490,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             String[] temp2 = temp.split("/");
             this.title = temp2[temp2.length - 1];
             temp2 = this.title.split("_");
+            this.type = temp2[temp2.length - 2];
             this.isLR = temp2[temp2.length - 1].equals("lr");
         }
 
@@ -480,6 +508,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         public View getView() {
             return view;
+        }
+
+        public String getType() {
+            return type;
         }
     }
 
@@ -537,13 +569,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                         .into(touchImageView);
             }
 
-
-
-
-
-
             touchImageView.setZoom(1f);
-
             touchImageView.setOnClickListener(v -> returnFromFullImage());
             touchImageView.setMaxZoom(8);
             container.addView(touchImageView);
@@ -575,6 +601,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         @Override
         public void onPageSelected(int position) {
             currentPosition = position;
+            textViewFullScreenIndicator.setVisibility(!viewHolderList.get(currentPosition).getIsLR() ? TextView.VISIBLE : TextView.INVISIBLE);
+            textViewFullScreenIndicator.setText(getIndicatorText(viewHolderList.get(currentPosition).getType()));
         }
 
         @Override

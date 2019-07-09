@@ -38,4 +38,9 @@
     <string name="settings_interpolation">Use interpolation in gallery</string>
     <string name="camera_text_snackbar_create">CREATE</string>
     <string name="channel_description">\"This is the srcc apps channel\"</string>
-    <string name="channel_name">SRCC_CHANNEL</string></resources>
+    <string name="channel_name">SRCC_CHANNEL</string>
+    <string name="settings_text_image_indicator_srdense">SR-D</string>
+    <string name="settings_text_image_indicator_srgan">SR-G</string>
+    <string name="settings_text_image_indicator_srresnet">SR-R</string>
+    <string name="settings_text_image_indicator_sr">SR</string>
+</resources>
