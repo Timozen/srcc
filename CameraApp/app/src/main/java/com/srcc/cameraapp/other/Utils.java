@@ -116,7 +116,7 @@ public class Utils extends Application {
         int initialization = preferences.getBoolean("srgan_use_init", true) ? 1 : 0;
 
         Single<ResponseBody> single;
-        boolean debug = preferences.getBoolean("debug", true);
+        boolean debug = preferences.getBoolean("debug", false);
         if(debug){
              single =  api.sendImage(debug ? 1 : 0, backend, tiling, tile_size, stitch_style, overlap, adjust_brightness, use_hsv, initialization, body);
         } else {
