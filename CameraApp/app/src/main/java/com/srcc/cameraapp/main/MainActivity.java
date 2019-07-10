@@ -1,20 +1,33 @@
 package com.srcc.cameraapp.main;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.gallery.GalleryFragment;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.disposables.CompositeDisposable;
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -26,30 +39,27 @@ public class MainActivity extends AppCompatActivity {
     public static final String TAG = "SRCC_CAMERA_MAIN";
 
     private CompositeDisposable compositeDisposable;
-    private ViewPager viewPager;
-    private static Context context;
+    private LockableViewPager viewPager;
+    private SharedPreferences sp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context = getApplicationContext();
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
-        SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        updateUI();
+        createNotificationChannel();
+
+        sp = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         if (sp.getBoolean("firstStart", true)) {
             Log.i(TAG, "App first start");
-            SharedPreferences.Editor editor = sp.edit();
-            editor.putBoolean(getString(R.string.srdense_key), true);
-            editor.putBoolean(getString(R.string.srgan_key), false);
-            editor.putBoolean(getString(R.string.srresnet_key), false);
-            editor.apply();
-
             Intent intent = new Intent(MainActivity.this, IntroActivity.class);
             startActivityForResult(intent, 1);
             Log.i(TAG, "Should have started Intro");
         } else {
             init();
         }
-
     }
 
     private void init(){
@@ -57,39 +67,33 @@ public class MainActivity extends AppCompatActivity {
             //trashcan if somehow the connection is interrupted
             compositeDisposable = new CompositeDisposable();
 
+            //http logging
+            /*OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            clientBuilder.addInterceptor(loggingInterceptor);*/
+
+
+            final OkHttpClient client = new OkHttpClient.Builder()
+                    .readTimeout(300, TimeUnit.SECONDS)
+                    .build();
+
+            String serverUrl = sp.getString("server_url", "10.42.0.1");
             //create async client to our server (currently only local network)
             Retrofit mClient = new Retrofit.Builder()
-                    .baseUrl("http://192.168.178.44:5000/")
+                    .baseUrl("http://" + serverUrl + ":5000/")
+//                    .client(clientBuilder.build())
                     .addConverterFactory(GsonConverterFactory.create())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .client(client)
                     .build();
+            sp.edit().putString("server_url", "10.42.0.1").apply();
+
             Log.i(TAG, "Connect to server...");
             //attach the api requests to it
             ApiService mApiConnection = mClient.create(ApiService.class);
 
-//        re-enable this code once have to check the server connection
-//        Single<Home> home = mApiConnection.getHome();
-//
-//        home.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<Home>() {
-//            @Override
-//            public void onSubscribe(Disposable d) {
-//                Log.i(TAG, "OnSubscribe triggered");
-//                compositeDisposable.add(d);
-//            }
-//
-//            @Override
-//            public void onSuccess(Home home) {
-//                Log.i(TAG, home.getName());
-//            }
-//
-//            @Override
-//            public void onError(Throwable e) {
-//                Log.i(TAG, "onError triggered");
-//                e.printStackTrace();
-//            }
-//        });
-
-            viewPager = findViewById(R.id.view_pager);
+            viewPager = (LockableViewPager) findViewById(R.id.view_pager);
 
             //create the fragment view for nice swiping
             ViewPagerAdapter vpa = new ViewPagerAdapter.Builder()
@@ -101,38 +105,46 @@ public class MainActivity extends AppCompatActivity {
                     .createViewPagerAdapter();
 
             viewPager.setAdapter(vpa);
-            //set the starting page to the camera, currently on frame == 0
+            //set the starting page to the camera, currently on frame == 1
             viewPager.setCurrentItem(1);
         }
     }
 
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("srcc", name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
 
-    /**
-     * We use this function for removing the android navigation
-     * on bottom and top
-     *
-     * @param hasFocus check if our app has the focus
-     */
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        View decorView = getWindow().getDecorView();
-
-        if (hasFocus) {
-            //set the tags for making it fullscreen
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+    public void updateUI() {
+        final View decorView = getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener (visibility -> {
+            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }
+            }
+        });
     }
 
     private boolean firstResume = true;
     @Override
     protected void onResume() {
         super.onResume();
+        updateUI();
         Log.i(TAG, "MainActivity is resumed");
         if(!firstResume) {
             init();
@@ -140,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
             firstResume = false;
         }
     }
-
 
     @Override
     public void onActivityReenter(int resultCode, Intent data) {
@@ -157,7 +168,25 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public static Context getAppContext() {
-        return MainActivity.context;
+    @Override
+    public void onBackPressed() {
+        switch (viewPager.getCurrentItem()){
+            case 0:
+                viewPager.setCurrentItem(1, true);
+                break;
+            case 1:
+                super.onBackPressed();
+                break;
+            case 2:
+                List<Fragment> fragmentList = getSupportFragmentManager().getFragments();
+                for(Fragment f : fragmentList){
+                    if(f != null && f instanceof GalleryFragment){
+                        if(!((GalleryFragment)f).onBackPressed()){
+                            viewPager.setCurrentItem(1, true);
+                        }
+                    }
+                }
+                break;
+        }
     }
 }

@@ -49,6 +49,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.srcc.cameraapp.R;
 import com.srcc.cameraapp.other.Utils;
 import com.srcc.cameraapp.api.ApiService;
@@ -77,6 +78,7 @@ import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import retrofit2.Retrofit;
 
 /**
@@ -117,8 +119,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     //api variables
     private final CompositeDisposable compositeDisposable;
-    private final Retrofit mClient;
-    private final ApiService mApiConnection;
+    private Retrofit mClient;
+    private ApiService mApiConnection;
 
     //picture state variables
     private int mState = STATE_PREVIEW;
@@ -168,6 +170,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 2;
     private static final String FRAGMENT_DIALOG = "dialog";
 
+
+    private Activity activity;
     /*
     Here are the callbacks
      */
@@ -279,7 +283,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     // this will show in the texture if the the TextureView is not available
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         /**
-         * If we create our texture view we want to display our camera image
+         * If we create our texture view we want to display our camera imageView_gallery_item_image
          * @param surface our texture view
          * @param width of it
          * @param height of it
@@ -311,7 +315,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     };
 
     /**
-     * Callback for what we do if our image is ready for saving from the preview
+     * Callback for what we do if our imageView_gallery_item_image is ready for saving from the preview
      */
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
 
@@ -325,6 +329,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                     .setCompositeDisposable(compositeDisposable)
                     .setmApiConnection(mApiConnection)
                     .setmClient(mClient)
+                    .setActivity(activity)
                     .createImageSaver();
             mBackgroundHandler.post(is);
         }
@@ -358,6 +363,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         view.findViewById(R.id.picture).setOnClickListener(this);
         mTextureView = view.findViewById(R.id.texture);
         view.setOnTouchListener(this);
+        activity = getActivity();
     }
 
     @Override
@@ -397,7 +403,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
             CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(mCameraId);
 
-            float maxZoom = 4;//(characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
+            float supportedZoom = (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM));
+            float maxZoom = 8;
+            if(supportedZoom < maxZoom){
+                maxZoom = supportedZoom;
+            }
 
             Rect rect = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             int action = event.getAction();
@@ -412,13 +422,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                         if((maxZoom - zoom_level) <= delta){
                             delta = maxZoom - zoom_level;
                         }
-                        zoom_level = maxZoom; //zoom_level + delta;
+                        zoom_level = zoom_level + delta;
                     }
                     if(currentFingerSpacing < fingerSpacing){
                         if((zoom_level - delta) <= 1f){
                             delta = zoom_level - 1f;
                         }
-                        zoom_level = 1;// zoom_level - delta;
+                        zoom_level = zoom_level - delta;
                     }
 
                     float ratio = (float) 1 / zoom_level;
@@ -505,8 +515,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                             try {
                                 // Auto focus should be continuous for camera preview.
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                                // Flash is automatically enabled when necessary.
-                                setAutoFlash(mPreviewRequestBuilder);
 
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
@@ -530,18 +538,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-    }
-
-    private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
-        if (mFlashSupported) {
-            requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+            activity.runOnUiThread(() -> Toast.makeText(activity, text, Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -558,7 +555,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
         if(requestCode == REQUEST_CAMERA_PERMISSION){
             if(grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED){
-                ErrorDialog.newInstance(getString(R.string.request_permission)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
+                ErrorDialog.newInstance(getString(R.string.request_permission_text)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -623,7 +620,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
             // Use the same AE and AF modes as the preview.
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-            setAutoFlash(captureBuilder);
 
             // Orientation
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
@@ -635,8 +631,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                    showToast("Saved: " + mFile);
-                    Log.d("CAMERA_APP", mFile.toString());
+                    Log.d("CAMERA_APP", "File saved to " + mFile.toString());
                     unlockFocus();
                 }
             };
@@ -661,7 +656,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         try {
             // Reset the auto-focus trigger
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
-            setAutoFlash(mPreviewRequestBuilder);
             mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
             // After this, the camera will go back to the normal state of preview.
             mState = STATE_PREVIEW;
@@ -822,7 +816,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
-            ErrorDialog.newInstance(getString(R.string.camera_error)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
+            ErrorDialog.newInstance(getString(R.string.error_text_camera)).show(getChildFragmentManager(), FRAGMENT_DIALOG);
         }
     }
 
@@ -906,7 +900,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Fragment parent = getParentFragment();
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.request_permission)
+                    .setMessage(R.string.request_permission_text)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -974,7 +968,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Fragment parent = getParentFragment();
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.request_permission)
+                    .setMessage(R.string.request_permission_text)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -995,7 +989,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-    private static class ImageSaver implements Runnable {
+    static class ImageSaver implements Runnable {
 
         static class Builder {
 
@@ -1006,6 +1000,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             private Retrofit mClient;
             private ApiService mApiConnection;
             private String timeValue;
+            private Activity activity;
 
             Builder setmImage(Image mImage) {
                 this.mImage = mImage;
@@ -1041,14 +1036,17 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 return this;
             }
 
-            ImageSaver createImageSaver() {
-                return new ImageSaver(mImage, mFile, mContext, compositeDisposable, mClient, mApiConnection, timeValue);
+            Builder setActivity(Activity activity){
+                this.activity = activity;
+                return this;
             }
 
-
+            ImageSaver createImageSaver() {
+                return new ImageSaver(mImage, mFile, mContext, compositeDisposable, mClient, mApiConnection, timeValue, activity);
+            }
         }
 
-
+        private Activity activity;
         private final Image mImage;
         private final File mFile;
         private final Context mContext;
@@ -1057,7 +1055,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         private ApiService mApiConnection;
         private String timeValue;
 
-        ImageSaver(Image mImage, File mFile, Context mContext, CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection, String timeValue) {
+        ImageSaver(Image mImage, File mFile, Context mContext, CompositeDisposable compositeDisposable, Retrofit mClient, ApiService mApiConnection, String timeValue, Activity activity) {
             this.mImage = mImage;
             this.mFile = mFile;
             this.mContext = mContext;
@@ -1065,6 +1063,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             this.mClient = mClient;
             this.mApiConnection = mApiConnection;
             this.timeValue = timeValue;
+            this.activity = activity;
         }
 
         @Override
@@ -1091,87 +1090,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 }
             }
 
-            uploadFile(mFile);
-        }
-
-        private void uploadFile(File file){
-            Log.i(TAG, "Prepare for upload of the taken picture");
-
-            RequestBody requestFile = RequestBody.create(MediaType.parse("image"), file);
-
-            MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
-
-            RequestBody description = RequestBody.create(MultipartBody.FORM, "description...");
-
-            Single<ResponseBody> single = mApiConnection.sendImage(description, body);
-
-            single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleObserver<ResponseBody>() {
-                @Override
-                public void onSubscribe(Disposable d) {
-                    Log.i(TAG, "OnSubscribe triggered");
-                    compositeDisposable.add(d);
-                }
-
-                @Override
-                public void onSuccess(ResponseBody responseBody) {
-                    Log.i(TAG, "Upload successful and got return");
-
-                    try {
-                        File root = Utils.getPublicAlbumStorageDir(Utils.IMAGE_FOLDER_NAME);
-                        File hrImage = new File(root.getAbsolutePath(), timeValue + "_hr.jpg");
-
-                        InputStream inputStream = null;
-                        OutputStream outputStream = null;
-
-                        try {
-                            byte[] fileReader = new byte[4096];
-
-                            long fileSize = responseBody.contentLength();
-                            long fileSizeDownloaded = 0;
-
-                            inputStream = responseBody.byteStream();
-                            outputStream = new FileOutputStream(hrImage);
-
-                            while (true) {
-                                int read = inputStream.read(fileReader);
-
-                                if (read == -1) {
-                                    break;
-                                }
-
-                                outputStream.write(fileReader, 0, read);
-
-                                fileSizeDownloaded += read;
-
-                                Log.d(TAG, "file download: " + fileSizeDownloaded + " of " + fileSize);
-                            }
-
-                            outputStream.flush();
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } finally {
-                            if (inputStream != null) {
-                                inputStream.close();
-                            }
-
-                            if (outputStream != null) {
-                                outputStream.close();
-                            }
-                            mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(hrImage)));
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public void onError(Throwable e) {
-                    Log.e(TAG, "Upload somehow failed");
-                    Log.e(TAG, e.getMessage());
-                    e.printStackTrace();
-                }
-            });
+            if(Utils.isSendingImage()){
+                Snackbar.make(activity.getWindow().getDecorView().getRootView(), mContext.getString(R.string.camera_text_image_in_progress), Snackbar.LENGTH_LONG).show();
+            } else {
+                Snackbar snackbar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), mContext.getString(R.string.camera_text_create_sr_image), Snackbar.LENGTH_LONG);
+                snackbar.setAction(mContext.getString(R.string.camera_text_snackbar_create), v1 -> {
+                    Utils.sendImage(mApiConnection, mFile, compositeDisposable, timeValue, mContext);
+                });
+                snackbar.show();
+            }
         }
     }
 }

@@ -12,28 +12,64 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.srcc.cameraapp.R;
+import com.srcc.cameraapp.api.ApiService;
+import com.srcc.cameraapp.main.LockableViewPager;
 
 import java.util.Objects;
 
+import io.reactivex.disposables.CompositeDisposable;
+import retrofit2.Retrofit;
+
 public class GalleryFragment extends Fragment {
+
+    //api variables
+    private final CompositeDisposable compositeDisposable;
+    private ApiService mApiConnection;
 
     /**
      * Builder pattern (not necessary but for consistency)
      */
     public static class Builder {
-        public GalleryFragment createShowImagesFragment() {
-            return new GalleryFragment();
+        private CompositeDisposable compositeDisposable;
+        private ApiService mApiConnection;
+        private LockableViewPager viewPager;
+
+        public Builder setCompositeDisposable(CompositeDisposable compositeDisposable) {
+            this.compositeDisposable = compositeDisposable;
+            return this;
         }
+
+        public Builder setmApiConnection(ApiService mApiConnection) {
+            this.mApiConnection = mApiConnection;
+            return this;
+        }
+
+        public Builder setViewPager(LockableViewPager viewPager){
+            this.viewPager = viewPager;
+            return this;
+        }
+
+        public GalleryFragment createGalleryFragment() {
+            return new GalleryFragment(compositeDisposable, mApiConnection, viewPager);
+        }
+
     }
+
 
     private static final String TAG = "SRCC_SHOW_IMAGES";
     private GalleryAdapter myAdapter;
-
+    private LockableViewPager viewPager;
+    private GalleryFragment(CompositeDisposable compositeDisposable, ApiService mApiConnection, LockableViewPager viewPager) {
+        this.compositeDisposable = compositeDisposable;
+        this.mApiConnection = mApiConnection;
+        this.viewPager = viewPager;
+    }
 
     /**
      * This function is called when the fragment is created. Here we just inflate
@@ -47,7 +83,7 @@ public class GalleryFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //inflate the layout, but don't attach it to the root
-        return inflater.inflate(R.layout.show_images_fragment, container, false);
+        return inflater.inflate(R.layout.gallery_fragment, container, false);
     }
 
 
@@ -67,15 +103,28 @@ public class GalleryFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
 
         //load the grid layout manager with 2 columns TODO maybe more?
-        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(Objects.requireNonNull(getContext()).getApplicationContext(), 2);
+        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(Objects.requireNonNull(getContext()).getApplicationContext(), 3){
+            @Override
+            public boolean canScrollHorizontally() {
+                return false;
+            }
+        };
         recyclerView.setLayoutManager(layoutManager);
 
         //Load our gallery adapter to display the data after our rules
-        myAdapter = new GalleryAdapter(getActivity());
+        myAdapter = new GalleryAdapter(getActivity(), compositeDisposable, mApiConnection, 3, viewPager);
         recyclerView.setAdapter(myAdapter);
 
         //load the data into the cursor
-        myAdapter.changeCursor(queryThumbnails());
+        myAdapter.changeCursor(myAdapter.queryThumbnails());
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if(isVisibleToUser){
+            myAdapter.changeCursor(myAdapter.queryThumbnails());
+        }
     }
 
     /**
@@ -87,7 +136,7 @@ public class GalleryFragment extends Fragment {
     @Override
     public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
-        myAdapter.changeCursor(queryThumbnails());
+        myAdapter.changeCursor(myAdapter.queryThumbnails());
     }
 
     /**
@@ -97,37 +146,11 @@ public class GalleryFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        myAdapter.changeCursor(queryThumbnails());
+        myAdapter.changeCursor(myAdapter.queryThumbnails());
     }
 
-    /**
-     * This function will query the MediaStore to get the thumbnails of our
-     * pictures. The cursor will hold all the needed information inside.
-     *
-     * @return the cursor with the data
-     */
-    private Cursor queryThumbnails() {
-        Log.i(TAG, "Query thumbnails");
-        //get the content resolver which will take care of all the file handling
-        ContentResolver cr = Objects.requireNonNull(getActivity(), "Activity should not be null").getContentResolver();
-
-        //which data we want to get from the media store
-        //id for row location, data_added for sorting, data for the actual location
-        String[] mProjection = {
-                MediaStore.Images.Media._ID,
-                MediaStore.Images.Media.DATE_ADDED,
-                MediaStore.Images.Media.DATA
-        };
-
-        //query the media store to get the data
-        //query the external storage only (also the place were we save everything)
-        //only query data which has "srcc" in the path and sort DESC
-        return cr.query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                mProjection,
-                MediaStore.Images.Media.DATA + " like ? ",
-                new String[]{"%srcc%"},
-                MediaStore.Images.Media.DATE_ADDED + " DESC"
-        );
+    public boolean onBackPressed(){
+        return myAdapter.onBackPressed();
     }
+
 }

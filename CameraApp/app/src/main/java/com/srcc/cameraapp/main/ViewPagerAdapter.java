@@ -26,14 +26,14 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
      */
     static class Builder {
 
-        private ViewPager viewPager;
+        private LockableViewPager viewPager;
         private FragmentManager fragmentManager;
         private CompositeDisposable compositeDisposable;
         private Retrofit client;
         private ApiService apiService;
         private Context context;
 
-        Builder setViewPager(ViewPager viewPager) {
+        Builder setViewPager(LockableViewPager viewPager) {
             this.viewPager = viewPager;
             return this;
         }
@@ -62,22 +62,20 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
             return new ViewPagerAdapter(viewPager, fragmentManager, compositeDisposable, client, apiService, context);
         }
 
-
-
         public Builder setContext(Context context) {
             this.context = context;
             return this;
         }
     }
 
-    private ViewPager viewPager;
+    private LockableViewPager viewPager;
     private FragmentManager fragmentManager;
     private final CompositeDisposable compositeDisposable;
-    private final Retrofit client;
-    private final ApiService apiService;
+    private Retrofit client;
+    private ApiService apiService;
     private Context context;
 
-    public ViewPagerAdapter(ViewPager viewPager, FragmentManager fragmentManager, CompositeDisposable compositeDisposable, Retrofit client, ApiService apiService, Context context) {
+    private ViewPagerAdapter(LockableViewPager viewPager, FragmentManager fragmentManager, CompositeDisposable compositeDisposable, Retrofit client, ApiService apiService, Context context) {
         super(fragmentManager);
         this.viewPager = viewPager;
         this.fragmentManager = fragmentManager;
@@ -100,7 +98,10 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int i) {
         switch (i) {
             case 0:
-                return new SettingsFragment.Builder().createSettingsFragment();
+                return new SettingsFragment.Builder()
+                        .setApiService(apiService)
+                        .setClient(client)
+                        .createSettingsFragment();
             case 1:
                 //Build the camera fragment with connection to the api
                 return new CameraFragment.Builder()
@@ -109,7 +110,11 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
                         .setClient(client)
                         .createCameraFragment();
             case 2:
-                return new GalleryFragment.Builder().createShowImagesFragment();
+                return new GalleryFragment.Builder()
+                        .setCompositeDisposable(compositeDisposable)
+                        .setmApiConnection(apiService)
+                        .setViewPager(viewPager)
+                        .createGalleryFragment();
         }
         return null;
     }

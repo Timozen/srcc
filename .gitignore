@@ -217,6 +217,7 @@ logs
 
 *.jpg
 *.h5
+CameraApp/.idea/dictionaries/Tim.xml
 models/
 
 #Testing
