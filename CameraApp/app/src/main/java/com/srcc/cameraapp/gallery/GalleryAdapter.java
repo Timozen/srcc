@@ -557,7 +557,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                     Glide.with(activity).load(viewHolderList.get(position).getUri())
                             .thumbnail(0.5f)
                             .placeholder(R.drawable.ic_mood_black_128dp)
-                            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
                             .into(touchImageView);
                 }
             } else {
@@ -565,7 +565,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 Glide.with(activity).load(viewHolderList.get(position).getUri())
                         .thumbnail(0.5f)
                         .placeholder(R.drawable.ic_mood_black_128dp)
-                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .into(touchImageView);
             }
 
