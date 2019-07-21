@@ -8,6 +8,7 @@ from io import BytesIO
 from PIL import Image
 import numpy as np
 import os
+import keras
 import cv2
 import tensorflow as tf
 from Utils_model import VGG_LOSS
@@ -111,8 +112,8 @@ def sr_image(file_path, backend, tiling, tile_size, overlap, stitch_type, adjust
     keras.backend.clear_session()
 
     models = {0: os.path.join("models", "SRDense-Type-3_ep80.h5"),
-              1: os.path.join("models", "init_gen_model50.h5"),
-              2: (os.path.join("models", "gen_model90.h5"), os.path.join("models", "initialized_gen_model20.h5"))}
+              1: os.path.join("models", "srresnet85.h5"),
+              2: (os.path.join("models", "gen_model90.h5"), os.path.join("models", "srgan20.h5"))}
 
     # first step: load the image
     #img = Utils.crop_into_lr_shape( cv2.cvtColor( cv2.imread(file_path, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB ) )
@@ -135,7 +136,10 @@ def sr_image(file_path, backend, tiling, tile_size, overlap, stitch_type, adjust
         sr_tiles = []
         for tile in tiles:
             if backend == 0:
-                sr_tiles.append( np.squeeze(model.predict(np.expand_dims(tile, axis=0)), axis=0) )
+                tmp = np.squeeze(model.predict(np.expand_dims(tile, axis=0)), axis=0)
+                tmp[tmp < 0] = 0
+                tmp[tmp > 255] = 255
+                sr_tiles.append( tmp.astype(np.uint8) )
             else:
                 sr_tiles.append( Utils.denormalize(np.squeeze(model.predict(np.expand_dims(Utils.rescale_imgs_to_neg1_1(tile), axis=0)), axis=0)))
 
@@ -159,6 +163,9 @@ def sr_image(file_path, backend, tiling, tile_size, overlap, stitch_type, adjust
     else:
         if backend == 0:
             sr = np.squeeze(model.predict(np.expand_dims(img, axis=0)), axis=0)
+            sr[sr < 0] = 0
+            sr[sr > 255] = 255
+            sr = sr.astype(np.uint8)
         else:
             sr = Utils.denormalize(np.squeeze(model.predict(np.expand_dims(Utils.rescale_imgs_to_neg1_1(img), axis=0)), axis=0))
 
@@ -169,7 +176,7 @@ def sr_image(file_path, backend, tiling, tile_size, overlap, stitch_type, adjust
         file_name = os.path.split(file_path)[1].split(".")[0] + "-srresnet.jpg"
     elif backend == 2:
         file_name = os.path.split(file_path)[1].split(".")[0] + "-srgan.jpg"
-        
+
     cv2.imwrite(os.path.join(os.path.split(file_path)[0], file_name), cv2.cvtColor(sr, cv2.COLOR_RGB2BGR))
 
     # clear the model
@@ -296,4 +303,4 @@ api.add_resource(Home, '/api/Home')
 api.add_resource(SendImage, '/api/SendImage')
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=False, host="0.0.0.0")

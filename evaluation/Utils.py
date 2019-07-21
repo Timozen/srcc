@@ -17,6 +17,8 @@ def rescale_imgs_to_neg1_1(img):
 
 def denormalize(input_data):
     input_data = (input_data + 1) * 127.5
+    input_data[input_data < 0] = 0
+    input_data[input_data > 255] = 255
     return input_data.astype(np.uint8)
 
 
