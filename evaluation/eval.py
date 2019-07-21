@@ -24,8 +24,8 @@ def main():
                    os.path.join("..", "models", "SRDense-Type-3_ep80.h5"),
                    os.path.join("..", "models", "gen_model5.h5"),
                    os.path.join("..", "models", "gen_model90.h5"),
-                   os.path.join("..", "models", "init_gen_model50.h5"),
-                   os.path.join("..", "models", "initialized_gen_init50_model10.h5"),
+                   os.path.join("..", "models", "srresnet85.h5"),
+                   os.path.join("..", "models", "srgan20.h5"),
                    "Nearest"]
 
     # corresponding names of the models
@@ -33,7 +33,7 @@ def main():
                    "SRDense80",
                    "SRGAN5",
                    "SRGAN90",
-                   "SRResnet50",
+                   "SRResnet88",
                    "initSRGAN20",
                    "Nearest"]
     
@@ -106,7 +106,10 @@ def main():
                 for lr, hr in zip(lr_tiles, hr_tiles):
                     # fifth step: calculate the sr tile
                     if i < 2:
-                        sr = np.squeeze(model.predict(np.expand_dims(lr, axis=0))).astype(np.uint8)
+                        tmp = np.squeeze(model.predict(np.expand_dims(lr, axis=0)))
+                        tmp[tmp < 0] = 0
+                        tmp[tmp > 255] = 255
+                        sr = tmp.astype(np.uint8)
                     elif i < 6:
                         sr = Utils.denormalize(np.squeeze(model.predict(np.expand_dims(rescale_imgs_to_neg1_1(lr), axis=0)), axis=0))
                     else:
@@ -166,7 +169,10 @@ def main():
                 # fourth step: calculate the sr image
                 try:
                     if i < 2:
-                        sr = np.squeeze(_model.predict(np.expand_dims(test_pair[0], axis=0))).astype(np.uint8)
+                        tmp = np.squeeze(_model.predict(np.expand_dims(test_pair[0], axis=0)))
+                        tmp[tmp < 0] = 0
+                        tmp[tmp > 255] = 255
+                        sr = tmp.astype(np.uint8)
                     elif i < 6:
                         sr = Utils.denormalize(np.squeeze(_model.predict(np.expand_dims(rescale_imgs_to_neg1_1(test_pair[0]), axis=0)), axis=0))
                     else:
@@ -234,7 +240,11 @@ def main():
                 for lr in lr_tiles:
                     # fifth step: calculate the sr tiles
                     if i < 2:
-                        sr_tiles.append( np.squeeze(model.predict(np.expand_dims(lr, axis=0))).astype(np.uint8) )
+                        tmp = np.squeeze(model.predict(np.expand_dims(lr, axis=0)))
+                        tmp[tmp < 0] = 0
+                        tmp[tmp > 255] = 255
+                        sr = tmp.astype(np.uint8)
+                        sr_tiles.append( sr )
                     elif i < 6:
                         sr_tiles.append( Utils.denormalize(np.squeeze(model.predict(np.expand_dims(rescale_imgs_to_neg1_1(lr), axis=0)), axis=0)) )
                     else:
@@ -246,7 +256,11 @@ def main():
                 for lr in lr_tiles_overlap:
                     # fifth step: calculate the sr tiles
                     if i < 2:
-                        sr_tiles_overlap.append( np.squeeze(model.predict(np.expand_dims(lr, axis=0))).astype(np.uint8) )
+                        tmp = np.squeeze(model.predict(np.expand_dims(lr, axis=0)))
+                        tmp[tmp < 0] = 0
+                        tmp[tmp > 255] = 255
+                        sr = tmp.astype(np.uint8)
+                        sr_tiles_overlap.append( sr )
                     elif i < 6:
                         sr_tiles_overlap.append( Utils.denormalize(np.squeeze(model.predict(np.expand_dims(rescale_imgs_to_neg1_1(lr), axis=0)), axis=0)) )
                     else:
