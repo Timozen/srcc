@@ -16,15 +16,10 @@ def rescale_imgs_to_neg1_1(img):
     return rescale_imgs(img, -1, 1)
 
 def denormalize(input_data):
-    print(np.max(input_data), np.min(input_data))
-    input_data[input_data < -1] = -1
-    input_data[input_data > 1] = 1
-    print(np.max(input_data), np.min(input_data))
     input_data = (input_data + 1) * 127.5
-    print(np.max(input_data), np.min(input_data))
-    input_data = input_data.astype(np.uint8)
-    print(np.max(input_data), np.min(input_data))
-    return input_data
+    input_data[input_data < 0] = 0
+    input_data[input_data > 255] = 255
+    return input_data.astype(np.uint8)
 
 
 def tile_image(img, shape=(336,336), overlap=False):
@@ -42,6 +37,11 @@ def tile_image(img, shape=(336,336), overlap=False):
     else:
         # no overlap -> a whole tile per step
         step_size = shape
+
+    x_dim = img.shape[1]//shape[1]
+    y_dim = img.shape[0]//shape[0]
+
+    img = img[:y_dim*shape[0], :x_dim*shape[1], :]
 
     tile_list = []
     for i in range(0, img.shape[0], step_size[0]):

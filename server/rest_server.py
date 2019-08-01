@@ -113,7 +113,7 @@ def sr_image(file_path, backend, tiling, tile_size, overlap, stitch_type, adjust
 
     models = {0: os.path.join("models", "SRDense-Type-3_ep80.h5"),
               1: os.path.join("models", "srresnet85.h5"),
-              2: (os.path.join("models", "gen_model90.h5"), os.path.join("models", "srgan20.h5"))}
+              2: (os.path.join("models", "gen_model90.h5"), os.path.join("models", "srgan60.h5"))}
 
     # first step: load the image
     #img = Utils.crop_into_lr_shape( cv2.cvtColor( cv2.imread(file_path, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB ) )

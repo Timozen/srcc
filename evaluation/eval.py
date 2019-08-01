@@ -20,27 +20,27 @@ STITCHED = True
 
 def main():
     # paths to the models
-    model_paths = [os.path.join("..", "models", "SRDense-Type-3_ep4.h5"), 
-                   os.path.join("..", "models", "SRDense-Type-3_ep80.h5"),
-                   os.path.join("..", "models", "gen_model5.h5"),
-                   os.path.join("..", "models", "gen_model90.h5"),
+    model_paths = [os.path.join("..", "models", "SRDense-Type-3_ep80.h5"), 
+                   os.path.join("..", "models", "srdense-norm.h5"),
                    os.path.join("..", "models", "srresnet85.h5"),
-                   os.path.join("..", "models", "srgan20.h5"),
+                   os.path.join("..", "models", "gen_model90.h5"),
+                   os.path.join("..", "models", "srgan60.h5"),
+                   os.path.join("..", "models", "srgan-mse-20.h5"),
                    "Nearest"]
 
     # corresponding names of the models
-    model_names = ["SRDense4",
-                   "SRDense80",
-                   "SRGAN5",
-                   "SRGAN90",
-                   "SRResnet88",
-                   "initSRGAN20",
-                   "Nearest"]
+    model_names = ["SRDense",
+                   "SRDense-norm",
+                   "SRResNet",
+                   "SRGAN-from-scratch",
+                   "SRGAN-percept.-loss",
+                   "SRGAN-mse",
+                   "NearestNeighbor"]
     
     # corresponding tile shapes
     tile_shapes = [((168, 168), (42, 42)),
                    ((168, 168), (42, 42)),
-                   ((336, 336), (84, 84)),
+                   ((504, 504), (126, 126)),
                    ((336, 336), (84, 84)),
                    ((504, 504), (126, 126)),
                    ((504, 504), (126, 126)),
@@ -49,10 +49,10 @@ def main():
     # used to load the models with custom loss functions
     loss = VGG_LOSS((504,504,3))
     custom_objects = [{},
-                      {},
                       {"tf": tf},
                       {"tf": tf},
-                      {"tf": tf, "loss": loss.loss},
+                      {"tf": tf},
+                      {"tf": tf},
                       {"tf": tf},
                       {}]
     
@@ -106,7 +106,12 @@ def main():
                 for lr, hr in zip(lr_tiles, hr_tiles):
                     # fifth step: calculate the sr tile
                     if i < 2:
+                        if i == 1:
+                            lr = lr.astype(np.float64)
+                            lr = lr/255
                         tmp = np.squeeze(model.predict(np.expand_dims(lr, axis=0)))
+                        if i == 1:
+                            tmp = tmp*255
                         tmp[tmp < 0] = 0
                         tmp[tmp > 255] = 255
                         sr = tmp.astype(np.uint8)
@@ -169,7 +174,14 @@ def main():
                 # fourth step: calculate the sr image
                 try:
                     if i < 2:
-                        tmp = np.squeeze(_model.predict(np.expand_dims(test_pair[0], axis=0)))
+                        if i == 1:
+                            lr = test_pair[0].astype(np.float64)
+                            lr = lr/255
+                        else:
+                            lr = test_pair[0]
+                        tmp = np.squeeze(_model.predict(np.expand_dims(lr, axis=0)))
+                        if i == 1:
+                            tmp = tmp*255
                         tmp[tmp < 0] = 0
                         tmp[tmp > 255] = 255
                         sr = tmp.astype(np.uint8)
@@ -240,7 +252,12 @@ def main():
                 for lr in lr_tiles:
                     # fifth step: calculate the sr tiles
                     if i < 2:
+                        if i == 1:
+                            lr = lr.astype(np.float64)
+                            lr = lr/255
                         tmp = np.squeeze(model.predict(np.expand_dims(lr, axis=0)))
+                        if i == 1:
+                            tmp = tmp*255
                         tmp[tmp < 0] = 0
                         tmp[tmp > 255] = 255
                         sr = tmp.astype(np.uint8)
@@ -256,7 +273,12 @@ def main():
                 for lr in lr_tiles_overlap:
                     # fifth step: calculate the sr tiles
                     if i < 2:
+                        if i == 1:
+                            lr = lr.astype(np.float64)
+                            lr = lr/255
                         tmp = np.squeeze(model.predict(np.expand_dims(lr, axis=0)))
+                        if i == 1:
+                            tmp = tmp*255
                         tmp[tmp < 0] = 0
                         tmp[tmp > 255] = 255
                         sr = tmp.astype(np.uint8)
@@ -271,7 +293,7 @@ def main():
 
                 # sixth step: stitch the image
                 sr_simple = ImageStitching.stitch_images(sr_tiles, test_pair[1].shape[1], test_pair[1].shape[0], sr_tiles[0].shape[1], sr_tiles[0].shape[0], test_pair[1].shape[1]//sr_tiles[0].shape[1], test_pair[1].shape[0]//sr_tiles[0].shape[0] )
-                sr_advanced = ImageStitching.stitching(sr_tiles_overlap, LR=test_pair[0], image_size=(test_pair[1].shape[0], test_pair[1].shape[1]), adjustRGB=True, overlap=True)
+                sr_advanced = ImageStitching.stitching(sr_tiles_overlap, LR=None, image_size=(test_pair[1].shape[0], test_pair[1].shape[1]), adjustRGB=False, overlap=True)
                 
                 # seventh step: append the mean metric for this image 
                 mse.append( metrics.MSE(test_pair[1], sr_simple) )
