@@ -219,3 +219,6 @@ logs
 *.h5
 CameraApp/.idea/dictionaries/Tim.xml
 models/
+evaluation/vis/whole_lr_performance.txt
+evaluation/vis/stitch_performance.txt
+evaluation/vis/tile_performance.txt
