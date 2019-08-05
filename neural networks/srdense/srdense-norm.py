@@ -17,9 +17,23 @@ from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils import to_categorical
 from keras.utils.vis_utils import plot_model
+from keras.layers.convolutional import UpSampling2D
+from keras.layers.advanced_activations import LeakyReLU, PReLU
 
 from memory_usage import get_model_memory_usage
 
+import matplotlib.pyplot as plt
+
+def up_sampling_block(model, kernal_size, filters, strides):
+    
+    # In place of Conv2D and UpSampling2D we can also use Conv2DTranspose (Both are used for Deconvolution)
+    # Even we can have our own function for deconvolution (i.e one made in Utils.py)
+    #model = Conv2DTranspose(filters = filters, kernel_size = kernal_size, strides = strides, padding = "same")(model)
+    model = Conv2D(filters = filters, kernel_size = kernal_size, strides = strides, padding = "same")(model)
+    model = UpSampling2D(size = 2)(model)
+    model = LeakyReLU(alpha = 0.2)(model)
+    
+    return model
 
 def dense_layer(x, block_id, layer_id, filters=12, kernel_size=(3, 3), strides=(1, 1)):
     """
@@ -153,21 +167,23 @@ def dense_model(dense_type, input_shape, blocks=[3, 4, 5], growth_rate=16, kerne
     # add the two deconv. layers
     # deconv. layers are mostly referred as ConvTranspose
     # this will make the network really big...
-    x = Conv2DTranspose(filters=256,
-                        kernel_size=(3, 3),
-                        strides=(2, 2),
-                        padding="same",
-                        use_bias=False,
-                        name="Deconvolution-1")(x)
-    x = ReLU(name="Deconvolution-1-ReLU")(x)
+    # x = Conv2DTranspose(filters=256,
+    #                     kernel_size=(3, 3),
+    #                     strides=(2, 2),
+    #                     padding="same",
+    #                     use_bias=False,
+    #                     name="Deconvolution-1")(x)
+    # x = ReLU(name="Deconvolution-1-ReLU")(x)
 
-    x = Conv2DTranspose(filters=256,
-                        kernel_size=(3, 3),
-                        strides=(2, 2),
-                        padding="same",
-                        use_bias=False,
-                        name="Deconvolution-2")(x)
-    x = ReLU(name="Deconvolution-2-ReLU")(x)
+    # x = Conv2DTranspose(filters=256,
+    #                     kernel_size=(3, 3),
+    #                     strides=(2, 2),
+    #                     padding="same",
+    #                     use_bias=False,
+    #                     name="Deconvolution-2")(x)
+    # x = ReLU(name="Deconvolution-2-ReLU")(x)
+    x = up_sampling_block(x, 3, 256, 1)
+    x = up_sampling_block(x, 3, 256, 1)
 
     # reconstruction layer
     outputs = Conv2D(filters=3,
@@ -191,7 +207,7 @@ def update_lr(epoch, lr):
     """
     This function will adapt the learning rate like discussed in the paper.
     """
-    if epoch == 30:
+    if epoch == 10 or epoch == 30:
         lr /= 10
     return lr
 
@@ -212,14 +228,30 @@ def create_callbacks(name):
     # save the good models
     mc = ModelCheckpoint(filepath=f"{name}-CheckPoint.h5", monitor="val_loss", verbose=1, save_best_only=True)
 
-    ea = EarlyStopping(monitor="val_loss", mode="min", min_delta=0.5)
+    #ea = EarlyStopping(monitor="val_loss", mode="min", min_delta=0.5)
 
-    return [tboard, lrs, mc, ea]
+    return [tboard, lrs, mc]
 
 
 def convert_to_YCrCb(image):
     return cv2.cvtColor(image, cv2.COLOR_RGB2YCR_CB)
 
+def show_final_history(history, name):
+    """Create a diagramm for the Train and Validation for loss and accuracy of the model.
+    
+    history -- the history of training process of a keras model
+    """
+    fig, ax = plt.subplots(1, 2, figsize=(15,5))
+    ax[0].set_title('loss')
+    ax[0].plot(history.epoch, history.history["loss"], label="Train loss")
+    ax[0].plot(history.epoch, history.history["val_loss"], label="Validation loss")
+    ax[1].set_title('acc')
+    ax[1].plot(history.epoch, history.history["acc"], label="Train acc")
+    ax[1].plot(history.epoch, history.history["val_acc"], label="Validation acc")
+    ax[0].legend()
+    ax[1].legend()
+    fig.savefig(f"{name}-history-vis.pdf")
+    
 
 def main():
     lr_input_shape = (42, 42, 3)
@@ -228,6 +260,8 @@ def main():
                                                                        path_hr="../../DSIDS/HR/tiles/",
                                                                        target_size_lr=(42, 42),
                                                                        target_size_hr=(168, 168),
+                                                                       rescale_lr=1/255,
+                                                                       rescale_hr=1/255,
                                                                        preproc_lr=None,  # convert_to_YCrCb,
                                                                        preproc_hr=None,  # convert_to_YCrCb,
                                                                        batch_size=16)
@@ -261,14 +295,15 @@ def main():
     callbacks = create_callbacks(name)
 
     # train the model
-    #dense_model_net.fit(x_train, y_train, epochs=50, shuffle=True, validation_split=0.1, callbacks=callbacks)
     history = dense_model_net.fit_generator(train_data, steps_per_epoch=train_samp//16,
-                                            epochs=80, validation_data=val_data, validation_steps=val_samp//16, shuffle=True)
+                                            epochs=120, validation_data=val_data, validation_steps=val_samp//16, shuffle=True, callbacks=callbacks)
 
     dense_model_net.save(f"{name}.h5")
 
     with open(f"{name}-history.json", 'wb') as file_pi:
         pickle.dump(history, file_pi)
+
+    show_final_history(history, name)
 
 
 if __name__ == "__main__":

@@ -4,8 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import fnmatch
 
+"""
+This script will load an image from the dataset and print and save the resuls.
+This will produce the stitched image and also one version where the 
+boarders between the tiles are smoothed
+"""
 
 def load_image(file, path=None):
+    # small hack if we only want to load one file manually!
     if path != None:
         return cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
     return cv2.imread(file, cv2.IMREAD_COLOR)
@@ -14,18 +20,22 @@ def load_image(file, path=None):
 def load_images(file_name, path):
     images = []
     for file in os.listdir(path):
+        # load only files fitting the name
         if fnmatch.fnmatch(file, file_name + "*.jpg"):
             images.append(load_image(file, path))
     return images
 
 
 def stitch_images(images, width, height, x_dim, y_dim):
+    # calculate the total size of the stitched image
     total_width = width * x_dim
     total_height = height * y_dim
 
+    # create a new image
     stitched_image = np.zeros((total_height, total_width, 3), dtype=np.uint8)
 
     i, j = 0, 0
+    # stitch the image by inserting the tiles one after another
     for image in images:
         stitched_image[j:(j+height), i:(i+width)] = image
 
@@ -38,20 +48,29 @@ def stitch_images(images, width, height, x_dim, y_dim):
 
 
 def remove_raster(image, width, height, x_dim, y_dim):
+    """
+    This function will try to smooth the boardes between tiles.
+    really really simple approach. not fast! just for testing
+    """
+    # calculate the size of the image
     total_width = width * x_dim
     total_height = height * y_dim
+    # create a mask
     mask = np.zeros((total_height, total_width), dtype=np.uint8)
 
+    # create a copy because we want to keep the original
     ret = np.copy(image)
 
-    # TODO this can be done smarter...
+    # TODO this can be done smarter... if i had time ;(
     # mark the tile borders as 1
     x = width
+    # go along the vertical borders
     while x < total_width:
         mask[:, (x-2):(x+1)] = 1
         x += width
 
     y = height
+    # go along the horizontal bords
     while y < total_height:
         mask[(y-2):(y+1), :] = 1
         y += height
@@ -82,16 +101,20 @@ def remove_raster(image, width, height, x_dim, y_dim):
 
 
 def main():
+    # get path to dataset
     path_lr = "..\\..\\DSIDS\\LR\\tiles\\4x_cubic\\ignore"
     path_hr = "..\\..\\DSIDS\\HR\\tiles\\ignore"
     path_sr = "pred"
 
+    # stich pack the original images
     img_lr = stitch_images(load_images("tim_animal_0001_", path_lr), 42, 42, 23, 17)
     img_hr = stitch_images(load_images("tim_animal_0001_", path_hr), 42*4, 42*4, 23, 17)
+    # load the already predicted tiles... this could be included here too...
     img_sr = stitch_images(load_images("pred_", path_sr), 42*4, 42*4, 23, 17)
 
     img_sr_cleaned = remove_raster(img_sr,  42*4, 42*4, 23, 17)
 
+    # plotting and saving
     fig = plt.figure("Compare", figsize=(16, 8))
 
     ax1 = fig.add_subplot(1, 3, 1)
@@ -113,9 +136,6 @@ def main():
     cv2.imwrite("img_sr.jpg", img_sr)
     cv2.imwrite("img_mask.jpg", img_sr_cleaned)
 
-    # diff = np.abs(np.dot(img_sr[...,:3], [0.2989, 0.5870, 0.1140]) - np.dot(img_hr[...,:3], [0.2989, 0.5870, 0.1140]))
-    # ax4.imshow(diff, cmap="gray")
-    # ax4.title.set_text("Difference")
     plt.show()
 
 
