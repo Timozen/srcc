@@ -3,6 +3,11 @@ import numpy as np
 import imageio
 import os
 
+"""
+This script is only for visualizing the results which can be found in the "images"
+folder. It is adding a zoom effect
+"""
+
 def add_content_to_axes(ax, image, name):
     ax.imshow(image)
     ax.set_xticklabels('')
@@ -30,6 +35,7 @@ def add_content_to_axes(ax, image, name):
 
     ax.set_title(fr"${name}$")
 
+# split the 21 images in 3*3 and 3*4 so it fits the latex document
 k = 5
 fig, ax = plt.subplots(3, 3, figsize=[3*k, 3*k])
 
