@@ -19,6 +19,14 @@ from keras.models import load_model
 import ImageStitching
 import keras
 
+"""
+This is the back of system.
+This server will run a computer and any smart phone which uses the app
+has to be in the SAME network.
+Currently the ipaddress of the server has to be added manually in the app
+so the connections works.
+"""
+
 # helpful links
 # https://flask-restful.readthedocs.io/en/latest/quickstart.html#a-minimal-api
 # https://flask-restful.readthedocs.io/en/0.3.5/reqparse.html
@@ -280,17 +288,14 @@ class SendImage(Resource):
         if not allowed_file(image.filename):
             return "{'errorcode' : 'NOT_ALLOWED_IMAGE_FORMAT', 'field':'image', 'message':'Image format now allowed'}"
 
-        # TODO add some logging maybe...
         # get the filename for saving it in the upload folder
         filename = secure_filename(image.filename)
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-        # TODO in this part the NN has to create the SR image of the LR image
         sr_name = sr_image(os.path.join(UPLOAD_FOLDER, filename), args["backend"], 
                            args["tiling"], args["tile_size"], args["overlap"], args["stitch_type"], args["adjust_brightness"], args["use_hsv"], args["initialization"])
         
-
-        # just echo the send image
+        # send the sr image back to the server
         # from directory with a certain filename
         return send_from_directory(app.config['UPLOAD_FOLDER'],
                                    sr_name,
