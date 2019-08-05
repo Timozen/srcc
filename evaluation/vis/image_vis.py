@@ -31,15 +31,36 @@ def add_content_to_axes(ax, image, name):
     ax.set_title(fr"${name}$")
 
 k = 5
-fig, ax = plt.subplots(7, 3, figsize=[3*k, 7*k])
+fig, ax = plt.subplots(3, 3, figsize=[3*k, 3*k])
 
 for i, file_name in enumerate(os.listdir("images")):
     name = file_name.split(".")[0]
     name = name.replace("_", "-")
     image = imageio.imread(os.path.join("images", file_name))
 
-    (x, y) = np.unravel_index(i, (7, 3))
+    (x, y) = np.unravel_index(i, (3, 3))
     add_content_to_axes(ax[x, y], image, name)
 
+    if i == 8:
+        break
+
 plt.tight_layout()
-fig.savefig("image_vis.pdf")
+fig.savefig("image_vis_1.pdf")
+
+fig, ax = plt.subplots(4, 3, figsize=[3*k, 4*k])
+for i, file_name in enumerate(os.listdir("images")):
+    if i < 9:
+        continue
+
+    index = i - 9
+    name = file_name.split(".")[0]
+    name = name.replace("_", "-")
+    image = imageio.imread(os.path.join("images", file_name))
+
+    (x, y) = np.unravel_index(index, (4, 3))
+    add_content_to_axes(ax[x, y], image, name)
+
+    
+
+plt.tight_layout()
+fig.savefig("image_vis_2.pdf")
