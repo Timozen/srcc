@@ -1,7 +1,7 @@
 # SRCC Project Read-Me
 
 ## Installing the environment
-To install the environment use the provided batch/shell script to install all the required packages (only python).
+Use the provided batch/shell script to install all the required packages (only python).
 Than manually activate the "srcc" environtment.
 To use any of the script change to according folder and run the script according the launch paramets (if necessary).
 
