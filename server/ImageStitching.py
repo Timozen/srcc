@@ -9,13 +9,13 @@ import tensorflow as tf
 from tqdm import tqdm
 
 
-def load_image(file, path=None):
+def load_image(file, path=None):    #Loads images
     if path != None:
         return cv2.imread(os.path.join(path, file), cv2.IMREAD_COLOR)
     return cv2.imread(file, cv2.IMREAD_COLOR)
 
 
-def load_images(file_name, path):
+def load_images(file_name, path):   #overloads load_image
     images = []
     for file in sorted(os.listdir(path)):
         if fnmatch.fnmatch(file, file_name + "*.jpg"):
@@ -23,22 +23,7 @@ def load_images(file_name, path):
     return images
 
 
-def calc_border_average(image_tile, border_size = 20):
-    '''
-    Calculates the border averages of a given tile
-
-    image_tile -- numpy array with image tile
-    border_size -- border size in pixel 
-
-    returns [border_avg_up, border_avg_down, border_avg_left, border_avg_right]
-            with list elements being RGB arrays
-    '''
-    '''
-    print(np.mean(image_tile[0:border_size,:,:],axis=(0,1)))
-    print(np.mean(image_tile[:,0:border_size,:],axis=(0,1)))
-    print(np.mean(image_tile[-border_size-1:,:,:],axis=(0,1)))
-    print(np.mean(image_tile[:,-border_size-1,:],axis=(0,1)))
-    '''
+def calc_border_average(image_tile, border_size = 20):              #Calculates the average of the borders of a singe tile
     return [np.mean(image_tile[0:border_size,:,:],axis=(0,1)),      #Upper border
             np.mean(image_tile[-border_size-1:,:,:],axis=(0,1)),    #Down border
             np.mean(image_tile[:,0:border_size,:],axis=(0,1)),      #Left border
@@ -46,47 +31,28 @@ def calc_border_average(image_tile, border_size = 20):
 
    
 
-def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):
+def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):   #Calculates the weight factors between two tiles
 
     factors = []
     mask = np.zeros(image_tiles[0].shape).astype(np.float32)
     
-
     for y,x in np.ndindex(mask.shape[0:2]):
         if x == 0 and y == 0:
             factor1_ = 0.5
         else:
             factor1_ = x/(x+y)
-            #print("x = ",x)
-            #print("y = ",y)
-            #print(factors)
             mask[y,x,0] = factor1_
             mask[y,x,1] = factor1_
             mask[y,x,2] = factor1_
     
 
-    def apply_factors(tile):
-        #print(tile.shape)
+    def apply_factors(tile):                    #Applies the factors for a tile to match neighboured gray scale factors
         float_tile = tile.astype(np.float64)
 
         float_tile[:,:,0] = np.multiply(float_tile[:,:,0], mask[:,:,0] * factors[-1][1][0]) + np.multiply(float_tile[:,:,0], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,0] *factors[-1][0][0])
         float_tile[:,:,1] = np.multiply(float_tile[:,:,1], mask[:,:,1] * factors[-1][1][1]) + np.multiply(float_tile[:,:,1], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,1] *factors[-1][0][1])
         float_tile[:,:,2] = np.multiply(float_tile[:,:,2], mask[:,:,2] * factors[-1][1][2]) + np.multiply(float_tile[:,:,2], np.subtract(np.ones(mask.shape), mask[:,:,:])[:,:,2] *factors[-1][0][2])
-        '''
-        for y,x in np.ndindex(this.shape[0:2]):
-            if x == 0 and y == 0:
-                factor1_ = 0.5
-                factor2_ = 0.5
-            else:
-                factor1_ = x/(x+y)
-                factor2_ = y/(x+y)
-            #print("x = ",x)
-            #print("y = ",y)
-            #print(factors)
-            float_tile[y,x,:] = np.multiply(float_tile[y,x,:], factor1_ * factors[-1][1]) + np.multiply(float_tile[y,x,:], factor2_ * factors[-1][0])
-        '''
         float_tile[float_tile > 255] = 255
-    
 
         return float_tile.astype(np.uint8)
 
@@ -116,16 +82,11 @@ def calc_border_factors(image_tiles, rows=3024//336, cols=4032//336):
     
     return image_tiles
 
-def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim):
-    #total_width = width * x_dim
-    #total_height = height * y_dim
-
+def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim): #puts tiles together
     stitched_image = np.zeros((total_height, total_width, 3), dtype=np.uint8)
-
     i, j = 0, 0
     for image in images:
         stitched_image[j:(j+height), i:(i+width)] = image
-
         i += width
         if i == total_width:
             i = 0
@@ -133,12 +94,12 @@ def stitch_images(images,total_width, total_height, width, height, x_dim, y_dim)
 
     return stitched_image
 
-def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
+def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y): #Uses masks to optimize interpolation between image overlaps
     x_offset = tile_dim_x//2
     y_offset = tile_dim_y//2
     output = img
 
-    def f(x,y):
+    def f(x,y): #The four proportion functions
         return ((-np.cos((2*math.pi)/tile_dim_x * x )+1)*(-np.cos((2*math.pi)/tile_dim_y * y)+1))/4
     def f_y(x,y):
         return ((-np.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-np.cos((2*math.pi)/tile_dim_y * y)+1))/4
@@ -147,9 +108,9 @@ def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
     def f_xy(x,y):
         return ((-np.cos((2*math.pi)/tile_dim_x * x +math.pi)+1)*(-np.cos((2*math.pi)/tile_dim_y * y+math.pi)+1))/4
 
+    #Declaring the masks
     norm_weights = np.fromfunction(lambda i, j:  f(i,j), (img.shape[0], img.shape[1]), dtype=np.float32)
     norm_weights = np.stack((norm_weights,norm_weights,norm_weights),axis=2)
-    #cv2.imwrite(os.path.join("ISTest","norm_weights.jpg"), np.interp(norm_weights, (0,1), (0,255))) This is for documentary
 
     x_weights = np.fromfunction(lambda i, j:  f_x(i,j-y_offset), (img.shape[0], img.shape[1]-tile_dim_x), dtype=np.float32)
     x_weights = np.stack((x_weights,x_weights,x_weights),axis=2)
@@ -166,7 +127,7 @@ def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
     y_border_weights = np.fromfunction(lambda i, j:  (-np.cos((2*math.pi)/tile_dim_x * (j- x_offset)+math.pi)+1) / 2, (y_offset, img.shape[1]-tile_dim_x), dtype=np.float32)
     y_border_weights = np.stack((y_border_weights,y_border_weights,y_border_weights),axis=2)
 
-    def overlap(input_img):
+    def overlap(input_img): #Applying the masks on the images
         output = input_img
         print("Overlapping ")
         output[y_offset:input_img.shape[0]-y_offset, x_offset:input_img.shape[1]-x_offset, 0:3] = \
@@ -192,12 +153,12 @@ def overlap_images(img, img_x, img_y, img_xy, tile_dim_x, tile_dim_y):
     return output
 
 
-def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB = True): 
+def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB = True): #The main algorithm
     
     if adjustRGB == False:
         LR = None
 
-    if (LR is None) and overlap==False: 
+    if (LR is None) and overlap==False: #just rgb adjusting, other cases are intercepted in the server call
         corrected_image_tiles = calc_border_factors(image_tiles,                                # Uses the Stitching-Alg to correct all single tiles of the sr image tile list
                                                 image_size[0]//image_tiles[0].shape[0],
                                                 image_size[1]//image_tiles[0].shape[1])     
@@ -209,8 +170,8 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
                             image_size[0]//image_tiles[0].shape[0])
         return output
     
-    if overlap is True:
-        if adjustRGB == True :
+    if overlap is True:       #overlapping is on
+        if adjustRGB == True : #a non recommanded path with due to unstable RGB adjusting
             img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
             print("Calculating x_norm image")
             img_ = stitching(img_list,LR,border_size,image_size, overlap = False)
@@ -224,6 +185,7 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
             img_xy_shifted_ = stitching(img_xy_shifted_list,LR,border_size, image_size=(image_size[0]-image_tiles[0].shape[0] , image_size[1]-image_tiles[0].shape[1] ),    # gets the xy shifted hsv corrected advance stitch image
                                                                             LROffset= (image_tiles[0].shape[0]//2,image_tiles[0].shape[1]//2), overlap=False)
             return overlap_images(img_, img_x_shifted_, img_y_shifted_, img_xy_shifted_, image_tiles[0].shape[1], image_tiles[0].shape[0]) 
+        #overlapping as the normal case (recommended)
         img_list, img_x_shifted_list, img_y_shifted_list, img_xy_shifted_list = get_shifted_images(image_tiles,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0])
         img_ = stitch_images(img_list,image_size[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
         img_x_shifted_ = stitch_images(img_x_shifted_list,image_size[1]-image_tiles[0].shape[1],image_size[0],image_tiles[0].shape[1],image_tiles[0].shape[0],image_size[1]//image_tiles[0].shape[1], image_size[0]//image_tiles[0].shape[0])
@@ -253,17 +215,7 @@ def stitching(image_tiles, LR = None, border_size=20, image_size=(3024,4032), LR
     return output
 
 
-def get_shifted_images(images, total_width, total_height, width, height):
-    '''
-    Seperates shifted images into a list of tiles of each shifted images.
-
-    images -- list of all tiles
-    total_width,total_height -- pixel size of the HR image
-    width, height -- pixel size of a single tile
-
-    returns lists of tiles in the following order: img, x-shifted, y-shifted, xy-shifted
-    '''
-
+def get_shifted_images(images, total_width, total_height, width, height): #Returns all images in non shifted and 3 shifted versions
     n = total_height // height
     k = total_width // width
 
@@ -281,16 +233,9 @@ def get_shifted_images(images, total_width, total_height, width, height):
                 norm.append(images[i*(k+(k-1)) + j])
             else:
                 xy.append(images[i*(k+(k-1)) + j])
-    '''
-    x_ = stitch_images(x, total_width-k, total_height, k, n, k-1, n)
-    y_ = stitch_images(y, total_width, total_height-n, k, n, k, n-1)
-    xy_ = stitch_images(xy, total_width-k, total_height-n, k, n, k-1, n-1)
-    img = stitch_images(norm, total_width, total_height, k, n, k, n)
-    '''
-
     return norm, x, y, xy
 
-def get_simple_stitch(images, total_width, total_height, width, height):
+def get_simple_stitch(images, total_width, total_height, width, height): #Puts just tiles together in an image
     n = total_height // height
     k = total_width // width
 
@@ -312,7 +257,7 @@ def get_simple_stitch(images, total_width, total_height, width, height):
     img = stitch_images(norm, total_width, total_height, width, height, k, n)
     return img
 
-def main():
+def main():             # TESTSCENARIO, will not be computated
     lr = cv2.cvtColor(cv2.imread(os.path.join("ISTest","img_lr.jpg")), cv2.COLOR_BGR2RGB)
     model = load_model(os.path.join("models","initialized_gen_model20.h5"), custom_objects={"tf":tf})
     lr_tiles_overlap = Utils.tile_image(lr, shape=(126,126), overlap=True)
@@ -323,8 +268,6 @@ def main():
     cv2.imwrite(os.path.join("ISTest","image_simple_stitched.jpg"), cv2.cvtColor(simpleStitch, cv2.COLOR_RGB2BGR))
     final_image = stitching(sr_tiles, lr, border_size=20, image_size=(3024,4032), LROffset = (0,0), overlap = True, adjustRGB=True)
     cv2.imwrite(os.path.join("ISTest","image_final.jpg"), cv2.cvtColor(final_image, cv2.COLOR_RGB2BGR))
-
-
 
 if __name__ == "__main__":
     main()
